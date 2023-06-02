@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import os
 
 class Database(ABC):
     def __init__(self, embedder, file_path=None):
@@ -7,7 +8,7 @@ class Database(ABC):
             self.load_from_file(file_path)
 
     @abstractmethod
-    def add_document(self, content, source):
+    def add_chunk(self, path, chunk):
         """
         Abstract method for adding a new document to the database.
         """
