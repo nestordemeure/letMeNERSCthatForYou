@@ -14,3 +14,5 @@ class Embedding(ABC):
         Abstract method for converting text into an embedding.
         """
         pass
+
+from . import openai_embedding

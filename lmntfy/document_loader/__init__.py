@@ -1,7 +1,7 @@
 import os
-from .models.llm import LanguageModel
-from text_spliter import text_splitter
-from markdown_spliter import markdown_splitter
+from ..models.llm import LanguageModel
+from .text_spliter import text_splitter
+from .markdown_spliter import markdown_splitter
 
 
 class DocumentLoader:
@@ -46,5 +46,9 @@ class DocumentLoader:
 
     def load_chunk(self, document_path, text):
         """Adds a given text and source to the Splitter"""
-        chunk = {'source':document_path, 'content':text}
+        chunk = {'source':document_path, 'content':text.strip()}
         self.chunks.append(chunk)
+    
+    def documents(self):
+        """Returns a list of all the chunks produced so far."""
+        return self.chunks

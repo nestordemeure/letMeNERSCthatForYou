@@ -1,20 +1,23 @@
-"""
-folder with data
-create a naive data base database
-save it
-load it
-run a query against it
+import lmntfy
+from pathlib import Path
 
-then an faiss database
+#------------------------------------------------------------------------------
+# PARAMETERS
 
-web one will come later
-----
+data_folder = Path('./data')
+docs_folder = data_folder / 'docs_lite'
 
+llm = lmntfy.models.llm.chatgpt.GPT35()
+embedder = lmntfy.models.embedding.openai_embedding.OpenAIEmbedding()
 
+#------------------------------------------------------------------------------
+# LOAD DOCUMENTS
 
-take a folder as input
-run over all the files in that folder
-for each file, split it into chunks
-(if k=3 by default then we want k+2=5 chunks)
-"""
+document_loader = lmntfy.document_loader.DocumentLoader(llm)
+document_loader.load_folder(docs_folder)
+chunks = document_loader.documents()
 
+print(f"Done! Produced {len(chunks)} chunks of maximum size {document_loader.max_chunk_size} tokens.")
+
+for chunk in chunks:
+    print(f"source:{chunk['source']} content:\n{chunk['content']}\n")

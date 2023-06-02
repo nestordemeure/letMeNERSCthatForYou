@@ -18,3 +18,5 @@ class LanguageModel(ABC):
         Abstract method for querying the model and getting a response.
         """
         pass
+
+from . import chatgpt

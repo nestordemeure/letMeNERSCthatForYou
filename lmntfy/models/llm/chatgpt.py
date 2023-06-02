@@ -1,4 +1,4 @@
-from tiktoken import Tokenizer, models
+import tiktoken
 import openai
 from . import LanguageModel
 
@@ -8,7 +8,7 @@ class GPT35(LanguageModel):
                  model_name='gpt-3.5-turbo', 
                  context_size=4096):
         super().__init__(model_name, context_size)
-        self.tokenizer = Tokenizer(models.get_encoder(self.model_name))
+        self.tokenizer = tiktoken.encoding_for_model(model_name)
         self.model_tokens_per_message = 4
         self.model_tokens_per_name = -1
 

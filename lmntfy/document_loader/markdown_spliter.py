@@ -1,5 +1,5 @@
 import mistune
-from text_spliter import text_splitter
+from .text_spliter import text_splitter
 
 #----------------------------------------------------------------------------------------
 # MARKDOWN PARSING
