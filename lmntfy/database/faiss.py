@@ -6,7 +6,7 @@ from . import Database
 class FaissDatabase(Database):
     def __init__(self, embedder):
         super().__init__(embedder)
-        self.index = faiss.IndexFlatIP(embedder.output_dim)
+        self.index = faiss.IndexFlatIP(embedder.embedding_length)
         self.chunks = []
 
     def add_chunk(self, chunk):

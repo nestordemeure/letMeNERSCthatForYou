@@ -18,10 +18,10 @@ class NaiveDatabase(Database):
     def get_closest_chunks(self, input_text, k=3):
         if len(self.chunks) <= k: return self.chunks
         # Calculate cosine distances to the input embedding and return the k documents with smallest distance
-        input_embedding = self.embedding.embed(input_text)
+        input_embedding = self.embedder.embed(input_text)
         distances = [distance.cosine(input_embedding, chunk['embedding']) for chunk in self.chunks]
         closest_indices = np.argsort(distances)[:k]
-        return [self.chunks[i] for i in closest_indices]
+        return [self.chunks[i]['chunk'] for i in closest_indices]
 
     def save_to_file(self, file_path):
         # Convert numpy arrays to lists before saving
