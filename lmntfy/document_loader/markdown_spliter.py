@@ -1,64 +1,66 @@
-import mistune
+import re
 from .text_spliter import text_splitter
 
 #----------------------------------------------------------------------------------------
 # MARKDOWN PARSING
 
-class MarkdownRenderer(mistune.AstRenderer):
-    """mistune makdown renderer to guide the parsing"""
-    def __init__(self, token_counter, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.token_counter = token_counter
-        self.current_section = None
-        self.sections = []
-
-    def header(self, text, level):
-        if self.current_section is not None:
-            self.sections.append(self.current_section)
-        self.current_section = Markdown(text, [], self.token_counter)
-
-    def text(self, text):
-        if self.current_section is not None:
-            self.current_section.header += '\n' + text.strip()
-
-    def finish(self):
-        if self.current_section is not None:
-            self.sections.append(self.current_section)
-        return self.sections
-
-#----------------------------------------------------------------------------------------
-# MARKDOWN PROCESSING
-
 class Markdown:
-    """
-    Tree representation of a markdown file.
-    Given a file made of text (prefaced by an optional top heading) folowed by optional sub headings,
-    All of the text before the sub headings is stored in header
-    Then the sub headings are stored as a list of Markdown classes (each could have their own subheading of lower levels)
-    """
-    def __init__(self, header: str, headings: list, token_counter):
+    def __init__(self, header: str, level: int, headings: list=[]):
         self.header = header 
+        self.level = level
         self.headings = headings
-        self.nb_tokens = token_counter(header) + sum(heading.nb_tokens for heading in headings)
+        self.nb_tokens = None
+
+    @staticmethod
+    def load(markdown_text: str):
+        result = Markdown(header="", level=0, headings=[])
+        in_code_block = False
+        for line in markdown_text.splitlines():
+            # flip the state if this is a codeblock
+            if line.startswith("```"):
+                in_code_block = not in_code_block
+            # inserts either text or a heading
+            match = re.match(r'^#+', line)
+            if match and not in_code_block:
+                level = len(match.group())
+                result.insert_heading(text=line, level=level)
+            else:
+                result.insert_text(line)
+        # pop the upper level if it is empty
+        if (len(result.header) == 0) and (len(result.headings) == 1):
+            result = result.headings[0]
+        return result
     
+    def insert_text(self, text):
+        """insert text at the end of the header of the latest, deepest, heading to data"""
+        if len(self.headings) == 0:
+            # we have reached the bottom
+            self.header += '\n' + text
+        else:
+            self.headings[-1].insert_text(text)
+
+    def insert_heading(self, text, level):
+        """insert a new heading whereaver is possible"""
+        if (len(self.headings) == 0) or (level <= self.headings[-1].level):
+            heading = Markdown(text, level, headings=[])
+            self.headings.append(heading)
+        else:
+            self.headings[-1].insert_heading(text, level)
+
     def to_string(self):
-        result = self.header
+        result = self.header + '\n'
         for heading in self.headings:
             result += '\n' + heading.to_string()
         return result
 
-    @staticmethod
-    def load(markdown_text, token_counter):
-        renderer = MarkdownRenderer(token_counter)
-        markdown = mistune.create_markdown(renderer=renderer)
-        markdown(markdown_text)
-        sections = renderer.finish()
+    def count_tokens(self, token_counter):
+        """memoized token counting function"""
+        if self.nb_tokens is None:
+            self.nb_tokens = token_counter(self.header) + sum(heading.count_tokens(token_counter) for heading in self.headings)
+        return self.nb_tokens
 
-        root = Markdown('', sections, token_counter)
-        return root
-    
     def to_chunks(self, token_counter, max_tokens):
-        if self.nb_tokens < max_tokens:
+        if self.count_tokens(token_counter) < max_tokens:
             # small enough to fit
             return [self.to_string()]
         else:
@@ -81,6 +83,6 @@ def markdown_splitter(markdown: str, token_counter, max_tokens):
     if token_counter(markdown) < max_tokens:
         return [markdown]
     # parses the text into a tree representation
-    ast = Markdown.load(markdown, token_counter)
+    ast = Markdown.load(markdown)
     # turn it into a list of chunks of appropriate size
     return ast.to_chunks(token_counter, max_tokens)

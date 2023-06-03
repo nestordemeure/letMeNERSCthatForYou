@@ -20,29 +20,30 @@ class DocumentLoader:
         # the token counting function
         self.token_counter = self.model.token_counter
 
-    def load_folder(self, folder_path):
+    def load_folder(self, folder_path, verbose=False):
         """Adds all markdown documents in a folder to the Splitter."""
-        for filename in os.listdir(folder_path):
-            file_path = os.path.join(folder_path, filename)
-            if os.path.isfile(file_path):
-                self.load_file(file_path)
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                self.load_file(file_path, verbose=verbose)
 
-    def load_file(self, file_path):
+    def load_file(self, file_path, verbose=False):
         """Adds a markdown document to the Splitter, splitting it until it fits."""
-        with open(file_path, 'r', encoding='utf8') as file:
-            text = file.read()
-            # split the file into chunks
-            if file_path.endswith('.md'): 
-                raw_chunks = markdown_splitter(text, self.token_counter, self.max_chunk_size)
-            elif file_path.endswith('.txt'): 
-                raw_chunks = text_splitter(text, self.token_counter, self.max_chunk_size)
-            else:
-                # unsupported format
-                # TODO add a verbose print statement
-                return
-            # saves all the chunks
-            for content in raw_chunks:
-                self.load_chunk(file_path, content)
+        try:
+            with open(file_path, 'r', encoding='utf8') as file:
+                text = file.read()
+                # split the file into chunks
+                if file_path.endswith('.md'): 
+                    raw_chunks = markdown_splitter(text, self.token_counter, self.max_chunk_size)
+                else:
+                    raw_chunks = text_splitter(text, self.token_counter, self.max_chunk_size)
+                # saves all the chunks
+                for content in raw_chunks:
+                    self.load_chunk(file_path, content)
+                print(f"Loaded file '{file_path}' ({len(raw_chunks)} chunks)")
+        except UnicodeDecodeError:
+            # unsupported format
+            print(f"WARNING: File '{file_path}' does not appear to be a utf8 encoded text file.")
 
     def load_chunk(self, document_path, text):
         """Adds a given text and source to the Splitter"""
