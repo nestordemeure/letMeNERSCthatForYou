@@ -10,7 +10,7 @@ class OpenAIEmbedding(Embedding):
                  normalized=True):
         super().__init__(name, embedding_length, tokenizer, max_input_tokens, normalized)
 
-    def embed(self, text):
+    def _embed(self, text):
         """
         OpenAI specific embedding computation.
         """

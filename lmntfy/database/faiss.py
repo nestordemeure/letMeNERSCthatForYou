@@ -4,46 +4,40 @@ import numpy as np
 from . import Database
 
 class FaissDatabase(Database):
-    def __init__(self, embedder, file_path=None):
-        super().__init__(embedder, file_path)
+    def __init__(self, embedder):
+        super().__init__(embedder)
         self.index = faiss.IndexFlatIP(embedder.output_dim)
-        self.documents = []
+        self.chunks = []
 
-    def add_document(self, content, source):
-        # Generate document embedding and add to the FAISS index
-        embedding = np.array([self.embedder.embed(content)], dtype='float32')
-        # Normalize the embedding
-        if not self.embedder.normalized:
-            faiss.normalize_L2(embedding)
+    def add_chunk(self, chunk):
+        # Generate chunk embedding and add to the FAISS index
+        embedding = np.array([self.embedder.embed(chunk['content'])], dtype='float32')
         self.index.add(embedding)
-        # Store the original document and its source
-        self.documents.append({
-            'content': content,
-            'source': source,
-            'embedding': embedding.tolist()  # Convert numpy array to list for json serialization
-        })
+        # Store the original chunk
+        self.chunks.append(chunk)
 
-    def get_closest_documents(self, input_text, k=1):
+    def get_closest_chunks(self, input_text, k=3):
+        if len(self.chunks) <= k: return self.chunks
         # Generate input text embedding
         input_embedding = np.array([self.embedder.embed(input_text)], dtype='float32')
-        # Normalize the embedding
-        if not self.embedder.normalized:
-            faiss.normalize_L2(input_embedding)
         # Query the FAISS index
         _, indices = self.index.search(input_embedding, k)
-        # Return the corresponding documents
-        return [self.documents[i] for i in indices.flatten()]
+        # Return the corresponding chunks
+        return [self.chunks[i] for i in indices.flatten()]
 
     def save_to_file(self, file_path):
         # Write FAISS index
         faiss.write_index(self.index, file_path + '_index.faiss')
-        # Write documents data
-        with open(file_path + '_docs.json', 'w') as f:
-            json.dump(self.documents, f)
+        # Write chunks data
+        with open(file_path + '_chunks.json', 'w') as f:
+            json.dump(self.chunks, f)
 
-    def load_from_file(self, file_path):
+    @staticmethod
+    def load_from_file(file_path, embedder):
+        db = FaissDatabase(embedder)
         # Read FAISS index
-        self.index = faiss.read_index(file_path + '_index.faiss')
-        # Read documents data
-        with open(file_path + '_docs.json', 'r') as f:
-            self.documents = json.load(f)
+        db.index = faiss.read_index(file_path + '_index.faiss')
+        # Read chunks data
+        with open(file_path + '_chunks.json', 'r') as f:
+            db.chunks = json.load(f)
+        return db

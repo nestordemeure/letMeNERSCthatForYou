@@ -38,7 +38,6 @@ Model:
 - have a vicuna based alternative setup
 
 Embeddings:
-- get the doc embedded with the openai model
 - get SBERT embeddings working as a viable alternative
 
 Database:

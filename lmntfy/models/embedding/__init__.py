@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import numpy as np
 
 class Embedding(ABC):
     def __init__(self, name, embedding_length, tokenizer, max_input_tokens, normalized):
@@ -8,11 +9,25 @@ class Embedding(ABC):
         self.max_input_tokens = max_input_tokens
         self.normalized = normalized
 
-    @abstractmethod
     def embed(self, text):
+        """
+        Converts text into an embedding.
+        """
+        raw_embedding = self._embed(text)
+        if self.normalized:
+            return raw_embedding
+        else:
+            # normalize the embedding
+            norm = np.linalg.norm(raw_embedding)
+            if norm == 0: 
+                return raw_embedding
+            return raw_embedding / norm
+
+    @abstractmethod
+    def _embed(self, text):
         """
         Abstract method for converting text into an embedding.
         """
         pass
 
-from . import openai_embedding
+from .openai_embedding import OpenAIEmbedding

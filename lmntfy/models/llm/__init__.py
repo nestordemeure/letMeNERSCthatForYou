@@ -19,4 +19,4 @@ class LanguageModel(ABC):
         """
         pass
 
-from . import chatgpt
+from .chatgpt import GPT35
