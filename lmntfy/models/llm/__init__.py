@@ -13,10 +13,21 @@ class LanguageModel(ABC):
         pass
 
     @abstractmethod
-    def query(self, input_string):
+    def query(self, input_string, verbose=False):
         """
         Abstract method for querying the model and getting a response.
         """
         pass
+
+    @abstractmethod
+    def get_answer(self, question, chunks, verbose=False):
+        """
+        Abstract method to get an answer given a question and some chunks passed for context.
+        """
+        pass
+
+    def is_input_too_long(self, input_string):
+        """Returns True if a prompt is too long for the model"""
+        return self.token_counter(input_string) >= self.context_size
 
 from .chatgpt import GPT35

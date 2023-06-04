@@ -28,9 +28,6 @@ class NaiveDatabase(Database):
         with open(file_path + '_chunks.json', 'w') as f:
             json.dump(self.chunks, f)
 
-    @staticmethod
-    def load_from_file(file_path, embedder):
-        db = NaiveDatabase(embedder)
+    def load_from_file(self, file_path):
         with open(file_path + '_chunks.json', 'r') as f:
-            db.chunks = json.load(f)
-        return db
+            self.chunks = json.load(f)

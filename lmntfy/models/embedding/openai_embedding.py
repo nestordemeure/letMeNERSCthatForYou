@@ -1,5 +1,6 @@
 import openai
 from . import Embedding
+from .. import retry
 
 class OpenAIEmbedding(Embedding):
     def __init__(self, 
@@ -10,6 +11,7 @@ class OpenAIEmbedding(Embedding):
                  normalized=True):
         super().__init__(name, embedding_length, tokenizer, max_input_tokens, normalized)
 
+    @retry(n=5)
     def _embed(self, text):
         """
         OpenAI specific embedding computation.

@@ -9,6 +9,10 @@ class FaissDatabase(Database):
         self.index = faiss.IndexFlatIP(embedder.embedding_length)
         self.chunks = []
 
+    def concurrent_add_chunks(self, chunks, verbose=False):
+        print(f"WARNING: FAISS does not support `concurrent_add_chunks`, dropping down to `add_chunks`")
+        return self.add_chunks(chunks, verbose=verbose)
+
     def add_chunk(self, chunk):
         # Generate chunk embedding and add to the FAISS index
         embedding = np.array([self.embedder.embed(chunk['content'])], dtype='float32')
@@ -32,12 +36,9 @@ class FaissDatabase(Database):
         with open(file_path + '_chunks.json', 'w') as f:
             json.dump(self.chunks, f)
 
-    @staticmethod
-    def load_from_file(file_path, embedder):
-        db = FaissDatabase(embedder)
+    def load_from_file(self, file_path):
         # Read FAISS index
-        db.index = faiss.read_index(file_path + '_index.faiss')
+        self.index = faiss.read_index(file_path + '_index.faiss')
         # Read chunks data
         with open(file_path + '_chunks.json', 'r') as f:
-            db.chunks = json.load(f)
-        return db
+            self.chunks = json.load(f)

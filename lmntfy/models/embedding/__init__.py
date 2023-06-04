@@ -13,7 +13,12 @@ class Embedding(ABC):
         """
         Converts text into an embedding.
         """
-        raw_embedding = self._embed(text)
+        try:
+            raw_embedding = self._embed(text)
+        except Exception as e:
+            print(f"An error occurred while embedding the text '{text}': {str(e)}")
+            raise  # rethrow the exception after handling
+        
         if self.normalized:
             return raw_embedding
         else:

@@ -47,8 +47,9 @@ class DocumentLoader:
 
     def load_chunk(self, document_path, text):
         """Adds a given text and source to the Splitter"""
-        chunk = {'source':document_path, 'content':text.strip()}
-        self.chunks.append(chunk)
+        if len(text) > 0:
+            chunk = {'source':document_path, 'content':text.strip()}
+            self.chunks.append(chunk)
     
     def documents(self):
         """Returns a list of all the chunks produced so far."""

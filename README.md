@@ -55,6 +55,7 @@ Further points:
 - use API key in environement
 - no need for rate limiting
 - yes need for number of tokens limiting
+- harden model against error (input size, model failure, etc)
 
 #### Details
 

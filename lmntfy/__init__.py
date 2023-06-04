@@ -1,1 +1,2 @@
-from . import document_loader, database, models, user_interface, question_answering
+from . import document_loader, database, models, user_interface
+from .question_answering import QuestionAnswerer
