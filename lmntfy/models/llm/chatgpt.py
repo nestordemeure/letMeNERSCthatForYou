@@ -1,4 +1,5 @@
 import re
+import json
 import tiktoken
 import openai
 from . import LanguageModel
@@ -17,6 +18,7 @@ def format_chunk(chunk, index):
 def add_references(answer, chunks, verbose=False):
     # TODO we need to shift references inside the text
     # TODO deal with several reference together in a coma separated list: [a, b, c]
+    # TODO overall, this needs to be a lot cleaner, maybe via some prompt cleanup
     if verbose:
         references = [(i+1) for i in range(len(chunks))]
     else:
@@ -73,7 +75,10 @@ class GPT35(LanguageModel):
         GPT-3.5-turbo specific model query and response.
         """
         response = openai.ChatCompletion.create(model=self.model_name, messages=messages)
-        if verbose: print(messages + [response.choices[0].message])
+        if verbose: 
+            full_messages = messages + [response.choices[0].message]
+            text_messages = json.dumps(full_messages, indent=4)
+            print(text_messages)
         return response.choices[0].message['content']
 
     def get_answer(self, question, chunks, verbose=False):

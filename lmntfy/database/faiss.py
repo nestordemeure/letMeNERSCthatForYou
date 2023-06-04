@@ -10,7 +10,7 @@ class FaissDatabase(Database):
         self.chunks = []
 
     def concurrent_add_chunks(self, chunks, verbose=False):
-        print(f"WARNING: FAISS does not support `concurrent_add_chunks`, dropping down to `add_chunks`")
+        print(f"WARNING: FAISS does not support `concurrent_add_chunks`, defaulting to `add_chunks`")
         return self.add_chunks(chunks, verbose=verbose)
 
     def add_chunk(self, chunk):

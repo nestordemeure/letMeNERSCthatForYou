@@ -60,12 +60,15 @@ class Markdown:
         return self.nb_tokens
 
     def to_chunks(self, token_counter, max_tokens):
-        if self.count_tokens(token_counter) < max_tokens:
+        if (self.count_tokens(token_counter) < max_tokens) and (len(self.headings) > 0):
             # small enough to fit
             return [self.to_string()]
         else:
             # split along headings
-            result = text_splitter(self.header, token_counter, max_tokens)
+            # include header only if it has more than one line
+            header = self.header.strip()
+            result = text_splitter(header, token_counter, max_tokens) if ('\n' in header) else []
+            # include all subheadings
             for heading in self.headings:
                 result.extend(heading.to_chunks(token_counter, max_tokens))
             return result
