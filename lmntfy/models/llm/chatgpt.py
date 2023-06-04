@@ -74,7 +74,7 @@ class GPT35(LanguageModel):
         """
         GPT-3.5-turbo specific model query and response.
         """
-        response = openai.ChatCompletion.create(model=self.model_name, messages=messages)
+        response = openai.ChatCompletion.create(model=self.model_name, messages=messages, temperature=0)
         if verbose: 
             full_messages = messages + [response.choices[0].message]
             text_messages = json.dumps(full_messages, indent=4)
