@@ -24,11 +24,6 @@ if rebuild_database:
     chunks = document_loader.documents()
     print(f"Produced {len(chunks)} chunks of maximum size {document_loader.max_chunk_size} tokens.")
 
-    # TODO debug
-    #display_chunks = chunks[:30]
-    #print(json.dumps(display_chunks, indent=4))
-    #print(f"{len(display_chunks)} display chunks")
-
     database.concurrent_add_chunks(chunks, verbose=True)
     print("Saved all chunks to the database.")
 
@@ -44,5 +39,5 @@ else:
     test_questions = ["What is NERSC?", "How can I connect to Perlmutter?", "Where do I find gcc?", "How do I kill all of my jobs?", "How can I run a job on GPU?"]
     for question in test_questions:
         print(f"\n> {question}\n")
-        answer = question_answerer.get_answer(question, verbose=True)
+        answer = question_answerer.get_answer(question, verbose=False)
         print(f"\n{answer}\n")
