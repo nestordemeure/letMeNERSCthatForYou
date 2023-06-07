@@ -8,8 +8,7 @@ from .. import retry
 #----------------------------------------------------------------------------------------
 # PROMPTS
 
-# You are a helpful member of the NERSC support staff.
-ANSWERING_PROMPT="Generate a comprehensive and informative answer for a given question solely based on the provided web Search Results (URL and Extract). You must only use information from the provided search results. Use an unbiased and journalistic tone. Combine search results together into a coherent answer. Cite search results using [${number}] notation. Only cite the most relevant results that answer the question accurately."
+ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support staff. Generate a comprehensive and informative answer for a given question solely based on the provided web Search Results (URL and Extract). You must only use information from the provided search results. Use an unbiased and journalistic tone. Combine search results together into a coherent answer. Cite search results using [${number}] notation. Only cite the most relevant results that answer the question accurately."
 
 def format_chunk(chunk, index):
     """takes  chunk and format it to include its index and source in the message"""

@@ -8,7 +8,7 @@ data_folder = './data'
 docs_folder = data_folder + '/docs'
 database_path_prefix = data_folder + '/database'
 rebuild_database = False
-use_test_questions = False
+use_test_questions = True
 
 llm = lmntfy.models.llm.GPT35()
 embedder = lmntfy.models.embedding.OpenAIEmbedding()
@@ -39,6 +39,7 @@ else:
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
     if use_test_questions:
         test_questions = ["What is NERSC?", "How can I connect to Perlmutter?", "Where do I find gcc?", "How do I kill all of my jobs?", "How can I run a job on GPU?"]
+        test_questions = ["How do I kill all of my jobs?"] * 5
         for question in test_questions:
             print(f"\n> {question}\n")
             answer = question_answerer.get_answer(question, verbose=False)
