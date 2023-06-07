@@ -8,7 +8,7 @@ class QuestionAnswerer:
         self.embeder = embeder
         self.database = database
 
-    def get_answer(self, question, max_context_size=5, verbose=False):
+    def get_answer(self, question, max_context_size=8, verbose=False):
         # get a context to help us answer the question
         chunks = self.database.get_closest_chunks(question, max_context_size)
         # gets an answer from the model

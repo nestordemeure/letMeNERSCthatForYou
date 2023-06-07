@@ -8,7 +8,8 @@ from .. import retry
 #----------------------------------------------------------------------------------------
 # PROMPTS
 
-ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support staff. Generate a comprehensive and informative answer for a given question solely based on the provided web Search Results (URL and Extract). You must only use information from the provided search results. Use an unbiased and journalistic tone. Combine search results together into a coherent answer. Cite search results using [${number}] notation. Only cite the most relevant results that answer the question accurately."
+# for a short answer: Generate a comprehensive and informative answer (but no more than 80 words)
+ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support staff. Generate a comprehensive and informative answer for a given question solely based on the provided web Search Results (URL and Extract). You must only use information from the provided search results. Use an unbiased and journalistic tone. Combine search results together into a coherent answer. Cite search results using [${number}] notation. Only cite the most relevant results that answer the question accurately. Try and be careful not to go off-topics."
 
 def format_chunk(chunk, index):
     """takes  chunk and format it to include its index and source in the message"""
@@ -84,6 +85,7 @@ class GPT35(LanguageModel):
         """
         Method to get an answer given a question and some chunks passed for context.
         """
+        # builds the prompt
         system_message = {"role": "system", "content": ANSWERING_PROMPT}
         question_message = {"role": "user", "content": question}
         context_messages = [{"role": "assistant", "content": format_chunk(chunk,i+1)} for (i,chunk) in enumerate(chunks)]
@@ -93,6 +95,7 @@ class GPT35(LanguageModel):
             if len(context_messages) > 0:
                 # reduce the context size
                 context_messages.pop()
+                messages = [system_message] + context_messages + [question_message]
             else:
                 # no more space to reduce context size
                 raise ValueError("You query is too long for the model's context size.")
