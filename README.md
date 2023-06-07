@@ -43,3 +43,6 @@ Database:
 UI:
 - command line UI
 - web UI
+
+simplify number promtp to ask number in just `[number]` format?
+also ask for them to be put at the end of the message?

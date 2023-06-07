@@ -13,15 +13,6 @@ class Database(ABC):
         for chunk in tqdm(chunks, disable=not verbose, desc="Loading chunks"):
             self.add_chunk(chunk)
 
-    def old_concurent_add_chunks(self, chunks, verbose=False):
-        """
-        Adds several documents to the database.
-        This version is faster then `add_chunks` but might trigger an overusage error from OpenAI.
-        """
-        # using `with` ensures that we wait for all addition to complete
-        with ThreadPoolExecutor() as executor:
-            executor.map(self.add_chunk, chunks)
-
     def concurrent_add_chunks(self, chunks, verbose=False):
         """
         Adds several documents to the database.
