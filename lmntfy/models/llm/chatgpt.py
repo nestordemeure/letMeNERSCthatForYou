@@ -2,6 +2,7 @@ import re
 import json
 import tiktoken
 import openai
+from copy import copy
 from . import LanguageModel
 from .. import retry
 
@@ -35,6 +36,9 @@ def add_references(answer, chunks, verbose=False):
             answer += f"\n[{reference}]: {source}"
     return answer
 
+QUESTION_EXTRACTION_PROMPT_SYSTEM="You are a question extraction system. You will be provided the last messages of a conversation between a user of the NERSC supercomputing center and an assistant from its support, ending on a question by the user. Your task is to return the user's last question."
+QUESTION_EXTRACTION_PROMPT_USER="Return the user's last question, rephrasing it such that it can be understood without the rest of the conversation."
+
 #----------------------------------------------------------------------------------------
 # MODEL
 
@@ -47,6 +51,7 @@ class GPT35(LanguageModel):
         self.model_tokens_per_message = 4
         self.model_tokens_per_name = -1
         self.upper_answer_size = 250
+        self.upper_question_size = 200
 
     def token_counter_messages(self, messages):
         """
@@ -87,15 +92,15 @@ class GPT35(LanguageModel):
         """
         # builds the prompt
         system_message = {"role": "system", "content": ANSWERING_PROMPT}
-        question_message = {"role": "user", "content": question}
         context_messages = [{"role": "assistant", "content": format_chunk(chunk,i+1)} for (i,chunk) in enumerate(chunks)]
-        # builds the answer with as many context messages as we can
+        question_message = {"role": "user", "content": question}
         messages = [system_message] + context_messages + [question_message]
+        # keep as many context messages as we can
         while self.token_counter_messages(messages) + self.upper_answer_size > self.context_size:
-            if len(context_messages) > 0:
-                # reduce the context size
-                context_messages.pop()
-                messages = [system_message] + context_messages + [question_message]
+            if len(messages) > 2:
+                # reduce the context size by popping the latest context message
+                # (which is likely the least relevant)
+                messages.pop(-2)
             else:
                 # no more space to reduce context size
                 raise ValueError("You query is too long for the model's context size.")
@@ -104,3 +109,28 @@ class GPT35(LanguageModel):
         # adds sources at the end of the query
         return add_references(answer, chunks, verbose=verbose)
         
+    def extract_question(self, previous_messages, verbose=False):
+        """
+        Extracts the latest question given a list of messages.
+        Message are expectted to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
+        the question returned will be a string.
+        """
+        # builds the prompt
+        system_message = {"role": "system", "content": QUESTION_EXTRACTION_PROMPT_SYSTEM}
+        context_messages = [{'role':'assistant', 'content': f"{m['role']}: {m['content']}"} for m in previous_messages]
+        user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
+        messages = [system_message] + context_messages + [user_message]
+        # keep as many context messages as we can
+        while self.token_counter_messages(messages) + self.upper_question_size > self.context_size:
+            if len(messages) > 3:
+                # reduce the context size by popping the oldest context message
+                # ensuring there is at least one context message
+                messages.pop(1)
+            else:
+                # no more space to reduce context size
+                raise ValueError("You query is too long for the model's context size.")
+        # shortcut if there is only one message
+        if len(messages) == 3:
+            return previous_messages[-1]['content']
+        else:
+            return self.query(messages, verbose=verbose)

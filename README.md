@@ -38,11 +38,15 @@ Embeddings:
 
 Database:
 - get a google search based retrieval set-up (nothing stored, instead we look up information online).
-- add input preprocessing to turn question into something closer to the target
 
 UI:
-- command line UI
+- put the command line UI into its own file
 - web UI
 
 simplify number promtp to ask number in just `[number]` format?
 also ask for them to be put at the end of the message?
+
+General:
+- fix the sourcing of answers
+- make sure the database is kept up to date on the fly
+- try the google as a database idea

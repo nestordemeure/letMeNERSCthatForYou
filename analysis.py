@@ -39,6 +39,7 @@ print(f"99% quantile: {quantile_99}")
 
 """
 GPT35's tokeniser:
+*** Answers:
 Mean size: 96.20449718925671
 Median size: 85.0
 Standard deviation of size: 73.79027308535585
@@ -48,4 +49,13 @@ Max size: 939
 95% quantile: 222.0
 99% quantile: 345.0
 (chunks of maximum size 819.2 tokens)
+*** Questions:
+Mean size: 13.172767020612117
+Median size: 12.0
+Standard deviation of size: 5.1105708284340805
+Upper bound (mean+2std): 23.393908677480276
+Max size: 130
+90% quantile: 19.0
+95% quantile: 22.0
+99% quantile: 28.960000000000036
 """

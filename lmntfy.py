@@ -8,7 +8,7 @@ data_folder = './data'
 docs_folder = data_folder + '/docs'
 database_path_prefix = data_folder + '/database'
 rebuild_database = False
-use_test_questions = True
+use_test_questions = False
 
 llm = lmntfy.models.llm.GPT35()
 embedder = lmntfy.models.embedding.OpenAIEmbedding()
@@ -44,7 +44,10 @@ else:
             answer = question_answerer.get_answer(question, verbose=False)
             print(f"\n{answer}\n")
     else:
+        messages = []
         while True:
             question = input("\n> ")
-            answer = question_answerer.get_answer(question, verbose=False)
-            print(f"\n{answer}")
+            messages.append({'role':'user', 'content': question})
+            answer_message = question_answerer.continue_chat(messages, verbose=False)
+            messages.append(answer_message)
+            print(f"\n{answer_message['content']}")

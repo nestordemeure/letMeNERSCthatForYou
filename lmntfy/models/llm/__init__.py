@@ -26,6 +26,15 @@ class LanguageModel(ABC):
         """
         pass
 
+    @abstractmethod
+    def extract_question(self, messages, verbose=False):
+        """
+        Abstract method to extract the latest question given a list of messages.
+        Message are expectted to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
+        the question returned will be a string.
+        """
+        pass
+
     def is_input_too_long(self, input_string):
         """Returns True if a prompt is too long for the model"""
         return self.token_counter(input_string) >= self.context_size
