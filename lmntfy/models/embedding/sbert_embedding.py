@@ -6,7 +6,7 @@ class SBERTEmbedding(Embedding):
     def __init__(self, 
                  name='all-mpnet-base-v2', 
                  embedding_length=768,
-                 tokenizer='cl100k_base',
+                 tokenizer=None,
                  max_input_tokens=384,
                  normalized=True):
         super().__init__(name, embedding_length, tokenizer, max_input_tokens, normalized)

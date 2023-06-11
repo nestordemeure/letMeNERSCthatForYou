@@ -3,11 +3,10 @@ os.environ["TOKENIZERS_PARALLELISM"]="False"
 import lmntfy
 import json
 import argparse
-
+absolute_path = os.path.dirname(__file__)
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data",type=str,default="/Users/ermal/workspace/NERSC/NERSC_chatbot/letMeNERSCthatForYou")
     parser.add_argument("--docs", default="/docs", type=str, help="where the documentation from NERSC is stored")
     parser.add_argument("--build_database", default=False, type=bool, help="whether to build database from docs")
     parser.add_argument("--use_test_questions", default=False, type=bool, help="whether to use test questions")
@@ -17,9 +16,8 @@ def parse_args():
 
 def main():
     args= parse_args()
-    data_folder = args.data
     docs_folder = args.docs
-    database_path_prefix = data_folder + args.database
+    database_path_prefix = absolute_path + args.database
     rebuild_database = args.build_database
     use_test_questions = args.use_test_questions
     llm = lmntfy.models.llm.GPT35()
