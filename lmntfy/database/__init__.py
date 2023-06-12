@@ -84,8 +84,9 @@ class Database:
         # add new files
         current_files = list(os.walk(self.documentation_folder))
         for root, dirs, files in tqdm(current_files, disable=not verbose, desc="Loading new files"):
+            root = Path(root)
             for file in files:
-                file_path = os.path.join(root, file)
+                file_path = root / file
                 if not file_path in self.files:
                     # slice file into chunks
                     chunks = chunk_file(file_path, self.token_counter, self.max_tokens_per_chunk)
@@ -117,7 +118,7 @@ class Database:
             # load the files info
             with open(self.database_folder / 'files.json', 'r') as f:
                 files_dict = json.load(f)
-                self.files = {k: File.from_dict(v) for k, v in files_dict.items()}
+                self.files = {Path(k): File.from_dict(v) for k, v in files_dict.items()}
             # load the chunks
             with open(self.database_folder / 'chunks.json', 'r') as f:
                 chunks_dict = json.load(f)
@@ -135,7 +136,7 @@ class Database:
         self.vector_database.save(self.database_folder / f"vector_database.{self.vector_database.name}")
         # saves the files info
         with open(self.database_folder / 'files.json', 'w') as f:
-            files_dict = {k: v.to_dict() for k, v in self.files.items()}
+            files_dict = {str(k): v.to_dict() for k, v in self.files.items()}
             json.dump(files_dict, f)
         # saves the chunks
         with open(self.database_folder / 'chunks.json', 'w') as f:

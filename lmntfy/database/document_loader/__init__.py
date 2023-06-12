@@ -25,14 +25,14 @@ class Chunk:
 #----------------------------------------------------------------------------------------
 # LOADER
 
-def chunk_file(file_path, token_counter, max_tokens_per_chunk, verbose=False):
+def chunk_file(file_path:Path, token_counter, max_tokens_per_chunk, verbose=False):
     """Adds a markdown document to the Splitter, splitting it until it fits."""
     chunks = list()
     try:
         with open(file_path, 'r', encoding='utf8') as file:
             text = file.read()
             # split the file into chunks
-            if file_path.endswith('.md'): 
+            if file_path.suffix == '.md': 
                 raw_chunks = markdown_splitter(text, token_counter, max_tokens_per_chunk)
             else:
                 raw_chunks = text_splitter(text, token_counter, max_tokens_per_chunk)
