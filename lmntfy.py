@@ -6,6 +6,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--docs_folder", default="./data/docs", type=Path, help="path to the NERSC documentation folder")
     parser.add_argument("--database_folder", default="./data/database", type=Path, help="path to the database saving folder") 
+    parser.add_argument("--logs_folder", default=None, type=Path, help="path to the log saving folder") 
     parser.add_argument("--update_database", default=True, type=bool, help="whether to update database to the current documentation")
     parser.add_argument("--use_test_questions", default=True, type=bool, help="whether to run on the test questions (for debugging purposes)")
     args = parser.parse_args()
@@ -16,6 +17,7 @@ def main():
     args= parse_args()
     docs_folder = args.docs_folder
     database_folder = args.database_folder
+    logs_folder = args.logs_folder
     update_database = args.update_database
     use_test_questions = args.use_test_questions
 
@@ -27,7 +29,7 @@ def main():
 
     # answers questions
     print("Answering questions")
-    question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
+    question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)
     if use_test_questions:
         test_questions = ["What is NERSC?", "How can I connect to Perlmutter?", "Where do I find gcc?", "How do I kill all of my jobs?", "How can I run a job on GPU?"]
         for question in test_questions:

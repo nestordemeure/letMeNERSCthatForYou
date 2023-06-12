@@ -30,8 +30,6 @@ Q&A:
 - improve source answer setup
   - simplify number promtp to ask number in just `[number]` format?
   - ask in prompt for them to be put at the end of the message?
-- harden model against error (input size, model failure, etc: if retying is not enough then we should return an error message to the user)
-  - log any error?
 
 Model:
 - have a Vicuna-based setup
