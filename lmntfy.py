@@ -26,17 +26,19 @@ def main():
     llm = lmntfy.models.llm.GPT35()
     embedder = lmntfy.models.embedding.SBERTEmbedding()
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=update_database)
+    question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)
 
     # answers questions
     print("Answering questions")
-    question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)
     if use_test_questions:
+        # run on a handful of test question for quick evaluation purposes
         test_questions = ["What is NERSC?", "How can I connect to Perlmutter?", "Where do I find gcc?", "How do I kill all of my jobs?", "How can I run a job on GPU?"]
         for question in test_questions:
             print(f"\n> {question}\n")
             answer = question_answerer.get_answer(question, verbose=False)
             print(f"\n{answer}\n")
     else:
+        # chat with the model
         messages = []
         while True:
             question = input("\n> ")
