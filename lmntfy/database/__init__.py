@@ -121,12 +121,10 @@ class Database(ABC):
         """returns True if the database already exists on disk"""
         files_file = self.database_folder / 'files.json'
         chunks_file = self.database_folder / 'chunks.json'
-        return self.database_folder.exists() and self.vector_database.exists(self.database_folder) and files_file.exists() and chunks_file.exists()
+        return self.database_folder.exists() and files_file.exists() and chunks_file.exists()
 
     def load(self, update_database=True, verbose=False):
         if self.exists():
-            # load the vector database
-            self.vector_database.load(self.database_folder)
             # load the files info
             with open(self.database_folder / 'files.json', 'r') as f:
                 files_dict = json.load(f)
@@ -144,8 +142,6 @@ class Database(ABC):
     def save(self):
         # insures that the saving folder exists
         self.database_folder.mkdir(parents=True, exist_ok=True)
-        # saves the vector database
-        self.vector_database.save(self.database_folder)
         # saves the files info
         with open(self.database_folder / 'files.json', 'w') as f:
             files_dict = {str(k): v.to_dict() for k, v in self.files.items()}

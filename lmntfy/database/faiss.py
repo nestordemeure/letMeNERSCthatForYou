@@ -11,12 +11,13 @@ class FaissDatabase(Database):
     def __init__(self, llm: LanguageModel, embedder: Embedding,
                  documentation_folder: Path, database_folder: Path,
                  min_chunks_per_query=3, update_database=True, name='faiss'):
-        super().__init__(llm, embedder, documentation_folder, database_folder, min_chunks_per_query, update_database, name)
         # vector database that will be used to store the vectors
-        raw_index = faiss.IndexFlatIP(self.embedding_length)
+        raw_index = faiss.IndexFlatIP(embedder.embedding_length)
         # index on top of the database to support addition and deletion by id
         self.index = faiss.IndexIDMap(raw_index)
         self.current_id = 0
+        # conclude the initialisation
+        super().__init__(llm, embedder, documentation_folder, database_folder, min_chunks_per_query, update_database, name)
 
     def _index_add(self, embedding: np.ndarray) -> int:
         assert (embedding.size == self.embedding_length), "Invalid shape for embedding"
