@@ -71,37 +71,49 @@ class Database:
         # Return the corresponding chunks
         return [self.chunks[i] for i in indices]
 
+    def remove_file(self, file_path):
+        """Removes a file's content from the Database"""
+        file = self.files[file_path]
+        indices_to_remove = file.vector_database_indices
+        # remove file chunks from chunks
+        for index in indices_to_remove:
+            del self.chunks[index]
+        # remove embeddings from vector database
+        self.vector_database.remove_several(indices_to_remove)
+        # remove file from files
+        del self.files[file_path]
+
+    def add_file(self, file_path):
+        """Add a file's content to the database"""
+        # slice file into chunks
+        chunks = chunk_file(file_path, self.token_counter, self.max_tokens_per_chunk)
+        # save chunks to memory
+        file_update_date = datetime.fromtimestamp(file_path.stat().st_mtime)
+        file = File(creation_date=file_update_date)
+        for chunk in chunks:
+            # embed chunk
+            embedding = np.array([self.embedder.embed(chunk.content)], dtype='float32')
+            # put chunks into the database
+            chunk_index = self.vector_database.add(embedding)
+            # save information on chunk
+            file.add_index(chunk_index)
+            self.chunks[chunk_index] = chunk
+        self.files[file_path] = file
+
     def update(self, verbose=False):
         """Goes over the documentation and insures that we are up to date then saves the result."""
         # removes files that do not exist anymore or are out of date
-        indices_to_remove = []
         existing_files = list(self.files.items())
         for file_path, file in tqdm(existing_files, disable=not verbose, desc="Removing old files"):
-            if not file_path.exists() or datetime.fromtimestamp(file_path.stat().st_mtime) > file.creation_date:
-                indices_to_remove.extend(file.vector_database_indices)
-                del self.files[file_path]
-        self.vector_database.remove_several(indices_to_remove)
-        for i in indices_to_remove:
-            del self.chunks[i]
+            if (not file_path.exists()) or (datetime.fromtimestamp(file_path.stat().st_mtime) > file.creation_date):
+                self.remove_file(file_path)
         # add new files
         current_files = [Path(root) / file for root, dirs, files in os.walk(self.documentation_folder) for file in files]
         if len(current_files) == 0:
             raise RuntimeError(f"ERROR: the documentation folder '{self.documentation_folder}' is empty or does not exist.")
         for file_path in tqdm(current_files, disable=not verbose, desc="Loading new files"):
             if not file_path in self.files:
-                # slice file into chunks
-                chunks = chunk_file(file_path, self.token_counter, self.max_tokens_per_chunk)
-                # save chunks to memory
-                file = File(creation_date=datetime.fromtimestamp(file_path.stat().st_mtime))
-                for chunk in chunks:
-                    # embed chunk
-                    embedding = np.array([self.embedder.embed(chunk.content)], dtype='float32')
-                    # put chunks into the database
-                    chunk_index = self.vector_database.add(embedding)
-                    # save information on chunk
-                    file.add_index(chunk_index)
-                    self.chunks[chunk_index] = chunk
-                self.files[file_path] = file
+                self.add_file(file_path)
         # save resulting database
         self.save()
 

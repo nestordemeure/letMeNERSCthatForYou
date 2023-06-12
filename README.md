@@ -45,4 +45,3 @@ UI:
   - turn the code into an API?
 
 merge two database abstractions
-introduce add_file / remove_file functions
