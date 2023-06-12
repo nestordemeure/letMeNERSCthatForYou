@@ -50,20 +50,9 @@ class QuestionAnswerer:
 
     def log_error(self, input_data, error: BaseException):
         """Saves the input data and error message to a JSON log file in self.logs_folder, if it's not None."""
-        if self.logs_folder is None:
-            return
-
-        error_message = str(error)
-        stacktrace = traceback.format_exc()
-        log_entry = {
-            'input': input_data,
-            'error_message': error_message,
-            'stacktrace': stacktrace,
-        }
-
+        if self.logs_folder is None: return
         current_time = datetime.now()
-        log_file = self.logs_folder / f"{current_time.strftime('%Y-%m-%d_%H-%M-%S')}_error_log.json"
-
-        # Write to file
-        with open(log_file, 'w') as f:
+        log_file_path = self.logs_folder / f"{current_time.strftime('%Y-%m-%d_%H-%M-%S')}_error_log.json"
+        with open(log_file_path, 'w') as f:
+            log_entry = {'input': input_data, 'error_message': str(error), 'stacktrace': traceback.format_exc()}
             json.dump(log_entry, f, indent=2)
