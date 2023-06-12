@@ -29,6 +29,11 @@ class VectorDatabase(ABC):
         pass
 
     @abstractmethod
+    def exists(self, database_folder:Path):
+        """returns True if the database already exists on disk"""
+        pass
+
+    @abstractmethod
     def save(self, file_path:Path):
         """
         Abstract method for saving the database to a file.

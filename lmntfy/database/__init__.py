@@ -80,6 +80,7 @@ class Database:
             if not file_path.exists() or datetime.fromtimestamp(file_path.stat().st_mtime) > file.creation_date:
                 indices_to_remove.extend(file.vector_database_indices)
                 del self.files[file_path]
+        print(f"removing {len(indices_to_remove)} indices")
         self.vector_database.remove_several(indices_to_remove)
         # add new files
         current_files = list(os.walk(self.documentation_folder))
@@ -106,15 +107,14 @@ class Database:
 
     def exists(self):
         """returns True if the database already exists on disk"""
-        database_file = self.database_folder / f"vector_database.{self.vector_database.name}"
         files_file = self.database_folder / 'files.json'
         chunks_file = self.database_folder / 'chunks.json'
-        return self.database_folder.exists() and database_file.exists() and files_file.exists() and chunks_file.exists()
+        return self.database_folder.exists() and self.vector_database.exists(self.database_folder) and files_file.exists() and chunks_file.exists()
 
     def load(self, update_database=True, verbose=False):
         if self.exists():
             # load the vector database
-            self.vector_database.load(self.database_folder / f"vector_database.{self.vector_database.name}")
+            self.vector_database.load(self.database_folder)
             # load the files info
             with open(self.database_folder / 'files.json', 'r') as f:
                 files_dict = json.load(f)
@@ -133,7 +133,7 @@ class Database:
         # insures that the saving folder exists
         self.database_folder.mkdir(parents=True, exist_ok=True)
         # saves the vector database
-        self.vector_database.save(self.database_folder / f"vector_database.{self.vector_database.name}")
+        self.vector_database.save(self.database_folder)
         # saves the files info
         with open(self.database_folder / 'files.json', 'w') as f:
             files_dict = {str(k): v.to_dict() for k, v in self.files.items()}
