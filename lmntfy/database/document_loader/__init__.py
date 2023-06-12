@@ -1,29 +1,7 @@
 from pathlib import Path
 from .text_spliter import text_splitter
 from .markdown_spliter import markdown_splitter
-
-#----------------------------------------------------------------------------------------
-# CHUNK
-
-class Chunk:
-    def __init__(self, source=None, content=None):
-        self.source = Path(source) if source else None
-        self.content = content
-
-    def to_dict(self):
-        return {
-            'source': str(self.source),
-            'content': self.content
-        }
-
-    @staticmethod
-    def from_dict(data):
-        source = Path(data['source'])
-        content = data['content']
-        return Chunk(source, content)
-
-#----------------------------------------------------------------------------------------
-# LOADER
+from .chunk import Chunk
 
 def chunk_file(file_path:Path, token_counter, max_tokens_per_chunk, verbose=False):
     """Adds a markdown document to the Splitter, splitting it until it fits."""

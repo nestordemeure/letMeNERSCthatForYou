@@ -3,7 +3,7 @@ import json
 import tiktoken
 import openai
 from . import LanguageModel
-from ...database import Chunk
+from ...database.document_loader import Chunk
 from .. import retry
 
 #----------------------------------------------------------------------------------------
