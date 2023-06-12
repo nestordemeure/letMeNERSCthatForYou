@@ -44,7 +44,7 @@ class QuestionAnswerer:
             if self.logs_folder is None:
                 raise
             # returns the error message instead of the model's answer
-            self.log_error(question, e)
+            self.log_error(messages, e)
             answer = f"ERROR: {str(e)}"
         return {'role':'assistant', 'content': answer}
 
