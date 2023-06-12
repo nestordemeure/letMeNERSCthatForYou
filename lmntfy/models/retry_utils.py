@@ -2,6 +2,7 @@ import time
 from functools import wraps
 
 def retry(n):
+    """This decorator can be put on top of a function to let it automatically retry n times on failures"""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):

@@ -1,7 +1,6 @@
 import os
 from sentence_transformers import SentenceTransformer
 from . import Embedding
-from .. import retry
 
 # needed to avoid a deadlock when processing sentences
 os.environ["TOKENIZERS_PARALLELISM"]="False"
@@ -16,7 +15,6 @@ class SBERTEmbedding(Embedding):
         super().__init__(name, embedding_length, tokenizer, max_input_tokens, normalized)
         self.model = SentenceTransformer(name)
 
-    @retry(n=5)
     def _embed(self, text):
         """
         OpenAI specific embedding computation.

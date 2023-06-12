@@ -35,8 +35,4 @@ class LanguageModel(ABC):
         """
         pass
 
-    def is_input_too_long(self, input_string):
-        """Returns True if a prompt is too long for the model"""
-        return self.token_counter(input_string) >= self.context_size
-
 from .chatgpt import GPT35
