@@ -2,9 +2,8 @@ import re
 import json
 import tiktoken
 import openai
-from copy import copy
 from . import LanguageModel
-from ...database.document_loader import Chunk
+from ...database import Chunk
 from .. import retry
 
 #----------------------------------------------------------------------------------------

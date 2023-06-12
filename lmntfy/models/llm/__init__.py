@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict
-from ...database.document_loader import Chunk
+from ...database import Chunk
 
 class LanguageModel(ABC):
     def __init__(self, model_name:str, context_size:int):

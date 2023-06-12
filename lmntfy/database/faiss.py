@@ -4,8 +4,7 @@ import numpy as np
 from pathlib import Path
 from typing import List
 from . import Database
-from ..models.llm import LanguageModel
-from ..models.embedding import Embedding
+from ..models import LanguageModel, Embedding
 
 class FaissDatabase(Database):
     def __init__(self, llm: LanguageModel, embedder: Embedding,

@@ -6,8 +6,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import List, Dict
 from abc import ABC, abstractmethod
-from ..models.embedding import Embedding
-from ..models.llm import LanguageModel
+from ..models import LanguageModel, Embedding
 from .document_loader import Chunk, chunk_file
 from .file import File
 

@@ -1,5 +1,4 @@
-from .models.llm import LanguageModel
-from .models.embedding import Embedding
+from .models import LanguageModel, Embedding
 from .database import Database
 
 class QuestionAnswerer:
