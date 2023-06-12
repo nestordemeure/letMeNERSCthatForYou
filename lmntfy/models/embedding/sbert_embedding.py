@@ -25,5 +25,5 @@ class SBERTEmbedding(Embedding):
         """
         Counts the number of tokens used to represent the given text
         """
-        encoded_text = self.model.tokenize([text])[0]
+        encoded_text = self.model.tokenize([text])
         return len(encoded_text)

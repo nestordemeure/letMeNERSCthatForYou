@@ -11,7 +11,7 @@ class OpenAIEmbedding(Embedding):
                  max_input_tokens=8191,
                  normalized=True):
         super().__init__(name, embedding_length, max_input_tokens, normalized)
-        self.tokenizer = tiktoken.get_encoding('cl100k_base'),
+        self.tokenizer = tiktoken.get_encoding('cl100k_base')
 
     @retry(n=5)
     def _embed(self, text):

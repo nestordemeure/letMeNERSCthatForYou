@@ -1,6 +1,8 @@
 import math
+from .token_count_pair import TokenCountPair
+from typing import Callable, List
 
-def text_splitter(text: str, token_counter, max_tokens):
+def text_splitter(text: str, token_counter:Callable[[str],TokenCountPair], max_tokens:TokenCountPair) -> List[str]:
     """
     takes a text as a string
     a function that can count the number of tokens in a string
@@ -18,7 +20,7 @@ def text_splitter(text: str, token_counter, max_tokens):
     # process line by line
     chunks = []
     current_chunk = []
-    current_chunk_size = 0
+    current_chunk_size = TokenCountPair(0,0)
     for line in lines:
         line_size = token_counter(line)
         new_chunk_size = current_chunk_size + line_size
@@ -31,7 +33,7 @@ def text_splitter(text: str, token_counter, max_tokens):
                 chunks.append(current_chunk_text)
             index_one_third = int(math.ceil(len(current_chunk) / 3))
             current_chunk = current_chunk[index_one_third:] if (index_one_third < len(current_chunk)) else []
-            current_chunk_size = sum(token_counter(line) for line in current_chunk)
+            current_chunk_size = sum((token_counter(line) for line in current_chunk), TokenCountPair(0,0))
     # add leftover lines
     if len(current_chunk) > 0: 
         current_chunk_text = '\n'.join(current_chunk)

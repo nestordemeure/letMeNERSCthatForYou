@@ -2,8 +2,10 @@ from pathlib import Path
 from .text_spliter import text_splitter
 from .markdown_spliter import markdown_splitter
 from .chunk import Chunk
+from .token_count_pair import TokenCountPair
+from typing import Callable, List
 
-def chunk_file(file_path:Path, token_counter, max_tokens_per_chunk, verbose=False):
+def chunk_file(file_path:Path, token_counter:Callable[[str],TokenCountPair], max_tokens_per_chunk: TokenCountPair, verbose=False) -> List[Chunk]:
     """Adds a markdown document to the Splitter, splitting it until it fits."""
     chunks = list()
     try:

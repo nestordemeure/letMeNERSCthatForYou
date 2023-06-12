@@ -20,7 +20,12 @@ class FaissDatabase(Database):
 
     def _index_add(self, embedding: np.ndarray) -> int:
         assert (embedding.size == self.embedding_length), "Invalid shape for embedding"
-        self.index.add_with_ids(embedding, np.array([self.current_id], dtype=np.int64))
+        # create a single element batch with the embeddings and indices
+        embedding_batch = embedding.reshape((1,-1))
+        id_batch = np.array([self.current_id], dtype=np.int64)
+        # adds them to the vector database
+        self.index.add_with_ids(embedding_batch, id_batch)
+        # update our global index
         self.current_id += 1
         return self.current_id - 1  # Return the ID of the added vector
 
@@ -29,7 +34,8 @@ class FaissDatabase(Database):
 
     def _index_get_closest(self, input_embedding: np.ndarray, k=3) -> List[int]:
         assert (input_embedding.size == self.embedding_length), "Invalid shape for input_embedding"
-        _, indices = self.index.search(input_embedding, k)
+        input_embedding_batch = input_embedding.reshape((1,-1))
+        _, indices = self.index.search(input_embedding_batch, k)
         return indices.flatten().tolist()
 
     def exists(self) -> bool:

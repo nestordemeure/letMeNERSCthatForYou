@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from ..models import LanguageModel, Embedding
 from .document_loader import Chunk, chunk_file
 from .file import File
+from .document_loader.token_count_pair import TokenCountPair
 
 class Database(ABC):
     def __init__(self, llm:LanguageModel, embedder:Embedding,
@@ -19,9 +20,10 @@ class Database(ABC):
         self.embedding_length = embedder.embedding_length
         # maximum size of each chunk
         # we leave space for two additional chunks, representing the prompt and the model's answer
-        self.max_tokens_per_chunk = llm.context_size / (min_chunks_per_query + 2)
+        llm_max_tokens = llm.context_size / (min_chunks_per_query + 2)
+        self.max_tokens_per_chunk = TokenCountPair(llm_max_tokens, embedder.max_input_tokens)
         # the token counting function
-        self.token_counter = llm.token_counter
+        self.token_counter = TokenCountPair.build_pair_counter(llm.token_counter, embedder.token_counter)
         # dictionary of all files
         # file_path -> File
         self.files: Dict[Path, File] = dict()
