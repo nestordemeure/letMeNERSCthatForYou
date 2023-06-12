@@ -5,47 +5,19 @@ from tqdm import tqdm
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict
-from .vector_database import VectorDatabase, FaissVectorDatabase
+from abc import ABC, abstractmethod
 from ..models.embedding import Embedding
 from ..models.llm import LanguageModel
 from .document_loader import Chunk, chunk_file
+from .file import File
 
-
-#------------------------------------------------------------------------------
-# FILE
-
-class File:
-    def __init__(self, creation_date, vector_database_indices=None):
-        # when was the file last modified
-        self.creation_date = creation_date
-        # list of all database indices
-        self.vector_database_indices = vector_database_indices or list()
-
-    def add_index(self, vector_database_index):
-        self.vector_database_indices.append(vector_database_index)
-
-    def to_dict(self):
-        return {
-            'creation_date': self.creation_date.isoformat(),
-            'vector_database_indices': self.vector_database_indices
-        }
-
-    @staticmethod
-    def from_dict(data):
-        creation_date = datetime.fromisoformat(data['creation_date'])
-        vector_database_indices = data['vector_database_indices']
-        return File(creation_date, vector_database_indices)
-
-#------------------------------------------------------------------------------
-# DATABASE
-
-class Database:
+class Database(ABC):
     def __init__(self, llm:LanguageModel, embedder:Embedding,
                        documentation_folder:Path, database_folder:Path, 
-                       vector_database_class=FaissVectorDatabase, 
-                       min_chunks_per_query=3, update_database=True):
+                       min_chunks_per_query=3, update_database=True, name=None):
+        self.name = name
         self.embedder = embedder
-        self.vector_database = vector_database_class(embedder.embedding_length)
+        self.embedding_length = embedder.embedding_length
         # maximum size of each chunk
         # we leave space for two additional chunks, representing the prompt and the model's answer
         self.max_tokens_per_chunk = llm.context_size / (min_chunks_per_query + 2)
@@ -62,14 +34,40 @@ class Database:
         self.database_folder = database_folder
         self.load(update_database=update_database, verbose=True)
     
+    # ----- VECTOR DATABASE OPERATIONS -----
+
+    @abstractmethod
+    def _index_add(self, embedding: np.ndarray) -> int:
+        """
+        Abstract method for adding a new vector to the vector database
+        returns its index
+        """
+        pass
+
+    @abstractmethod
+    def _index_remove_several(self, indices: List[int]):
+        """
+        Abstract method for removing vectors from the vector database
+        """
+        pass
+
+    @abstractmethod
+    def _index_get_closest(self, input_embedding: np.ndarray, k=3) -> List[int]:
+        """
+        Abstract method, returns the indices of the k closest embeddings in the vector database
+        """
+        pass
+
     def get_closest_chunks(self, input_text: str, k: int = 3) -> List[Chunk]:
         if len(self.chunks) <= k: return list(self.chunks.values())
         # Generate input text embedding
         input_embedding = np.array([self.embedder.embed(input_text)], dtype='float32')
         # Query the vector databse
-        indices = self.vector_database.get_closest(input_embedding, k)
+        indices = self._index_get_closest(input_embedding, k)
         # Return the corresponding chunks
         return [self.chunks[i] for i in indices]
+
+    # ----- FILE OPERATIONS -----
 
     def remove_file(self, file_path):
         """Removes a file's content from the Database"""
@@ -79,7 +77,7 @@ class Database:
         for index in indices_to_remove:
             del self.chunks[index]
         # remove embeddings from vector database
-        self.vector_database.remove_several(indices_to_remove)
+        self._index_remove_several(indices_to_remove)
         # remove file from files
         del self.files[file_path]
 
@@ -87,17 +85,19 @@ class Database:
         """Add a file's content to the database"""
         # slice file into chunks
         chunks = chunk_file(file_path, self.token_counter, self.max_tokens_per_chunk)
-        # save chunks to memory
+        # save chunks in the databse
         file_update_date = datetime.fromtimestamp(file_path.stat().st_mtime)
         file = File(creation_date=file_update_date)
         for chunk in chunks:
-            # embed chunk
+            # compute the embedding of the chunk
             embedding = np.array([self.embedder.embed(chunk.content)], dtype='float32')
-            # put chunks into the database
-            chunk_index = self.vector_database.add(embedding)
-            # save information on chunk
+            # add embedding to the vector database
+            chunk_index = self._index_add(embedding)
+            # add chunk to file
             file.add_index(chunk_index)
+            # add chunk to chunks
             self.chunks[chunk_index] = chunk
+        # add file to files
         self.files[file_path] = file
 
     def update(self, verbose=False):
@@ -154,3 +154,5 @@ class Database:
         with open(self.database_folder / 'chunks.json', 'w') as f:
             chunks_dict = {k: v.to_dict() for k, v in self.chunks.items()}
             json.dump(chunks_dict, f)
+
+from .faiss import FaissDatabase

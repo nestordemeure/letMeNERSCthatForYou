@@ -23,7 +23,7 @@ def main():
     print("Loading the database and models.")
     llm = lmntfy.models.llm.GPT35()
     embedder = lmntfy.models.embedding.SBERTEmbedding()
-    database = lmntfy.database.Database(llm, embedder, docs_folder, database_folder, update_database=update_database)
+    database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=update_database)
 
     # answers questions
     print("Answering questions")

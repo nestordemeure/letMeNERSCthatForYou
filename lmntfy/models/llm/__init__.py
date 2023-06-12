@@ -8,28 +8,28 @@ class LanguageModel(ABC):
         self.context_size = context_size
 
     @abstractmethod
-    def token_counter(self, input_string:str):
+    def token_counter(self, input_string:str) -> int:
         """
         Abstract method for counting tokens in an input string.
         """
         pass
 
     @abstractmethod
-    def query(self, input_string:str, verbose=False):
+    def query(self, input_string:str, verbose=False) -> str:
         """
         Abstract method for querying the model and getting a response.
         """
         pass
 
     @abstractmethod
-    def get_answer(self, question:str, chunks:List[Chunk], verbose=False):
+    def get_answer(self, question:str, chunks:List[Chunk], verbose=False) -> str:
         """
         Abstract method to get an answer given a question and some chunks passed for context.
         """
         pass
 
     @abstractmethod
-    def extract_question(self, messages:List[Dict], verbose=False):
+    def extract_question(self, messages:List[Dict], verbose=False) -> str:
         """
         Abstract method to extract the latest question given a list of messages.
         Message are expectted to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.

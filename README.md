@@ -43,5 +43,3 @@ UI:
 - put the command line UI into its own file
 - web UI
   - turn the code into an API?
-
-merge two database abstractions
