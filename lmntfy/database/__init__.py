@@ -80,30 +80,26 @@ class Database:
             if not file_path.exists() or datetime.fromtimestamp(file_path.stat().st_mtime) > file.creation_date:
                 indices_to_remove.extend(file.vector_database_indices)
                 del self.files[file_path]
-        print(f"removing {len(indices_to_remove)} indices out of {self.vector_database.current_id}")
         self.vector_database.remove_several(indices_to_remove)
         for i in indices_to_remove:
             del self.chunks[i]
         # add new files
-        current_files = list(os.walk(self.documentation_folder))
-        for root, dirs, files in tqdm(current_files, disable=not verbose, desc="Loading new files"):
-            root = Path(root)
-            for file in files:
-                file_path = root / file
-                if not file_path in self.files:
-                    # slice file into chunks
-                    chunks = chunk_file(file_path, self.token_counter, self.max_tokens_per_chunk)
-                    # save chunks to memory
-                    file = File()
-                    for chunk in chunks:
-                        # embed chunk
-                        embedding = np.array([self.embedder.embed(chunk.content)], dtype='float32')
-                        # put chunks into the database
-                        chunk_index = self.vector_database.add(embedding)
-                        # save information on chunk
-                        file.add_index(chunk_index)
-                        self.chunks[chunk_index] = chunk
-                    self.files[file_path] = file
+        current_files = [Path(root) / file for root, dirs, files in os.walk(self.documentation_folder) for file in files]
+        for file_path in tqdm(current_files, disable=not verbose, desc="Loading new files"):
+            if not file_path in self.files:
+                # slice file into chunks
+                chunks = chunk_file(file_path, self.token_counter, self.max_tokens_per_chunk)
+                # save chunks to memory
+                file = File()
+                for chunk in chunks:
+                    # embed chunk
+                    embedding = np.array([self.embedder.embed(chunk.content)], dtype='float32')
+                    # put chunks into the database
+                    chunk_index = self.vector_database.add(embedding)
+                    # save information on chunk
+                    file.add_index(chunk_index)
+                    self.chunks[chunk_index] = chunk
+                self.files[file_path] = file
         # save resulting database
         self.save()
 
@@ -124,7 +120,7 @@ class Database:
             # load the chunks
             with open(self.database_folder / 'chunks.json', 'r') as f:
                 chunks_dict = json.load(f)
-                self.chunks = {k: Chunk.from_dict(v) for k, v in chunks_dict.items()}
+                self.chunks = {int(k): Chunk.from_dict(v) for k, v in chunks_dict.items()}
         elif verbose:
             print(f"Warning: '{self.database_folder}' or its content does not currently exist. The database will be created from scratch.")
         # updates the database to the latest documentation
