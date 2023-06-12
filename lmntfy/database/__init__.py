@@ -80,8 +80,10 @@ class Database:
             if not file_path.exists() or datetime.fromtimestamp(file_path.stat().st_mtime) > file.creation_date:
                 indices_to_remove.extend(file.vector_database_indices)
                 del self.files[file_path]
-        print(f"removing {len(indices_to_remove)} indices")
+        print(f"removing {len(indices_to_remove)} indices out of {self.vector_database.current_id}")
         self.vector_database.remove_several(indices_to_remove)
+        for i in indices_to_remove:
+            del self.chunks[i]
         # add new files
         current_files = list(os.walk(self.documentation_folder))
         for root, dirs, files in tqdm(current_files, disable=not verbose, desc="Loading new files"):
