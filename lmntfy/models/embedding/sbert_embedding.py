@@ -1,6 +1,10 @@
+import os
 from sentence_transformers import SentenceTransformer
 from . import Embedding
 from .. import retry
+
+# needed to avoid a deadlock when processing sentences
+os.environ["TOKENIZERS_PARALLELISM"]="False"
 
 class SBERTEmbedding(Embedding):
     def __init__(self, 

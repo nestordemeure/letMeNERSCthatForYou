@@ -15,7 +15,7 @@ This bot is not made to replace the documentation but rather to improve informat
 **TODO**
 - clone the repo
 - get an api key
-- get the dependency in your environement (openai, tiktoken, faiss-cpu)
+- get the dependency in your environement (openai, tiktoken, faiss-cpu, sentence_transformers)
 
 ## Usage
 
@@ -32,9 +32,6 @@ Q&A:
 
 Model:
 - have a Vicuna based alternative setup
-
-Embeddings:
-- get SBERT embeddings working as a viable alternative
 
 Database:
 - get a google search based retrieval set-up (nothing stored, instead we look up information online).

@@ -1,28 +1,29 @@
-import os
-os.environ["TOKENIZERS_PARALLELISM"]="False"
 import lmntfy
-import json
 import argparse
-absolute_path = os.path.dirname(__file__)
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--docs", default="/docs", type=str, help="where the documentation from NERSC is stored")
-    parser.add_argument("--build_database", default=False, type=bool, help="whether to build database from docs")
-    parser.add_argument("--use_test_questions", default=False, type=bool, help="whether to use test questions")
-    parser.add_argument("--database", default="/database", type=str, help="documentation databse path") 
+    parser.add_argument("--docs_path", default="./data/docs", type=str, help="path to the NERSC documentation folder")
+    parser.add_argument("--database_path", default="./data/database", type=str, help="path to load/save the database") 
+    parser.add_argument("--build_database", default=False, type=bool, help="whether to rebuild database from the documentation")
+    parser.add_argument("--use_test_questions", default=True, type=bool, help="whether to run on the test questions (for testing purpose)")
     args = parser.parse_args()
     return args
 
 def main():
+    # process command line arguments
     args= parse_args()
-    docs_folder = args.docs
-    database_path_prefix = absolute_path + args.database
+    docs_folder = args.docs_path
+    database_path_prefix = args.database_path
     rebuild_database = args.build_database
     use_test_questions = args.use_test_questions
+
+    # initializes models
     llm = lmntfy.models.llm.GPT35()
     embedder = lmntfy.models.embedding.SBERTEmbedding()
     database = lmntfy.database.FaissDatabase(embedder)
+
+    # initializes database
     if rebuild_database:
         print("Rebuilding the database.")
     
@@ -43,6 +44,7 @@ def main():
         database.load_from_file(database_path_prefix)
         print("Loaded database from file.")
 
+    # answers questions
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
     if use_test_questions:
         test_questions = ["What is NERSC?", "How can I connect to Perlmutter?", "Where do I find gcc?", "How do I kill all of my jobs?", "How can I run a job on GPU?"]
