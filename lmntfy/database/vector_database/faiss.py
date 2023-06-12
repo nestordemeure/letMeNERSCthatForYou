@@ -49,4 +49,4 @@ class FaissVectorDatabase(VectorDatabase):
         # load the database_data
         with open(database_folder / 'faiss_vector_database.json', 'r') as f:
             database_data = json.load(f)
-            self.current_id = database_data['current_id']
+            self.current_id = int(database_data['current_id'])

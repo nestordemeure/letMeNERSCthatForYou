@@ -15,9 +15,9 @@ from .document_loader import Chunk, chunk_file
 # FILE
 
 class File:
-    def __init__(self, creation_date=None, vector_database_indices=None):
+    def __init__(self, creation_date, vector_database_indices=None):
         # when was the file last modified
-        self.creation_date = creation_date or datetime.now()
+        self.creation_date = creation_date
         # list of all database indices
         self.vector_database_indices = vector_database_indices or list()
 
@@ -63,7 +63,7 @@ class Database:
         self.load(update_database=update_database, verbose=True)
     
     def get_closest_chunks(self, input_text: str, k: int = 3) -> List[Chunk]:
-        if len(self.chunks) <= k: return self.chunks.values()
+        if len(self.chunks) <= k: return list(self.chunks.values())
         # Generate input text embedding
         input_embedding = np.array([self.embedder.embed(input_text)], dtype='float32')
         # Query the vector databse
@@ -85,12 +85,14 @@ class Database:
             del self.chunks[i]
         # add new files
         current_files = [Path(root) / file for root, dirs, files in os.walk(self.documentation_folder) for file in files]
+        if len(current_files) == 0:
+            raise RuntimeError(f"ERROR: the documentation folder '{self.documentation_folder}' is empty or does not exist.")
         for file_path in tqdm(current_files, disable=not verbose, desc="Loading new files"):
             if not file_path in self.files:
                 # slice file into chunks
                 chunks = chunk_file(file_path, self.token_counter, self.max_tokens_per_chunk)
                 # save chunks to memory
-                file = File()
+                file = File(creation_date=datetime.fromtimestamp(file_path.stat().st_mtime))
                 for chunk in chunks:
                     # embed chunk
                     embedding = np.array([self.embedder.embed(chunk.content)], dtype='float32')

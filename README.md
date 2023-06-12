@@ -37,10 +37,12 @@ Model:
 - have a Vicuna-based setup
 
 Database:
-- merge Database and VectorDatabase classes
 - get a google search based retrieval set-up (nothing stored, instead we look up information online).
 
 UI:
 - put the command line UI into its own file
 - web UI
   - turn the code into an API?
+
+merge two database abstractions
+introduce add_file / remove_file functions
