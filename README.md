@@ -36,6 +36,7 @@ Model:
 
 Database:
 - get a google search based retrieval set-up (nothing stored, instead we look up information online).
+- take embedder max input size into account (run a pair of tokeniser / max sizes)
 
 UI:
 - put the command line UI into its own file

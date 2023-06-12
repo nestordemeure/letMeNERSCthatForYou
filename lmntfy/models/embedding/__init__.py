@@ -2,14 +2,13 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 class Embedding(ABC):
-    def __init__(self, name, embedding_length, tokenizer, max_input_tokens, normalized):
+    def __init__(self, name, embedding_length, max_input_tokens, normalized):
         self.name = name
         self.embedding_length = embedding_length
-        self.tokenizer = tokenizer
         self.max_input_tokens = max_input_tokens
         self.normalized = normalized
 
-    def embed(self, text):
+    def embed(self, text:str) -> np.ndarray:
         """
         Converts text into an embedding.
         """
@@ -29,9 +28,16 @@ class Embedding(ABC):
             return raw_embedding / norm
 
     @abstractmethod
-    def _embed(self, text):
+    def _embed(self, text:str) -> np.ndarray:
         """
         Abstract method for converting text into an embedding.
+        """
+        pass
+
+    @abstractmethod
+    def token_counter(self, text:str) -> int:
+        """
+        Counts the number of tokens used to represent the given text
         """
         pass
 

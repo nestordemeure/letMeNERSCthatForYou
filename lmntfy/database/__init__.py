@@ -60,7 +60,7 @@ class Database(ABC):
     def get_closest_chunks(self, input_text: str, k: int = 3) -> List[Chunk]:
         if len(self.chunks) <= k: return list(self.chunks.values())
         # Generate input text embedding
-        input_embedding = np.array([self.embedder.embed(input_text)], dtype='float32')
+        input_embedding = self.embedder.embed(input_text)
         # Query the vector databse
         indices = self._index_get_closest(input_embedding, k)
         # Return the corresponding chunks
@@ -89,7 +89,7 @@ class Database(ABC):
         file = File(creation_date=file_update_date)
         for chunk in chunks:
             # compute the embedding of the chunk
-            embedding = np.array([self.embedder.embed(chunk.content)], dtype='float32')
+            embedding = self.embedder.embed(chunk.content)
             # add embedding to the vector database
             chunk_index = self._index_add(embedding)
             # add chunk to file
