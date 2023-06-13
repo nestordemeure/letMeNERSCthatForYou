@@ -22,30 +22,21 @@ def main():
     use_test_questions = args.use_test_questions
 
     # initializes models
-    print("Loading the database and models.")
+    print("Loading the database and models...")
     llm = lmntfy.models.llm.GPT35()
     embedder = lmntfy.models.embedding.SBERTEmbedding()
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=update_database)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)
 
     # answers questions
-    print("Answering questions")
+    lmntfy.user_interface.command_line.display_logo()
     if use_test_questions:
         # run on a handful of test question for quick evaluation purposes
         test_questions = ["What is NERSC?", "How can I connect to Perlmutter?", "Where do I find gcc?", "How do I kill all of my jobs?", "How can I run a job on GPU?"]
-        for question in test_questions:
-            print(f"\n> {question}\n")
-            answer = question_answerer.get_answer(question, verbose=False)
-            print(f"\n{answer}\n")
+        lmntfy.user_interface.command_line.answer_questions(question_answerer, test_questions)
     else:
         # chat with the model
-        messages = []
-        while True:
-            question = input("\n> ")
-            messages.append({'role':'user', 'content': question})
-            answer_message = question_answerer.continue_chat(messages, verbose=False)
-            messages.append(answer_message)
-            print(f"\n{answer_message['content']}")
+        lmntfy.user_interface.command_line.chat(question_answerer)
  
 if __name__ == "__main__":
     main()
