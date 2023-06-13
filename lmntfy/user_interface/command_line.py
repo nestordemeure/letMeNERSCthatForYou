@@ -31,4 +31,3 @@ def chat(question_answerer:QuestionAnswerer) -> List[Dict]:
         answer_message = question_answerer.continue_chat(messages, verbose=False)
         messages.append(answer_message)
         print(f"\n{answer_message['content']}")
-    return messages

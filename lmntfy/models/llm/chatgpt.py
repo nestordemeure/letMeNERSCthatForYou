@@ -14,7 +14,7 @@ ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support 
 
 def format_chunk(chunk:Chunk, index):
     """takes  chunk and format it to include its index and source in the message"""
-    return f"URL {index}: {chunk.source}\n\n{chunk.content}"
+    return f"URL {index}: {chunk.url}\n\n{chunk.content}"
 
 def add_references(answer, chunks, verbose=False):
     # TODO we need to shift references inside the text
@@ -32,7 +32,7 @@ def add_references(answer, chunks, verbose=False):
     if len(references) > 0:
         answer += '\n'
         for reference in references:
-            source = chunks[reference-1].source
+            source = chunks[reference-1].url
             answer += f"\n[{reference}]: {source}"
     return answer
 

@@ -35,7 +35,11 @@ Model:
 - have a Vicuna-based setup
 
 Database:
+- turn sources into url on loading chunks? (exploiting the local knowledge of the documentation folder to remove prefixes)
 - get a google search based retrieval set-up (nothing stored, instead we look up information online).
 
 Web deployment:
 - turn the code into an API?
+
+Overall:
+- cleanup readme
