@@ -7,16 +7,6 @@ class Chunk:
         self.content = content
         self._url = None # used to memoize the url
 
-    def to_dict(self):
-        return {
-            'source': str(self.source),
-            'content': self.content
-        }
-
-    @staticmethod
-    def from_dict(data):
-        return Chunk(data['source'], data['content'])
-
     @property
     def url(self) -> str:
         """url to the source"""
@@ -33,3 +23,17 @@ class Chunk:
             url = quote(url, safe='/:')
             self._url = url
         return self._url
+
+    def __str__(self):
+        """turns a chunk into a string representation suitable for usage in a prompt"""
+        return f"URL: {self.url}\n\n{self.content}"
+
+    def to_dict(self):
+        return {
+            'source': str(self.source),
+            'content': self.content
+        }
+
+    @staticmethod
+    def from_dict(data):
+        return Chunk(data['source'], data['content'])

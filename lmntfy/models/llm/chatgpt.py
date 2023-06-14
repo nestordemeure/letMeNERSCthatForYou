@@ -1,50 +1,23 @@
-import re
 import json
 import tiktoken
 import openai
 from . import LanguageModel
-from ...database.document_loader import Chunk
 from .. import retry
 
 #----------------------------------------------------------------------------------------
 # PROMPTS
 
-# for a short answer: Generate a comprehensive and informative answer (but no more than 80 words)
+# prompt to answer a question
 ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support staff. \
 Generate a comprehensive and informative answer for a given question solely based on the provided web Search Results (URL and Extract). \
 You must only use information from the provided search results. \
 Use an unbiased and journalistic tone. \
 Combine search results together into a coherent answer. \
-Cite search results using [${number}] notation. \
 Only cite the most relevant results that answer the question accurately. \
-Try and be careful not to go off-topics."
+Try and be careful not to go off-topics. \
+End your answer with `References:` followed by a bullet list of the relevant urls."
 
-# TODO test prompt
-ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support staff. \
-Generate a comprehensive and informative answer for a given question solely based on the provided web Search Results (SOURCE and Extract). \
-You must only use information from the provided search results. \
-Use an unbiased and journalistic tone. \
-Combine search results together into a coherent answer. \
-whenever you use information from a given search result, cite its source using the [url{number}] notation. \
-Only cite the most relevant results that answer the question accurately. \
-Try and be careful not to go off-topics."
-
-def format_chunk(chunk:Chunk, index):
-    """takes  chunk and format it to include its index and source in the message"""
-    return f"SOURCE: url{index} ({chunk.url})\n\n{chunk.content}"
-
-def add_references(answer:str, chunks, url2index, verbose=False):
-    answer += '\n'
-    referenceindex = 0
-    for chunk in chunks:
-        url = chunk.url
-        reference = f"[url{url2index[url]}]"
-        if verbose or (reference in answer):
-            referenceindex +=1
-            answer = answer.replace(reference, f"[{referenceindex}]")
-            answer += f"\n[{referenceindex}]: {url}"
-    return answer.strip()
-
+# prompt to summarize a conversation into its latest question
 QUESTION_EXTRACTION_PROMPT_SYSTEM="You are a question extraction system. You will be provided the last messages of a conversation between a user of the NERSC supercomputing center and an assistant from its support, ending on a question by the user. Your task is to return the user's last question."
 QUESTION_EXTRACTION_PROMPT_USER="Return the user's last question, rephrasing it such that it can be understood without the rest of the conversation."
 
@@ -99,15 +72,9 @@ class GPT35(LanguageModel):
         """
         Method to get an answer given a question and some chunks passed for context.
         """
-        # number the urls
-        url2index = dict()
-        for chunk in chunks:
-            url = chunk.url
-            if not url in url2index:
-                url2index[url] = len(url2index)+1
         # builds the prompt
         system_message = {"role": "system", "content": ANSWERING_PROMPT}
-        context_messages = [{"role": "assistant", "content": format_chunk(chunk, url2index[chunk.url])} for chunk in chunks]
+        context_messages = [{"role": "assistant", "content": str(chunk)} for chunk in chunks]
         question_message = {"role": "user", "content": question}
         messages = [system_message] + context_messages + [question_message]
         # keep as many context messages as we can
@@ -122,7 +89,6 @@ class GPT35(LanguageModel):
         # runs the query
         answer = self.query(messages, verbose=verbose)
         # adds sources at the end of the query
-        #TODO return add_references(answer, chunks, url2index, verbose=verbose)
         return answer
         
     def extract_question(self, previous_messages, verbose=False):

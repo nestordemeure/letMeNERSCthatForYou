@@ -24,16 +24,12 @@ This bot is not made to replace the documentation but rather to improve informat
 
 ## TODO
 
-Q&A:
-- improve source answer setup
-  - simplify number promtp to ask number in just `[number]` format?
-  - ask in prompt for them to be put at the end of the message?
-
 Model:
 - have a Vicuna-based setup
 
 Database:
 - turn sources into url on loading chunks? (exploiting the local knowledge of the documentation folder to remove prefixes)
+- improve urls by including a `#` link to the proper heading
 - get a google search based retrieval set-up (nothing stored, instead we look up information online).
 
 Web deployment:
