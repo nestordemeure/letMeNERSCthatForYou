@@ -12,7 +12,6 @@ This bot is not made to replace the documentation but rather to improve informat
 
 ## Installation
 
-**TODO**
 - clone the repo
 - get an openai API key
 - get the dependency in your environement (openai, tiktoken, faiss-cpu, sentence_transformers)
@@ -20,7 +19,6 @@ This bot is not made to replace the documentation but rather to improve informat
 
 ## Usage
 
-**TODO:**
 - put the openai API key in environement
 - run lmntfy.py
 

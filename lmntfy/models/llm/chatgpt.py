@@ -10,7 +10,25 @@ from .. import retry
 # PROMPTS
 
 # for a short answer: Generate a comprehensive and informative answer (but no more than 80 words)
-ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support staff. Generate a comprehensive and informative answer for a given question solely based on the provided web Search Results (URL and Extract). You must only use information from the provided search results. Use an unbiased and journalistic tone. Combine search results together into a coherent answer. Cite search results using [${number}] notation. Only cite the most relevant results that answer the question accurately. Try and be careful not to go off-topics."
+ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support staff. \
+Generate a comprehensive and informative answer for a given question solely based on the provided web Search Results (URL and Extract). \
+You must only use information from the provided search results. \
+Use an unbiased and journalistic tone. \
+Combine search results together into a coherent answer. \
+Cite search results using [${number}] notation. \
+Only cite the most relevant results that answer the question accurately. \
+Try and be careful not to go off-topics."
+
+# TODO test prompt
+ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support staff. \
+Generate a comprehensive and informative answer for a given question solely based on the provided web Search Results (URL and Extract). \
+You must only use information from the provided search results. \
+Use an unbiased and journalistic tone. \
+Combine search results together into a coherent answer. \
+Cite search results using [number] notation. \
+End your message with a list of the search results cited in [number]:url notation. \
+Only cite the most relevant results that answer the question accurately. \
+Try and be careful not to go off-topics."
 
 def format_chunk(chunk:Chunk, index):
     """takes  chunk and format it to include its index and source in the message"""
@@ -107,7 +125,8 @@ class GPT35(LanguageModel):
         # runs the query
         answer = self.query(messages, verbose=verbose)
         # adds sources at the end of the query
-        return add_references(answer, chunks, verbose=verbose)
+        # TODO return add_references(answer, chunks, verbose=verbose)
+        return answer
         
     def extract_question(self, previous_messages, verbose=False):
         """
