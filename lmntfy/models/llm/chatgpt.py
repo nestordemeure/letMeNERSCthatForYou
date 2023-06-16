@@ -1,3 +1,4 @@
+import re
 import json
 import tiktoken
 import openai
@@ -15,10 +16,23 @@ Use an unbiased and journalistic tone. \
 Combine search results together into a coherent answer. \
 Only cite the most relevant results that answer the question accurately. \
 Try and be careful not to go off-topics. \
-End your answer with `References:` followed by a bullet list of the relevant urls."
+End your answer with \"References:\" followed by a bullet list of the relevant urls."
+
+# prompt to get references for an answer
+REFERENCE_PROMPT="Produce a bullet list of the urls you found useful to answer the question, \
+sorted from most relevant to least relevant. \
+Try to keep the bullet list short, keeping *only* the relevant urls (there are rarely more than three relevant urls)."
+
+def keep_references_only(input_str):
+    """keep only lines starting with a *, - or number followed by spaces then a url starting in https"""
+    pattern = re.compile(r'^(?:\*|-|\d+)\s+https:.*$', re.MULTILINE)
+    matches = pattern.findall(input_str)
+    return '\n'.join(matches)
 
 # prompt to summarize a conversation into its latest question
-QUESTION_EXTRACTION_PROMPT_SYSTEM="You are a question extraction system. You will be provided the last messages of a conversation between a user of the NERSC supercomputing center and an assistant from its support, ending on a question by the user. Your task is to return the user's last question."
+QUESTION_EXTRACTION_PROMPT_SYSTEM="You are a question extraction system. \
+You will be provided the last messages of a conversation between a user of the NERSC supercomputing center and an assistant from its support, ending on a question by the user. \
+Your task is to return the user's last question."
 QUESTION_EXTRACTION_PROMPT_USER="Return the user's last question, rephrasing it such that it can be understood without the rest of the conversation."
 
 #----------------------------------------------------------------------------------------
@@ -83,14 +97,37 @@ class GPT35(LanguageModel):
                 # reduce the context size by popping the latest context message
                 # (which is likely the least relevant)
                 messages.pop(-2)
+                chunks = chunks[:-1]
             else:
                 # no more space to reduce context size
                 raise ValueError("You query is too long for the model's context size.")
         # runs the query
         answer = self.query(messages, verbose=verbose)
         # adds sources at the end of the query
+        if not "References:" in answer:
+            answer = self.add_references(question, answer, chunks, verbose=verbose)
+        # returns
         return answer
         
+    def add_references(self, question, answer, chunks, verbose=False):
+        """
+        Adds references to an answer.
+        """
+        # builds the prompt
+        system_message = {"role": "system", "content": ANSWERING_PROMPT}
+        context_messages = [{"role": "assistant", "content": str(chunk)} for chunk in chunks]
+        question_message = {"role": "user", "content": question}
+        answer_message = {"role": "assistant", "content": answer}
+        reference_message = {"role": "user", "content": REFERENCE_PROMPT}
+        messages = [system_message] + context_messages + [question_message, answer_message, reference_message]
+        # runs the query
+        references = self.query(messages, verbose=verbose)
+        # remove any irrelevant line
+        references = keep_references_only(references)
+        # updates the answer
+        answer = f"{answer}\n\nReferences:\n{references}"
+        return answer
+
     def extract_question(self, previous_messages, verbose=False):
         """
         Extracts the latest question given a list of messages.
