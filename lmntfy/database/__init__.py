@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import List, Dict
 from abc import ABC, abstractmethod
 from ..models import LanguageModel, Embedding
-from .document_loader import Chunk, chunk_file
+from .document_loader import Chunk, path2url, chunk_file
 from .file import File
 from .document_loader.token_count_pair import TokenCountPair
 
@@ -84,8 +84,10 @@ class Database(ABC):
 
     def add_file(self, file_path):
         """Add a file's content to the database"""
+        # generates the url to the file
+        url = path2url(file_path, self.documentation_folder)
         # slice file into chunks
-        chunks = chunk_file(file_path, self.token_counter, self.max_tokens_per_chunk)
+        chunks = chunk_file(file_path, url, self.token_counter, self.max_tokens_per_chunk)
         # save chunks in the databse
         file_update_date = datetime.fromtimestamp(file_path.stat().st_mtime)
         file = File(creation_date=file_update_date)

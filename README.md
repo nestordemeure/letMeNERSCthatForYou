@@ -26,6 +26,7 @@ This bot is not made to replace the documentation but rather to improve informat
 
 Model:
 - have a Vicuna-based setup
+- use the message model to answer followup questions?
 
 Database:
 - turn sources into url on loading chunks? (exploiting the local knowledge of the documentation folder to remove prefixes)

@@ -1,11 +1,11 @@
 from pathlib import Path
 from .text_spliter import text_splitter
 from .markdown_spliter import markdown_splitter
-from .chunk import Chunk
+from .chunk import Chunk, path2url
 from .token_count_pair import TokenCountPair
 from typing import Callable, List
 
-def chunk_file(file_path:Path, token_counter:Callable[[str],TokenCountPair], max_tokens_per_chunk: TokenCountPair, verbose=False) -> List[Chunk]:
+def chunk_file(file_path:Path, url:str, token_counter:Callable[[str],TokenCountPair], max_tokens_per_chunk: TokenCountPair, verbose=False) -> List[Chunk]:
     """Adds a markdown document to the Splitter, splitting it until it fits."""
     chunks = list()
     try:
@@ -19,7 +19,7 @@ def chunk_file(file_path:Path, token_counter:Callable[[str],TokenCountPair], max
             # saves all the chunks
             for content in raw_chunks:
                 if len(content) > 0:
-                    chunk = Chunk(source=file_path, content=content.strip())
+                    chunk = Chunk(source=file_path, url=url, content=content.strip())
                     chunks.append(chunk)
             if verbose: print(f"Loaded file '{file_path}' ({len(raw_chunks)} chunks)")
     except UnicodeDecodeError:
