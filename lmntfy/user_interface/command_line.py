@@ -41,5 +41,5 @@ def chat(question_answerer:QuestionAnswerer) -> List[Dict]:
         answer_message = question_answerer.continue_chat(messages, verbose=False)
         messages.append(answer_message)
         # pretty prints the answer
-        markdown_answer = Markdown(f"\n{answer_message['content']}\n")
+        markdown_answer = Markdown(f"\n\n{answer_message['content']}\n")
         console.print(markdown_answer)
