@@ -139,7 +139,7 @@ class Database(ABC):
         elif verbose:
             print(f"Warning: '{self.database_folder}' or its content does not currently exist. The database will be created from scratch.")
         # updates the database to the latest documentation
-        if update_database:
+        if update_database or not self.exists():
             self.update(verbose=verbose)
 
     def save(self):

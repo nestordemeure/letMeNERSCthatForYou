@@ -7,23 +7,25 @@ from typing import Callable, List
 
 def chunk_file(file_path:Path, url:str, token_counter:Callable[[str],TokenCountPair], max_tokens_per_chunk: TokenCountPair, verbose=False) -> List[Chunk]:
     """Adds a markdown document to the Splitter, splitting it until it fits."""
-    chunks = list()
+    result = list()
     try:
         with open(file_path, 'r', encoding='utf8') as file:
             text = file.read()
             # split the file into chunks
             if file_path.suffix == '.md': 
-                raw_chunks = markdown_splitter(text, token_counter, max_tokens_per_chunk)
+                # splits the text along headings when possible
+                chunks = markdown_splitter(url, text, token_counter, max_tokens_per_chunk)
             else:
+                # gets raw pieces of text
                 raw_chunks = text_splitter(text, token_counter, max_tokens_per_chunk)
-            # saves all the chunks
-            for content in raw_chunks:
-                if len(content) > 0:
-                    chunk = Chunk(source=file_path, url=url, content=content.strip())
-                    chunks.append(chunk)
-            if verbose: print(f"Loaded file '{file_path}' ({len(raw_chunks)} chunks)")
+                chunks = [Chunk(url=url, content=content) for content in raw_chunks]
+            # saves the non-empty chunks
+            for chunk in chunks:
+                if len(chunk.content) > 0:
+                    result.append(chunk)
+            if verbose: print(f"Loaded file '{file_path}' ({len(result)} chunks)")
     except UnicodeDecodeError:
         # unsupported format
         if verbose: print(f"WARNING: File '{file_path}' does not appear to be a utf8 encoded text file.")
-    return chunks
+    return result
 

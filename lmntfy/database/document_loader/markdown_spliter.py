@@ -1,6 +1,7 @@
 import re
 from .text_spliter import text_splitter
 from .token_count_pair import TokenCountPair
+from .chunk import Chunk, header2url
 from typing import Callable, List
 
 #----------------------------------------------------------------------------------------
@@ -61,21 +62,28 @@ class Markdown:
             self.nb_tokens = token_counter(self.header) + sum((heading.count_tokens(token_counter) for heading in self.headings), TokenCountPair(0,0))
         return self.nb_tokens
 
-    def to_chunks(self, token_counter, max_tokens):
+    def to_chunks(self, url, token_counter, max_tokens):
+        # computes the url to the current heading
+        local_url = header2url(url, self.header)
+        # computes the current chunks
         if (self.count_tokens(token_counter) < max_tokens) and (len(self.headings) > 0):
             # small enough to fit
-            return [self.to_string()]
+            return [Chunk(url=local_url, content=self.to_string())]
         else:
             # split along headings
             # include header only if it has more than one line
             header = self.header.strip()
-            result = text_splitter(header, token_counter, max_tokens) if ('\n' in header) else []
+            if ('\n' in header):
+                raw_chunks = text_splitter(header, token_counter, max_tokens)
+                result = [Chunk(url=local_url, content=content) for content in raw_chunks]
+            else:
+                result = []
             # include all subheadings
             for heading in self.headings:
-                result.extend(heading.to_chunks(token_counter, max_tokens))
+                result.extend(heading.to_chunks(url, token_counter, max_tokens))
             return result
 
-def markdown_splitter(markdown: str, token_counter:Callable[[str],TokenCountPair], max_tokens:TokenCountPair) -> List[str]:
+def markdown_splitter(url:str, markdown: str, token_counter:Callable[[str],TokenCountPair], max_tokens:TokenCountPair) -> List[str]:
     """
     takes a markdown file as a string
     a function that can count the number of tokens in a string
@@ -86,8 +94,8 @@ def markdown_splitter(markdown: str, token_counter:Callable[[str],TokenCountPair
     """
     # shortcut if the text is short enough to be returned uncut
     if token_counter(markdown) < max_tokens:
-        return [markdown]
+        return [Chunk(url=url, content=markdown)]
     # parses the text into a tree representation
     ast = Markdown.load(markdown)
     # turn it into a list of chunks of appropriate size
-    return ast.to_chunks(token_counter, max_tokens)
+    return ast.to_chunks(url, token_counter, max_tokens)
