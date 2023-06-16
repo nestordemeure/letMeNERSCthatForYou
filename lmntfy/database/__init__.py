@@ -31,8 +31,8 @@ class Database(ABC):
         # vector_database_index -> Chunk
         self.chunks: Dict[int, Chunk] = dict()
         # loads the database from file if possible
-        self.documentation_folder = documentation_folder
-        self.database_folder = database_folder
+        self.documentation_folder = documentation_folder.absolute()
+        self.database_folder = database_folder.absolute()
         self.load(update_database=update_database, verbose=True)
     
     # ----- VECTOR DATABASE OPERATIONS -----
