@@ -7,8 +7,8 @@ def parse_args():
     parser.add_argument("--docs_folder", default="./data/docs", type=Path, help="path to the NERSC documentation folder")
     parser.add_argument("--database_folder", default="./data/database", type=Path, help="path to the database saving folder") 
     parser.add_argument("--logs_folder", default=None, type=Path, help="path to the log saving folder") 
-    parser.add_argument("--update_database", default=False, type=bool, help="whether to update database to the current documentation")
-    parser.add_argument("--use_test_questions", default=True, type=bool, help="whether to run on the test questions (for debugging purposes)")
+    parser.add_argument("--update_database", default=False, action='store_true', help="whether to update database to the current documentation")
+    parser.add_argument("--use_test_questions", default=False, action='store_true', help="whether to run on the test questions (for debugging purposes)")
     args = parser.parse_args()
     return args
 
