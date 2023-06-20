@@ -36,3 +36,10 @@ Web deployment:
 
 Overall:
 - cleanup readme
+- cleanup requirements.txt
+
+## Needed packages
+on Perlmutter:
+module load pytorch/2.0.1
+
+and then check requirements.txt
