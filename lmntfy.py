@@ -17,18 +17,11 @@ def parse_args():
     parser.add_argument("--load-8bit", action="store_true", help="Use 8-bit quantization")
     parser.add_argument("--cpu-offloading",action="store_true",
                             help="Only when using 8-bit quantization: Offload excess weights to the CPU that don't fit on the GPU",)
-    parser.add_argument("--conv-template", type=str, default=None, help="Conversation prompt template.")
     parser.add_argument("--temperature", type=float, default=0.0)#0.7
     parser.add_argument("--repetition_penalty", type=float, default=1.0)
     parser.add_argument("--max-new-tokens", type=int, default=512)
-    parser.add_argument(
-        "--style",
-        type=str,
-        default="simple",
-        choices=["simple", "rich", "programmatic"],
-        help="Display style.",
-    )
     parser.add_argument("--debug",default=False,action="store_true",help="Print useful debug information (e.g., prompts)",)
+    parser.add_argument("--llm_model", type=str, default='vicuna')
     args = parser.parse_args()
     return args
 
@@ -43,8 +36,10 @@ def main():
 
     # initializes models
     print("Loading the database and models...")
-    #llm = lmntfy.models.llm.GPT35()
-    llm = lmntfy.models.llm.Vicuna(args=args)
+    if args.llm_model == "GPT":
+        llm = lmntfy.models.llm.GPT35()
+    elif args.llm_model == "Vicuna":
+        llm = lmntfy.models.llm.Vicuna(args=args)
     embedder = lmntfy.models.embedding.SBERTEmbedding()
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=update_database)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)
