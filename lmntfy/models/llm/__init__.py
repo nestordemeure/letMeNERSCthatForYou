@@ -38,3 +38,4 @@ class LanguageModel(ABC):
         pass
 
 from .chatgpt import GPT35
+from .vicuna import Vicuna
