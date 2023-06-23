@@ -37,3 +37,4 @@ Web deployment:
 
 Overall:
 - cleanup readme
+- can we speedup dependencies loading? or is speed mostly a matter of loading the model?

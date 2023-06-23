@@ -14,6 +14,17 @@ def display_logo():
 ╚══════╝╚═╝     ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝        ╚═╝   "
     print(lmntfy)
 
+def answer_question(question_answerer:QuestionAnswerer, question) -> str:
+    """answers a single question"""
+    # gets an answer
+    answer = question_answerer.get_answer(question, verbose=False)
+    # pretty prints the answer
+    markdown_answer = Markdown(answer)
+    print()
+    Console().print(markdown_answer)
+    print()
+    return answer
+
 def answer_questions(question_answerer:QuestionAnswerer, questions:List[str]) -> List[str]:
     """run on a handful of test question for quick evaluation purposes"""
     answers = []
