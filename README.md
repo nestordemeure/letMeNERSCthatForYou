@@ -38,3 +38,4 @@ Web deployment:
 Overall:
 - cleanup readme
 - can we speedup dependencies loading? or is speed mostly a matter of loading the model?
+- insure that local links given in the doc are translated to link to the actual doc
