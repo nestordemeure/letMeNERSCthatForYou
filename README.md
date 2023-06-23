@@ -27,6 +27,7 @@ This bot is not made to replace the documentation but rather to improve informat
 Model:
 - have a Vicuna-based setup
 - use the message model to answer follow-up questions?
+- set `SENTENCE_TRANSFORMERS_HOME` to define the model containing folder manualy?
 
 Database:
 - get a google search based retrieval set-up (nothing stored, instead we look up information online).
