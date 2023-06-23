@@ -27,6 +27,7 @@ This bot is not made to replace the documentation but rather to improve informat
 Model:
 - have a Vicuna-based setup
 - use the message model to answer follow-up questions?
+- set `SENTENCE_TRANSFORMERS_HOME` to define the model containing folder manualy?
 
 Database:
 - get a google search based retrieval set-up (nothing stored, instead we look up information online).
@@ -36,10 +37,7 @@ Web deployment:
 
 Overall:
 - cleanup readme
+- can we speedup dependencies loading? or is speed mostly a matter of loading the model?
+- insure that local links given in the doc are translated to link to the actual doc
+- add a progress bar to make runtime less painful/sensitive? (only if we cannot sensibly speedup the model)
 - cleanup requirements.txt
-
-## Needed packages
-on Perlmutter:
-module load pytorch/2.0.1
-
-and then check requirements.txt
