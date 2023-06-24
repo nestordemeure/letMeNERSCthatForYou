@@ -10,16 +10,6 @@ def parse_args():
     parser.add_argument("--update_database", default=True, action='store_true', help="whether to update database to the current documentation")
     parser.add_argument("--use_test_questions", default=True, action='store_true', help="whether to run on the test questions (for debugging purposes)")
     parser.add_argument("--model_path",default="/pscratch/sd/e/ermal/vicuna/vicuna-13b",type=str)
-    parser.add_argument("--device",type=str,choices=["cpu", "cuda", "mps"],default="cuda",help="The device type",)
-    parser.add_argument("--gpus",type=str,default=None,help="A single GPU like 1 or multiple GPUs like 0,2",)
-    parser.add_argument("--num-gpus", type=int, default=1)
-    parser.add_argument("--max-gpu-memory",type=str,help="The maximum memory per gpu. Use a string like '13Gib'",)
-    parser.add_argument("--load-8bit", action="store_true", help="Use 8-bit quantization")
-    parser.add_argument("--cpu-offloading",action="store_true",
-                            help="Only when using 8-bit quantization: Offload excess weights to the CPU that don't fit on the GPU",)
-    parser.add_argument("--temperature", type=float, default=0.0)#0.7
-    parser.add_argument("--repetition_penalty", type=float, default=1.0)
-    parser.add_argument("--max-new-tokens", type=int, default=512)
     parser.add_argument("--debug",default=False,action="store_true",help="Print useful debug information (e.g., prompts)",)
     parser.add_argument("--llm_model", type=str, default='vicuna')
     args = parser.parse_args()

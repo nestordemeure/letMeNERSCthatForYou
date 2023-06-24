@@ -36,8 +36,7 @@ class Vicuna(LanguageModel):
         super().__init__(model_name, context_size)
         self.model, self.tokenizer = load_model(model_path=model_path, device='cuda', num_gpus=1)
         self.conversation_template = get_conversation_template(model_path)
-        # TODO update those values with the analysis script
-        self.upper_answer_size = 500
+        self.upper_answer_size = 300
         self.upper_question_size = 200
 
     def messages_to_prompt(self, messages) -> str:
@@ -66,15 +65,19 @@ class Vicuna(LanguageModel):
         encoded_text = self.tokenizer.encode(text)
         return len(encoded_text)
 
-    def query(self, prompt, verbose=False):
+    def query(self, prompt, prompt_size=None, verbose=False):
         """
         Vicuna specific model query and response.
         """
+        # compute the maximum answer size possible
+        # see implementation of generate_stream for formula details
+        if prompt_size is None: prompt_size = self.token_counter(prompt)
+        max_new_tokens = self.context_size - prompt_size - 8
         # parameters for the generation
         params = {
             "prompt": prompt,
             "temperature": 0.0,
-            "max_new_tokens": self.upper_answer_size, # TODO compute the number of tokens left to set this value as high as possible?
+            "max_new_tokens": max_new_tokens,
             "stop": self.conversation_template.stop_str,
             "stop_token_ids": self.conversation_template.stop_token_ids,
             "echo": verbose,
@@ -98,19 +101,21 @@ class Vicuna(LanguageModel):
         question_message = {"role": "user", "content": question}
         messages = [system_message] + context_messages + [question_message]
         prompt = self.messages_to_prompt(messages)
+        prompt_size = self.token_counter(prompt)
         # keep as many context messages as we can
-        while self.token_counter(prompt) + self.upper_answer_size > self.context_size:
+        while prompt_size + self.upper_answer_size > self.context_size:
             if len(messages) > 2:
                 # reduce the context size by popping the latest context message
                 # (which is likely the least relevant)
                 messages.pop(-2)
                 chunks = chunks[:-1]
                 prompt = self.messages_to_prompt(messages)
+                prompt_size = self.token_counter(prompt)
             else:
                 # no more space to reduce context size
                 raise ValueError("You query is too long for the model's context size.")
         # runs the query
-        answer = self.query(prompt, verbose=verbose)
+        answer = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
         # adds sources at the end of the query
         answer = self.add_references(question, answer, chunks, verbose=verbose)
         # returns
@@ -148,13 +153,15 @@ class Vicuna(LanguageModel):
         user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
         messages = [system_message] + context_messages + [user_message]
         prompt = self.messages_to_prompt(messages)
+        prompt_size = self.token_counter(prompt)
         # keep as many context messages as we can
-        while self.token_counter(prompt) + self.upper_question_size > self.context_size:
+        while prompt_size + self.upper_question_size > self.context_size:
             if len(messages) > 3:
                 # reduce the context size by popping the oldest context message
                 # ensuring there is at least one context message
                 messages.pop(1)
                 prompt = self.messages_to_prompt(messages)
+                prompt_size = self.token_counter(prompt)
             else:
                 # no more space to reduce context size
                 raise ValueError("You query is too long for the model's context size.")
@@ -162,4 +169,7 @@ class Vicuna(LanguageModel):
         if len(messages) == 3:
             return previous_messages[-1]['content']
         else:
-            return self.query(prompt, verbose=verbose)
+            question = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
+            # remove an eventual prefix
+            if question.startswith('user: '): question = question[6:]
+            return question

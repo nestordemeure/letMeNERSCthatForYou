@@ -25,23 +25,17 @@ This bot is not made to replace the documentation but rather to improve informat
 ## TODO
 
 Model:
-- use the message model to answer follow-up questions?
+- use the message model to answer follow-up questions instead of going straight to summarization?
 - set `SENTENCE_TRANSFORMERS_HOME` to define the model containing folder manualy?
 
 Database:
-- get a google search based retrieval set-up (nothing stored, instead we look up information online).
+- insure that local links given in the doc are translated to link to the actual doc
+- clean up duplicate links in the output references
 
-Web deployment:
-- turn the code into an API?
-
-Vicuna:
-- unify the two implementations of keep_references_only
-- move some args to the model (rather than having them be user decisions)
-- decide on using quantisation or not?
+Deployment:
+- turn the code into an API always running?
 
 Overall:
 - cleanup readme
-- can we speedup dependencies loading? or is speed mostly a matter of loading the model?
-- insure that local links given in the doc are translated to link to the actual doc
-- add a progress bar to make runtime less painful/sensitive? (only if we cannot sensibly speedup the model)
+- can we speedup dependencies loading? or is speed mostly a matter of loading the model? (useless if we end up going the API way)
 - cleanup requirements.txt
