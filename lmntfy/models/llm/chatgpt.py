@@ -34,9 +34,10 @@ QUESTION_EXTRACTION_PROMPT_USER="Return the user's last question, rephrasing it 
 
 class GPT35(LanguageModel):
     def __init__(self, 
+                 models_folder,
                  model_name='gpt-3.5-turbo', 
                  context_size=4096):
-        super().__init__(model_name, context_size)
+        super().__init__(models_folder, model_name, context_size)
         self.tokenizer = tiktoken.encoding_for_model(model_name)
         self.model_tokens_per_message = 4
         self.model_tokens_per_name = -1

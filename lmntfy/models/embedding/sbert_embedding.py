@@ -7,11 +7,15 @@ os.environ["TOKENIZERS_PARALLELISM"]="False"
 
 class SBERTEmbedding(Embedding):
     def __init__(self, 
+                 models_folder,
                  name='all-mpnet-base-v2', 
                  embedding_length=768,
                  max_input_tokens=384,
                  normalized=True):
-        super().__init__(name, embedding_length, max_input_tokens, normalized)
+        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized)
+        # ensures that the model caching folder is set properly
+        os.environ['SENTENCE_TRANSFORMERS_HOME'] = str(models_folder)
+        # loads the model
         self.model = SentenceTransformer(name)
 
     def _embed(self, text):

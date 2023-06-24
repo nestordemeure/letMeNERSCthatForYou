@@ -6,7 +6,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--docs_folder", default="/global/u2/n/nestor/scratch_perlmutter/chatbot/documentation/docs", type=Path, help="path to the NERSC documentation folder")
     parser.add_argument("--database_folder", default="/global/u2/n/nestor/scratch_perlmutter/chatbot/database", type=Path, help="path to the database saving folder") 
-    parser.add_argument("--model_path",default="/global/u2/n/nestor/scratch_perlmutter/chatbot/models/vicuna-13b",type=str)
+    parser.add_argument("--models_folder",default="/global/u2/n/nestor/scratch_perlmutter/chatbot/models",type=Path, help="path to the folder containing all the models")
     parser.add_argument("--use_test_questions", default=True, action='store_true', help="whether to run on the test questions (for debugging purposes)")
     args = parser.parse_args()
     return args
@@ -16,13 +16,13 @@ def main():
     args= parse_args()
     docs_folder = args.docs_folder
     database_folder = args.database_folder
-    model_path = args.model_path
+    models_folder = args.models_folder
     use_test_questions = args.use_test_questions
 
     # initializes models
     print("Loading the database and models...")
-    llm = lmntfy.models.llm.Vicuna(model_path=model_path)
-    embedder = lmntfy.models.embedding.SBERTEmbedding()
+    llm = lmntfy.models.llm.Vicuna(models_folder)
+    embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
 

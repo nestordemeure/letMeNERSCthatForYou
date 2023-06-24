@@ -1,6 +1,7 @@
 import re
 from abc import ABC, abstractmethod
 from typing import List, Dict
+from pathlib import Path
 from ...database.document_loader import Chunk
 
 def keep_references_only(input_str):
@@ -10,7 +11,8 @@ def keep_references_only(input_str):
     return '\n'.join(matches)
 
 class LanguageModel(ABC):
-    def __init__(self, model_name:str, context_size:int):
+    def __init__(self, models_folder:Path, model_name:str, context_size:int):
+        self.models_folder = models_folder
         self.model_name = model_name
         self.context_size = context_size
 

@@ -26,7 +26,6 @@ This bot is not made to replace the documentation but rather to improve informat
 
 Model:
 - use the message model to answer follow-up questions instead of going straight to summarization?
-- set `SENTENCE_TRANSFORMERS_HOME` to define the model containing folder manualy?
 
 Database:
 - insure that local links given in the doc are translated to link to the actual doc

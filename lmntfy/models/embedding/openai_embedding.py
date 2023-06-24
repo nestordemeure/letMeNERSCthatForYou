@@ -6,11 +6,12 @@ from .. import retry
 
 class OpenAIEmbedding(Embedding):
     def __init__(self, 
+                 models_folder,
                  name='text-embedding-ada-002', 
                  embedding_length=1536,
                  max_input_tokens=8191,
                  normalized=True):
-        super().__init__(name, embedding_length, max_input_tokens, normalized)
+        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized)
         self.tokenizer = tiktoken.get_encoding('cl100k_base')
 
     @retry(n=5)
