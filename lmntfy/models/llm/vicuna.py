@@ -34,7 +34,7 @@ class Vicuna(LanguageModel):
                  model_name='vicuna-13b', 
                  context_size=2048):
         super().__init__(models_folder, model_name, context_size)
-        model_path = models_folder / model_name
+        model_path = str(models_folder / model_name)
         self.model, self.tokenizer = load_model(model_path=model_path, device='cuda', num_gpus=1)
         self.conversation_template = get_conversation_template(model_path)
         self.upper_answer_size = 300
