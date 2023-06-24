@@ -2,7 +2,7 @@ import re
 import json
 import tiktoken
 import openai
-from . import LanguageModel
+from . import LanguageModel, keep_references_only
 from .. import retry
 
 #----------------------------------------------------------------------------------------
@@ -22,12 +22,6 @@ End your answer with \"References:\" followed by a bullet list of the relevant u
 REFERENCE_PROMPT="Produce a bullet list of the urls you found useful to answer the question, \
 sorted from most relevant to least relevant. \
 Try to keep the bullet list short, keeping *only* the relevant urls (there are rarely more than three relevant urls)."
-
-def keep_references_only(input_str):
-    """keep only lines starting with a *, - or number followed by spaces then a url starting in https"""
-    pattern = re.compile(r'^(?:\*|-|\d+)\s+https:.*$', re.MULTILINE)
-    matches = pattern.findall(input_str)
-    return '\n'.join(matches)
 
 # prompt to summarize a conversation into its latest question
 QUESTION_EXTRACTION_PROMPT_SYSTEM="You are a question extraction system. \

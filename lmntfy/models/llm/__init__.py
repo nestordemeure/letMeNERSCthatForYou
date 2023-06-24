@@ -1,6 +1,13 @@
+import re
 from abc import ABC, abstractmethod
 from typing import List, Dict
 from ...database.document_loader import Chunk
+
+def keep_references_only(input_str):
+    """keep only lines starting with a *, - or number followed by spaces then a url starting in https or enclosed in <>"""
+    pattern = re.compile(r'^(?:\*|-|\d+)\s+(?:https:.*|<https:.*>)$', re.MULTILINE)
+    matches = pattern.findall(input_str)
+    return '\n'.join(matches)
 
 class LanguageModel(ABC):
     def __init__(self, model_name:str, context_size:int):

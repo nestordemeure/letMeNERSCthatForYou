@@ -14,7 +14,7 @@ This bot is not made to replace the documentation but rather to improve informat
 
 - clone the repo
 - get an openai API key
-- get the dependency in your environement (openai, tiktoken, faiss-cpu, sentence_transformers, rich)
+- get the dependency in your environement (openai, tiktoken, faiss-cpu, sentence_transformers, rich, fschat)
 - clone the [NERSC doc repository](https://gitlab.com/NERSC/nersc.gitlab.io/-/tree/main/docs) into a folder
 
 ## Usage
@@ -25,7 +25,6 @@ This bot is not made to replace the documentation but rather to improve informat
 ## TODO
 
 Model:
-- have a Vicuna-based setup
 - use the message model to answer follow-up questions?
 - set `SENTENCE_TRANSFORMERS_HOME` to define the model containing folder manualy?
 
@@ -34,6 +33,11 @@ Database:
 
 Web deployment:
 - turn the code into an API?
+
+Vicuna:
+- unify the two implementations of keep_references_only
+- move some args to the model (rather than having them be user decisions)
+- decide on using quantisation or not?
 
 Overall:
 - cleanup readme
