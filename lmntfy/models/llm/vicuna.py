@@ -1,9 +1,6 @@
-import re
-import json
-import tiktoken
-import openai
 from . import LanguageModel, keep_references_only
-from .. import retry
+from fastchat.model.model_adapter import load_model, get_conversation_template
+from fastchat.serve.inference import generate_stream
 
 #----------------------------------------------------------------------------------------
 # PROMPTS
@@ -15,8 +12,7 @@ You must only use information from the provided search results. \
 Use an unbiased and journalistic tone. \
 Combine search results together into a coherent answer. \
 Only cite the most relevant results that answer the question accurately. \
-Try and be careful not to go off-topics. \
-End your answer with \"References:\" followed by a bullet list of the relevant urls."
+Try and be careful not to go off-topics."
 
 # prompt to get references for an answer
 REFERENCE_PROMPT="Produce a bullet list of the urls you found useful to answer the question, \
@@ -32,50 +28,69 @@ QUESTION_EXTRACTION_PROMPT_USER="Return the user's last question, rephrasing it 
 #----------------------------------------------------------------------------------------
 # MODEL
 
-class GPT35(LanguageModel):
+class Vicuna(LanguageModel):
     def __init__(self, 
                  models_folder,
-                 model_name='gpt-3.5-turbo', 
-                 context_size=4096):
+                 model_name='vicuna-13b', 
+                 context_size=2048):
         super().__init__(models_folder, model_name, context_size)
-        self.tokenizer = tiktoken.encoding_for_model(model_name)
-        self.model_tokens_per_message = 4
-        self.model_tokens_per_name = -1
-        self.upper_answer_size = 250
+        model_path = str(models_folder / model_name)
+        self.model, self.tokenizer = load_model(model_path=model_path, device='cuda', num_gpus=1)
+        self.conversation_template = get_conversation_template(model_path)
+        self.upper_answer_size = 300
         self.upper_question_size = 200
 
-    def token_counter_messages(self, messages):
-        """
-        GPT-3.5-turbo specific token counting implementation for list of messages.
-        """
-        total_tokens = 0
-        for message in messages:
-            total_tokens += self.model_tokens_per_message
-            for key, value in message.items():
-                total_tokens += self.token_counter(value)
-                if key == "name":
-                    total_tokens += self.model_tokens_per_name
-        total_tokens += 2
-        return total_tokens
+    def messages_to_prompt(self, messages) -> str:
+        """Takes an OpenAI-style list of messages and converts it into a Vicuna compatible prompt"""
+        # builds a conversation object from the messages
+        conv = self.conversation_template.copy()
+        for i, message in enumerate(messages):
+            if message['role'] == 'system':
+                if i > 0: raise RuntimeError("The Vicuna model requiers at most a *single* 'system' prompt passed in first position.")
+                conv.system = message['content']
+            elif message['role'] == 'user':
+                conv.append_message(role='USER', message=message['content'])
+            elif message['role'] == 'assistant':
+                conv.append_message(role='ASSISTANT', message=message['content'])
+            else:
+                raise RuntimeError(f"Model only accept 'system', 'user' and 'assistant' roles, not '{message['role']}'")
+        # ends on the beginning of the answer message
+        # NOTE: testing shows that the answer cannot be primed by a starting message
+        conv.append_message(role='ASSISTANT', message=None)
+        return conv.get_prompt()
 
     def token_counter(self, text):
         """
-        GPT-3.5-turbo specific token counting implementation.
+        Token counting implementation.
         """
         encoded_text = self.tokenizer.encode(text)
         return len(encoded_text)
 
-    @retry(n=5)
-    def query(self, messages, verbose=False):
+    def query(self, prompt, prompt_size=None, verbose=False):
         """
-        GPT-3.5-turbo specific model query and response.
+        Vicuna specific model query and response.
         """
-        response = openai.ChatCompletion.create(model=self.model_name, messages=messages, temperature=0)
-        if verbose: 
-            full_messages = messages + [response.choices[0].message]
-            text_messages = json.dumps(full_messages, indent=4)
-            print(text_messages)
-        return response.choices[0].message['content']
+        # compute the maximum answer size possible
+        # see implementation of generate_stream for formula details
+        if prompt_size is None: prompt_size = self.token_counter(prompt)
+        max_new_tokens = self.context_size - prompt_size - 8
+        # parameters for the generation
+        params = {
+            "prompt": prompt,
+            "temperature": 0.0,
+            "max_new_tokens": max_new_tokens,
+            "stop": self.conversation_template.stop_str,
+            "stop_token_ids": self.conversation_template.stop_token_ids,
+            "echo": verbose,
+        }
+        # produces an answer as a stream
+        stream_response = generate_stream(self.model, self.tokenizer, params, device='cuda', context_len=self.context_size)
+        # gets to the last element of the stream
+        response = None
+        for partial_response in stream_response:
+            response = partial_response
+        # returns the actual answer
+        return response['text'].strip()
 
     def get_answer(self, question, chunks, verbose=False):
         """
@@ -86,21 +101,24 @@ class GPT35(LanguageModel):
         context_messages = [{"role": "assistant", "content": str(chunk)} for chunk in chunks]
         question_message = {"role": "user", "content": question}
         messages = [system_message] + context_messages + [question_message]
+        prompt = self.messages_to_prompt(messages)
+        prompt_size = self.token_counter(prompt)
         # keep as many context messages as we can
-        while self.token_counter_messages(messages) + self.upper_answer_size > self.context_size:
+        while prompt_size + self.upper_answer_size > self.context_size:
             if len(messages) > 2:
                 # reduce the context size by popping the latest context message
                 # (which is likely the least relevant)
                 messages.pop(-2)
                 chunks = chunks[:-1]
+                prompt = self.messages_to_prompt(messages)
+                prompt_size = self.token_counter(prompt)
             else:
                 # no more space to reduce context size
                 raise ValueError("You query is too long for the model's context size.")
         # runs the query
-        answer = self.query(messages, verbose=verbose)
+        answer = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
         # adds sources at the end of the query
-        if not "References:" in answer:
-            answer = self.add_references(question, answer, chunks, verbose=verbose)
+        answer = self.add_references(question, answer, chunks, verbose=verbose)
         # returns
         return answer
         
@@ -116,8 +134,9 @@ class GPT35(LanguageModel):
         reference_message = {"role": "user", "content": REFERENCE_PROMPT}
         messages = [system_message] + context_messages + [question_message, answer_message, reference_message]
         # runs the query
-        references = self.query(messages, verbose=verbose)
-        # remove any irrelevant line
+        prompt = self.messages_to_prompt(messages)
+        references = self.query(prompt, verbose=verbose)
+        # remove any irrelevant lines
         references = keep_references_only(references)
         # updates the answer
         answer = f"{answer}\n\nReferences:\n{references}"
@@ -134,12 +153,16 @@ class GPT35(LanguageModel):
         context_messages = [{'role':'assistant', 'content': f"{m['role']}: {m['content']}"} for m in previous_messages]
         user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
         messages = [system_message] + context_messages + [user_message]
+        prompt = self.messages_to_prompt(messages)
+        prompt_size = self.token_counter(prompt)
         # keep as many context messages as we can
-        while self.token_counter_messages(messages) + self.upper_question_size > self.context_size:
+        while prompt_size + self.upper_question_size > self.context_size:
             if len(messages) > 3:
                 # reduce the context size by popping the oldest context message
                 # ensuring there is at least one context message
                 messages.pop(1)
+                prompt = self.messages_to_prompt(messages)
+                prompt_size = self.token_counter(prompt)
             else:
                 # no more space to reduce context size
                 raise ValueError("You query is too long for the model's context size.")
@@ -147,4 +170,7 @@ class GPT35(LanguageModel):
         if len(messages) == 3:
             return previous_messages[-1]['content']
         else:
-            return self.query(messages, verbose=verbose)
+            question = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
+            # remove an eventual prefix
+            if question.startswith('user: '): question = question[6:]
+            return question

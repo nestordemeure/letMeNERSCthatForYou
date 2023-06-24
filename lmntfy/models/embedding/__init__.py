@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 import numpy as np
 
 class Embedding(ABC):
-    def __init__(self, name, embedding_length, max_input_tokens, normalized):
+    def __init__(self, models_folder:Path, name, embedding_length, max_input_tokens, normalized):
+        self.models_folder = models_folder
         self.name = name
         self.embedding_length = embedding_length
         self.max_input_tokens = max_input_tokens

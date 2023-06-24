@@ -2,40 +2,43 @@
 This script can be used to determine an upper bound on the answer size for a given tokeniser.
 Using preexisting answers.
 """
-from lmntfy.models.llm import GPT35
+from lmntfy.models.llm import GPT35, Vicuna
 import numpy as np
 import json
 
 # Define your token_counter function here
-token_counter = GPT35().token_counter
+#token_counter = GPT35().token_counter
+token_counter = Vicuna(model_path="/global/u2/n/nestor/scratch_perlmutter/chatbot/models/vicuna-13b").token_counter
 
 # Load JSON data
 with open('./data/questions.json', 'r') as f:
     data = json.load(f)
 
-# Extract answers and measure their sizes
-answer_sizes = [token_counter(item['answer']) for item in data]
+for kind in ['answer', 'question']:
+    print(f"*** {kind}:")
+    # Extract answers and measure their sizes
+    sizes = [token_counter(item[kind]) for item in data]
 
-# Convert to numpy array for easy calculation of statistics
-answer_sizes = np.array(answer_sizes)
+    # Convert to numpy array for easy calculation of statistics
+    sizes = np.array(sizes)
 
-# Calculate and display statistics
-mean_size = np.mean(answer_sizes)
-median_size = np.median(answer_sizes)
-std_size = np.std(answer_sizes)
-max_size = np.max(answer_sizes)
-quantile_90 = np.percentile(answer_sizes, 90)
-quantile_95 = np.percentile(answer_sizes, 95)
-quantile_99 = np.percentile(answer_sizes, 99)
+    # Calculate and display statistics
+    mean_size = np.mean(sizes)
+    median_size = np.median(sizes)
+    std_size = np.std(sizes)
+    max_size = np.max(sizes)
+    quantile_90 = np.percentile(sizes, 90)
+    quantile_95 = np.percentile(sizes, 95)
+    quantile_99 = np.percentile(sizes, 99)
 
-print(f"Mean size: {mean_size}")
-print(f"Median size: {median_size}")
-print(f"Standard deviation of size: {std_size}")
-print(f"Upper bound (mean+2std): {mean_size + 2*std_size}")
-print(f"Max size: {max_size}")
-print(f"90% quantile: {quantile_90}")
-print(f"95% quantile: {quantile_95}")
-print(f"99% quantile: {quantile_99}")
+    print(f"Mean size: {mean_size}")
+    print(f"Median size: {median_size}")
+    print(f"Standard deviation of size: {std_size}")
+    print(f"Upper bound (mean+2std): {mean_size + 2*std_size}")
+    print(f"Max size: {max_size}")
+    print(f"90% quantile: {quantile_90}")
+    print(f"95% quantile: {quantile_95}")
+    print(f"99% quantile: {quantile_99}")
 
 """
 GPT35's tokeniser:
@@ -58,4 +61,24 @@ Max size: 130
 90% quantile: 19.0
 95% quantile: 22.0
 99% quantile: 28.960000000000036
+
+Vicuna's tokeniser:
+*** answer:
+Mean size: 107.95915053091818
+Median size: 94.0
+Standard deviation of size: 84.61246457852216
+Upper bound (mean+2std): 277.1840796879625
+Max size: 1096
+90% quantile: 205.0
+95% quantile: 252.0
+99% quantile: 397.96000000000004
+*** question:
+Mean size: 15.17838850718301
+Median size: 14.0
+Standard deviation of size: 5.845451380160406
+Upper bound (mean+2std): 26.869291267503822
+Max size: 171
+90% quantile: 22.0
+95% quantile: 25.0
+99% quantile: 32.0
 """
