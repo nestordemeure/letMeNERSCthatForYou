@@ -6,18 +6,18 @@ from fastchat.serve.inference import generate_stream
 # PROMPTS
 
 # prompt to answer a question
-ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support staff. \
-Generate a comprehensive and informative answer for a given question solely based on the provided web Search Results (URL and Extract). \
-You must only use information from the provided search results. \
-Use an unbiased and journalistic tone. \
-Combine search results together into a coherent answer. \
-Only cite the most relevant results that answer the question accurately. \
-Try and be careful not to go off-topics."
+ANSWERING_PROMPT="A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. \
+                The assistant generates a comprehensive and informative answer for a given question solely based on the provided information (URL and Extract). \
+                The assistant combines search results together into a coherent answer. \
+                The assitant only cites the most relevant results that answer the question accurately. \
+                The assistant ends the answer with \'References:\' followed by a bullet list of the relevant urls.\n"
+
 
 # prompt to get references for an answer
-REFERENCE_PROMPT="Produce a bullet list of the urls you found useful to answer the question, \
-sorted from most relevant to least relevant. \
-Try to keep the bullet list short, keeping *only* the relevant urls (there are rarely more than three relevant urls)."
+REFERENCE_PROMPT="A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. \
+                The assistant produces a bullet list of the urls useful to answer the question, \
+                sorted from most relevant to least relevant. \
+                The assistant keeps the bullet list short, keeping only the relevant urls (there are rarely more than three relevant urls)."
 
 # prompt to summarize a conversation into its latest question
 QUESTION_EXTRACTION_PROMPT_SYSTEM="You are a question extraction system. \
@@ -36,22 +36,27 @@ class Vicuna(LanguageModel):
         super().__init__(models_folder, model_name, context_size)
         model_path = str(models_folder / model_name)
         self.model, self.tokenizer = load_model(model_path=model_path, device='cuda', num_gpus=1)
-        self.conversation_template = get_conversation_template(model_path)
+        self.conversation = get_conversation_template(model_path) 
         self.upper_answer_size = 300
         self.upper_question_size = 200
 
     def messages_to_prompt(self, messages) -> str:
         """Takes an OpenAI-style list of messages and converts it into a Vicuna compatible prompt"""
         # builds a conversation object from the messages
-        conv = self.conversation_template.copy()
-        for i, message in enumerate(messages):
+        conv = self.conversation.copy()
+        # prepare the system message
+        conv.system=''
+        for message in messages:
             if message['role'] == 'system':
-                if i > 0: raise RuntimeError("The Vicuna model requiers at most a *single* 'system' prompt passed in first position.")
-                conv.system = message['content']
-            elif message['role'] == 'user':
+                conv.system += message['content']
+
+        for message in messages:
+            if message['role'] == 'user':
                 conv.append_message(role='USER', message=message['content'])
             elif message['role'] == 'assistant':
                 conv.append_message(role='ASSISTANT', message=message['content'])
+            elif message['role'] == 'system':
+                continue
             else:
                 raise RuntimeError(f"Model only accept 'system', 'user' and 'assistant' roles, not '{message['role']}'")
         # ends on the beginning of the answer message
@@ -74,13 +79,14 @@ class Vicuna(LanguageModel):
         # see implementation of generate_stream for formula details
         if prompt_size is None: prompt_size = self.token_counter(prompt)
         max_new_tokens = self.context_size - prompt_size - 8
+
         # parameters for the generation
         params = {
             "prompt": prompt,
             "temperature": 0.0,
             "max_new_tokens": max_new_tokens,
-            "stop": self.conversation_template.stop_str,
-            "stop_token_ids": self.conversation_template.stop_token_ids,
+            "stop": self.conversation.stop_str,
+            "stop_token_ids": self.conversation.stop_token_ids,
             "echo": verbose,
         }
         # produces an answer as a stream
@@ -97,10 +103,11 @@ class Vicuna(LanguageModel):
         Method to get an answer given a question and some chunks passed for context.
         """
         # builds the prompt
-        system_message = {"role": "system", "content": ANSWERING_PROMPT}
-        context_messages = [{"role": "assistant", "content": str(chunk)} for chunk in chunks]
+        system_messages  = [{"role": "system", "content": ANSWERING_PROMPT}]
+        system_messages += [{"role": "system", "content": "The assistant answer the users's question based only on the following information:"}]
+        context_messages = [{"role": "system", "content": str(chunk)} for chunk in chunks]
         question_message = {"role": "user", "content": question}
-        messages = [system_message] + context_messages + [question_message]
+        messages = system_messages + context_messages + [question_message]
         prompt = self.messages_to_prompt(messages)
         prompt_size = self.token_counter(prompt)
         # keep as many context messages as we can
@@ -108,8 +115,9 @@ class Vicuna(LanguageModel):
             if len(messages) > 2:
                 # reduce the context size by popping the latest context message
                 # (which is likely the least relevant)
-                messages.pop(-2)
-                chunks = chunks[:-1]
+                chunks.pop(-1)
+                context_messages.pop(-1)
+                messages = system_messages + context_messages + [question_message]
                 prompt = self.messages_to_prompt(messages)
                 prompt_size = self.token_counter(prompt)
             else:
@@ -126,13 +134,17 @@ class Vicuna(LanguageModel):
         """
         Adds references to an answer.
         """
+       
         # builds the prompt
-        system_message = {"role": "system", "content": ANSWERING_PROMPT}
-        context_messages = [{"role": "assistant", "content": str(chunk)} for chunk in chunks]
-        question_message = {"role": "user", "content": question}
-        answer_message = {"role": "assistant", "content": answer}
-        reference_message = {"role": "user", "content": REFERENCE_PROMPT}
-        messages = [system_message] + context_messages + [question_message, answer_message, reference_message]
+        system_messages = [{"role": "system", "content": 'Given the following information: '}, 
+                           {"role": "system", "content": '. Provide url refences: '}] 
+        system_messages += [{"role": "system", "content": "The assistant answer the users's question based only on the following information:"}] 
+        context_messages = [{"role": "system", "content": str(chunk)} for chunk in chunks]
+        context_messages += [{"role": "system", "content": REFERENCE_PROMPT}]
+        question_message = {"role": "system", "content": ". The question is: "+question}
+        answer_message = {"role": "system", "content": "The answer is: "+answer}
+        reference_message = {"role": "user", "content": "What are the most important url references used to asnwer the question?"}
+        messages = system_messages + context_messages + [question_message, answer_message, reference_message]
         # runs the query
         prompt = self.messages_to_prompt(messages)
         references = self.query(prompt, verbose=verbose)
