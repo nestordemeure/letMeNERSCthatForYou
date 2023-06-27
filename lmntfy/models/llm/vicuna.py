@@ -6,18 +6,27 @@ from fastchat.serve.inference import generate_stream
 # PROMPTS
 
 # prompt to answer a question
-ANSWERING_PROMPT="A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. \
-                The assistant generates a comprehensive and informative answer for a given question solely based on the provided information (URL and Extract). \
-                The assistant combines search results together into a coherent answer. \
-                The assitant only cites the most relevant results that answer the question accurately. \
-                The assistant ends the answer with \'References:\' followed by a bullet list of the relevant urls.\n"
+ANSWERING_PROMPT="A chat between a curious user and an artificial intelligence assistant. \
+The assistant gives helpful, detailed, and polite answers to the user's questions. \
+The assistant generates a comprehensive and informative answer for a given question solely based on the provided information (URL and Extract). \
+The assistant combines search results together into a coherent answer. \
+The assitant only cites the most relevant results that answer the question accurately. \
+The assistant answer the users's question based only on the following information:"
+# this prompt is meant to be followed by a list of chunks
 
+# prompt to answer a question
+ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support staff. \
+Generate a comprehensive and informative answer for a given question solely based on the provided information (URL and Extract). \
+You must only use information from the provided search results. \
+Use an unbiased and journalistic tone. \
+Combine search results together into a coherent answer. \
+Only cite the most relevant results that answer the question accurately. \
+Try and be careful not to go off-topics."
 
 # prompt to get references for an answer
-REFERENCE_PROMPT="A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. \
-                The assistant produces a bullet list of the urls useful to answer the question, \
-                sorted from most relevant to least relevant. \
-                The assistant keeps the bullet list short, keeping only the relevant urls (there are rarely more than three relevant urls)."
+REFERENCE_PROMPT="Produce a bullet list of the urls you found useful to answer the question, \
+sorted from most relevant to least relevant. \
+Keep the bullet list short, keeping *only* the relevant urls (there are rarely more than three relevant urls)."
 
 # prompt to summarize a conversation into its latest question
 QUESTION_EXTRACTION_PROMPT_SYSTEM="You are a question extraction system. \
@@ -47,7 +56,7 @@ class Vicuna(LanguageModel):
                                    "be shared with other GPU-consuming users or resources.")
             raise
         self.conversation = get_conversation_template(model_path) 
-        self.upper_answer_size = 300
+        self.upper_answer_size = 450
         self.upper_question_size = 200
 
     def messages_to_prompt(self, messages) -> str:
@@ -108,21 +117,20 @@ class Vicuna(LanguageModel):
         Method to get an answer given a question and some chunks passed for context.
         """
         # builds the prompt
-        system_messages  = [{"role": "system", "content": ANSWERING_PROMPT}]
-        system_messages += [{"role": "system", "content": "The assistant answer the users's question based only on the following information:"}]
-        context_messages = [{"role": "system", "content": str(chunk)} for chunk in chunks]
+        system_message = {"role": "system", "content": ANSWERING_PROMPT}
+        context_messages = [{"role": "system", "content": f"\n\n{str(chunk)}"} for chunk in chunks]
         question_message = {"role": "user", "content": question}
-        messages = system_messages + context_messages + [question_message]
+        messages = [system_message] + context_messages + [question_message]
         prompt = self.messages_to_prompt(messages)
         prompt_size = self.token_counter(prompt)
         # keep as many context messages as we can
         while prompt_size + self.upper_answer_size > self.context_size:
-            if len(messages) > 2:
+            if len(context_messages) > 1:
                 # reduce the context size by popping the latest context message
                 # (which is likely the least relevant)
                 chunks.pop(-1)
                 context_messages.pop(-1)
-                messages = system_messages + context_messages + [question_message]
+                messages = [system_message] + context_messages + [question_message]
                 prompt = self.messages_to_prompt(messages)
                 prompt_size = self.token_counter(prompt)
             else:
@@ -139,17 +147,13 @@ class Vicuna(LanguageModel):
         """
         Adds references to an answer.
         """
-       
         # builds the prompt
-        system_messages = [{"role": "system", "content": 'Given the following information: '}, 
-                           {"role": "system", "content": '. Provide url refences: '}] 
-        system_messages += [{"role": "system", "content": "The assistant answer the users's question based only on the following information:"}] 
-        context_messages = [{"role": "system", "content": str(chunk)} for chunk in chunks]
-        context_messages += [{"role": "system", "content": REFERENCE_PROMPT}]
-        question_message = {"role": "system", "content": ". The question is: "+question}
-        answer_message = {"role": "system", "content": "The answer is: "+answer}
-        reference_message = {"role": "user", "content": "What are the most important url references used to asnwer the question?"}
-        messages = system_messages + context_messages + [question_message, answer_message, reference_message]
+        system_message  = {"role": "system", "content": "URLs available:"}
+        context_messages = [{"role": "system", "content": f"\n\n{str(chunk)}"} for chunk in chunks]
+        question_message = {"role": "user", "content": question}
+        answer_message = {"role": "assistant", "content": answer}
+        reference_message = {"role": "user", "content": REFERENCE_PROMPT}
+        messages = [system_message] + context_messages + [question_message, answer_message, reference_message]
         # runs the query
         prompt = self.messages_to_prompt(messages)
         references = self.query(prompt, verbose=verbose)
