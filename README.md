@@ -24,13 +24,6 @@ This bot is not made to replace the documentation but rather to improve informat
 
 ## TODO
 
-Model:
-- use the message model to answer follow-up questions instead of going straight to summarization?
-
-Database:
-- insure that local links given in the doc are translated to link to the actual doc
-- clean up duplicate links in the output references
-
 Deployment:
 - turn the code into an API always running?
 
