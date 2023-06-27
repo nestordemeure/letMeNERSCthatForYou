@@ -35,7 +35,17 @@ class Vicuna(LanguageModel):
                  context_size=2048):
         super().__init__(models_folder, model_name, context_size)
         model_path = str(models_folder / model_name)
-        self.model, self.tokenizer = load_model(model_path=model_path, device='cuda', num_gpus=1)
+        try:
+            # tries to load the model
+            self.model, self.tokenizer = load_model(model_path=model_path, device='cuda', num_gpus=1)
+        except RuntimeError as e:
+            # display a user friendly message in case of failure
+            if 'CUDA out of memory' in str(e):
+                raise RuntimeError("The model could not be loaded due to a lack of available GPU memory. "
+                                   "This may be caused by other processes sharing the GPU. "
+                                   "Consider trying to run the code on a new node (login or compute) if your current node might "
+                                   "be shared with other GPU-consuming users or resources.")
+            raise
         self.conversation = get_conversation_template(model_path) 
         self.upper_answer_size = 300
         self.upper_question_size = 200

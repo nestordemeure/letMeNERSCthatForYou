@@ -9,7 +9,7 @@ def parse_args():
     parser.add_argument("--database_folder", default="./data/database", type=Path, help="path to the database saving folder") 
     parser.add_argument("--models_folder",default="./data/models",type=Path, help="path to the folder containing all the models")
     parser.add_argument("--logs_folder", default=None, type=Path, help="path to the log saving folder") 
-    parser.add_argument("--use_gpt", default=False, action='store_true', help="Should we use ChatGPT3.5 as the backend instead of a local backend (requires an OPENAI_API_KEY in memory).")
+    parser.add_argument("--use_gpt", default=False, action='store_true', help="Uses ChatGPT3.5 as the backend instead of a local language model (requires OPENAI_API_KEY in the environement).")
     parser.add_argument("question", nargs="*", default=[], help="optional question passed to the script")
     args = parser.parse_args()
     # Convert the question list back to a string
