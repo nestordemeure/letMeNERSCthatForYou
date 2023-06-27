@@ -5,10 +5,16 @@ from pathlib import Path
 from ...database.document_loader import Chunk
 
 def keep_references_only(input_str):
-    """keep only lines starting with a *, - or number followed by spaces then a url starting in https or enclosed in <>"""
-    pattern = re.compile(r'^(?:\*|-|\d+)\s+(?:https:.*|<https:.*>)$', re.MULTILINE)
-    matches = pattern.findall(input_str)
-    return '\n'.join(matches)
+    # extract all urls
+    url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F])|#)+')
+    urls = re.findall(url_pattern, input_str)
+    # remove trailing `>` (from <url> types of pattern)
+    urls = [url[:-1] if url.endswith('>') else url for url in urls]
+    # remove duplicates while preserving order
+    urls = list(dict.fromkeys(urls))
+    # convert list into a bullet list of URLs
+    bullet_list = "\n".join(f"* {url}" for url in urls)
+    return bullet_list
 
 class LanguageModel(ABC):
     def __init__(self, models_folder:Path, model_name:str, context_size:int):
