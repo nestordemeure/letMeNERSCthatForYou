@@ -37,7 +37,6 @@ class QuestionAnswerer:
         try:
             # extract the latest question
             question = self.llm.extract_question(messages, verbose=verbose)
-            print(f"QUESTION: {question}")
             # gets an answer for the question
             answer = self.get_answer(question, max_context_size=max_context_size, verbose=verbose)
         except Exception as e:

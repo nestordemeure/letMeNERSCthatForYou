@@ -6,7 +6,7 @@ from ...database.document_loader import Chunk
 
 def keep_references_only(input_str):
     # extract all urls
-    url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F])|#)+')
+    url_pattern = re.compile(r'https?://(?:[a-zA-Z]|[0-9]|[-.#/]|[$@&+]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
     urls = re.findall(url_pattern, input_str)
     # remove trailing `>` (from <url> types of pattern)
     urls = [url[:-1] if url.endswith('>') else url for url in urls]
