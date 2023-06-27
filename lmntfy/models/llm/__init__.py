@@ -13,7 +13,7 @@ def keep_references_only(input_str):
     # remove duplicates while preserving order
     urls = list(dict.fromkeys(urls))
     # convert list into a bullet list of URLs
-    bullet_list = "\n".join(f"* {url}" for url in urls)
+    bullet_list = "\n".join(f"* <{url}>" for url in urls)
     return bullet_list
 
 class LanguageModel(ABC):

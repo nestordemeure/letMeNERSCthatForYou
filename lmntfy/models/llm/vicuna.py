@@ -54,19 +54,14 @@ class Vicuna(LanguageModel):
         """Takes an OpenAI-style list of messages and converts it into a Vicuna compatible prompt"""
         # builds a conversation object from the messages
         conv = self.conversation.copy()
-        # prepare the system message
         conv.system=''
-        for message in messages:
-            if message['role'] == 'system':
-                conv.system += message['content']
-
         for message in messages:
             if message['role'] == 'user':
                 conv.append_message(role='USER', message=message['content'])
             elif message['role'] == 'assistant':
                 conv.append_message(role='ASSISTANT', message=message['content'])
             elif message['role'] == 'system':
-                continue
+                conv.system += message['content']
             else:
                 raise RuntimeError(f"Model only accept 'system', 'user' and 'assistant' roles, not '{message['role']}'")
         # ends on the beginning of the answer message
