@@ -30,7 +30,13 @@ def main():
     lmntfy.user_interface.command_line.display_logo()
     if use_test_questions:
         # run on a handful of test question for quick evaluation purposes
-        test_questions = ["What is NERSC?", "How do I use sshproxy?", "How can I connect to Perlmutter?", "Where do I find gcc?", "How do I kill all of my jobs?", "How can I run a job on GPU?"]
+        test_questions = ["What is NERSC?", 
+                          "What is the meaning of life?",
+                          "Where do I find gcc?", 
+                          "How do I use sshproxy?", 
+                          "How can I connect to Perlmutter?", 
+                          "How do I kill all of my jobs?", 
+                          "How can I run a job on GPU?"]
         lmntfy.user_interface.command_line.answer_questions(question_answerer, test_questions)
     else:
         # chat with the model
