@@ -32,8 +32,8 @@ Keep the bullet list short, keeping *only* the relevant urls (there are rarely m
 # prompt to summarize a conversation into its latest question
 QUESTION_EXTRACTION_PROMPT_SYSTEM="You are a question extraction system. \
 You will be provided the last messages of a conversation between a user of the NERSC supercomputing center and an assistant from its support, ending on a question by the user. \
-Your task is to return the user's last question."
-QUESTION_EXTRACTION_PROMPT_USER="Return the user's last question, rephrasing it such that it can be understood without the rest of the conversation."
+Your task is to summarize the user's last message."
+QUESTION_EXTRACTION_PROMPT_USER="Reframe my last question so that I can forward it to support without the rest of this conversation."
 
 #----------------------------------------------------------------------------------------
 # MODEL
@@ -165,7 +165,7 @@ class Vicuna(LanguageModel):
         answer = f"{answer}\n\nReferences:\n{references}"
         return answer
 
-    def extract_question(self, previous_messages, verbose=False):
+    def old_extract_question(self, previous_messages, verbose=False):
         """
         Extracts the latest question given a list of messages.
         Message are expectted to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
@@ -197,4 +197,39 @@ class Vicuna(LanguageModel):
             question = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
             # remove an eventual prefix
             if question.startswith('user: '): question = question[6:]
+            return question
+
+    def extract_question(self, previous_messages, verbose=False):
+        """
+        Extracts the latest question given a list of messages.
+        Message are expectted to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
+        the question returned will be a string.
+        """
+        # builds the prompt
+        system_message = {"role": "system", "content": QUESTION_EXTRACTION_PROMPT_SYSTEM}
+        user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
+        messages = [system_message] + previous_messages + [user_message]
+        prompt = self.messages_to_prompt(messages)
+        prompt_size = self.token_counter(prompt)
+        # keep as many context messages as we can
+        while prompt_size + self.upper_question_size > self.context_size:
+            if len(messages) > 3:
+                # reduce the context size by popping the oldest context message
+                # ensuring there is at least one context message
+                messages.pop(1)
+                prompt = self.messages_to_prompt(messages)
+                prompt_size = self.token_counter(prompt)
+            else:
+                # no more space to reduce context size
+                raise ValueError("You query is too long for the model's context size.")
+        # shortcut if there is only one message
+        last_message = previous_messages[-1]['content']
+        if len(messages) == 3:
+            return last_message
+        else:
+            question = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
+            # remove an eventual prefix
+            if question.startswith('user: '): question = question[6:]
+            # combine it with the last nessage so that we cover all of our bases
+            question = f"{last_message} ({question})"
             return question

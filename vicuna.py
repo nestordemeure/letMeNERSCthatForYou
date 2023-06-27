@@ -29,7 +29,6 @@ def main():
         llm = lmntfy.models.llm.Wizard(models_folder)
     else:
         llm = lmntfy.models.llm.Vicuna(models_folder)
-
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
