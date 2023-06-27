@@ -37,10 +37,10 @@ QUESTION_EXTRACTION_PROMPT_USER="Return the user's last question, rephrasing it 
 #----------------------------------------------------------------------------------------
 # MODEL
 
-class Vicuna(LanguageModel):
+class Wizard(LanguageModel):
     def __init__(self, 
                  models_folder,
-                 model_name='vicuna-13b-v1.3', 
+                 model_name='wizard-vicuna-13b', 
                  context_size=2048):
         super().__init__(models_folder, model_name, context_size)
         model_path = str(models_folder / model_name)
