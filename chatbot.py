@@ -22,11 +22,10 @@ def main():
     database_folder = args.database_folder
     models_folder = args.models_folder
     logs_folder = args.logs_folder
-    use_gpt = args.use_gpt
     question = args.question
 
     # initializes models
-    llm = lmntfy.models.llm.GPT35(models_folder) if use_gpt else lmntfy.models.llm.Vicuna(models_folder)
+    llm = lmntfy.models.llm.Vicuna(models_folder)
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)
