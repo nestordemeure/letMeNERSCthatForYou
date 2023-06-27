@@ -16,7 +16,7 @@ def path2url(file_path:Path, documentation_folder_path:Path):
     # Replace the final '.md' with '/'
     url = url.replace(".md", "/")
     # Convert spaces into URL valid format
-    url = quote(url, safe='/:')
+    url = quote(url, safe='/:#')
     return url
 
 def header2url(url:str, header:str):

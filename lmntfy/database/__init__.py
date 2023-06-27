@@ -31,8 +31,8 @@ class Database(ABC):
         # vector_database_index -> Chunk
         self.chunks: Dict[int, Chunk] = dict()
         # loads the database from file if possible
-        self.documentation_folder = documentation_folder.absolute()
-        self.database_folder = database_folder.absolute()
+        self.documentation_folder = documentation_folder.absolute().resolve()
+        self.database_folder = database_folder.absolute().resolve()
         self.load(update_database=update_database, verbose=True)
     
     # ----- VECTOR DATABASE OPERATIONS -----
@@ -84,10 +84,8 @@ class Database(ABC):
 
     def add_file(self, file_path):
         """Add a file's content to the database"""
-        # generates the url to the file
-        url = path2url(file_path, self.documentation_folder)
         # slice file into chunks
-        chunks = chunk_file(file_path, url, self.token_counter, self.max_tokens_per_chunk)
+        chunks = chunk_file(file_path, self.documentation_folder, self.token_counter, self.max_tokens_per_chunk)
         # save chunks in the databse
         file_update_date = datetime.fromtimestamp(file_path.stat().st_mtime)
         file = File(creation_date=file_update_date)
