@@ -93,7 +93,6 @@ class Vicuna(LanguageModel):
         # see implementation of generate_stream for formula details
         if prompt_size is None: prompt_size = self.token_counter(prompt)
         max_new_tokens = self.context_size - prompt_size - 8
-
         # parameters for the generation
         params = {
             "prompt": prompt,
@@ -171,24 +170,25 @@ class Vicuna(LanguageModel):
         """
         # builds the prompt
         system_message = {"role": "system", "content": QUESTION_EXTRACTION_PROMPT_SYSTEM}
-        context_messages = [{'role':'assistant', 'content': f"{m['role']}: {m['content']}"} for m in previous_messages]
+        system_message = {"role": "system", "content": "\n\nConversation:"}
+        context_messages = [{'role':'system', 'content': f"\n{m['role']}: {m['content']}"} for m in previous_messages]
         user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
         messages = [system_message] + context_messages + [user_message]
         prompt = self.messages_to_prompt(messages)
         prompt_size = self.token_counter(prompt)
         # keep as many context messages as we can
         while prompt_size + self.upper_question_size > self.context_size:
-            if len(messages) > 3:
+            if len(messages) > 4:
                 # reduce the context size by popping the oldest context message
                 # ensuring there is at least one context message
-                messages.pop(1)
+                messages.pop(2)
                 prompt = self.messages_to_prompt(messages)
                 prompt_size = self.token_counter(prompt)
             else:
                 # no more space to reduce context size
                 raise ValueError("You query is too long for the model's context size.")
         # shortcut if there is only one message
-        if len(messages) == 3:
+        if len(messages) == 4:
             return previous_messages[-1]['content']
         else:
             question = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
