@@ -9,7 +9,7 @@ def parse_args():
     parser.add_argument("--database_folder", default="./data/database", type=Path, help="path to the database saving folder") 
     parser.add_argument("--models_folder",default="./data/models",type=Path, help="path to the folder containing all the models")
     parser.add_argument("--logs_folder", default=None, type=Path, help="path to the log saving folder") 
-    parser.add_argument("--open", default=False, action='store_true', help="Should we run an open-source model locally?")
+    parser.add_argument("--use_gpt", default=False, action='store_true', help="Should we use ChatGPT3.5 as the backend instead of a local backend (requires an OPENAI_API_KEY in memory).")
     parser.add_argument("question", nargs="*", default=[], help="optional question passed to the script")
     args = parser.parse_args()
     # Convert the question list back to a string
@@ -23,11 +23,11 @@ def main():
     database_folder = args.database_folder
     models_folder = args.models_folder
     logs_folder = args.logs_folder
-    use_open_model = args.open
+    use_gpt = args.use_gpt
     question = args.question
 
     # initializes models
-    llm = lmntfy.models.llm.Vicuna(models_folder) if use_open_model else lmntfy.models.llm.GPT35(models_folder)
+    llm = lmntfy.models.llm.GPT35(models_folder) if use_gpt else lmntfy.models.llm.Vicuna(models_folder)
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)

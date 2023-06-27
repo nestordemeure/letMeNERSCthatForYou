@@ -21,7 +21,7 @@ def main():
     models_folder = args.models_folder
 
     # load the database and updates it if needed
-    llm = lmntfy.models.llm.GPT35(models_folder)
+    llm = lmntfy.models.llm.Vicuna(models_folder)
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=True)
     print("Done!")
