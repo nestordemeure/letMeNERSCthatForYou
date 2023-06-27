@@ -85,7 +85,7 @@ class Wizard(LanguageModel):
         """
         Token counting implementation.
         """
-        encoded_text = self.tokenizer.encode(text, max_length=sys.maxsize)
+        encoded_text = self.tokenizer.encode(text, truncation=False, max_length=sys.maxsize)
         return len(encoded_text)
 
     def query(self, prompt, prompt_size=None, verbose=False):
