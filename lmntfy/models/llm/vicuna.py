@@ -1,3 +1,4 @@
+import sys
 from . import LanguageModel, keep_references_only
 from fastchat.model.model_adapter import load_model, get_conversation_template
 from fastchat.serve.inference import generate_stream
@@ -84,7 +85,7 @@ class Vicuna(LanguageModel):
         """
         Token counting implementation.
         """
-        encoded_text = self.tokenizer.encode(text)
+        encoded_text = self.tokenizer.encode(text, max_length=sys.maxsize)
         return len(encoded_text)
 
     def query(self, prompt, prompt_size=None, verbose=False):
