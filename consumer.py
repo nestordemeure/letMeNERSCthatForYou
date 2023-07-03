@@ -10,6 +10,7 @@ def parse_args():
     parser.add_argument("--docs_folder", default="/global/u2/n/nestor/scratch_perlmutter/chatbot/documentation/docs", type=Path, help="path to the NERSC documentation folder")
     parser.add_argument("--database_folder", default="/global/u2/n/nestor/scratch_perlmutter/chatbot/database", type=Path, help="path to the database saving folder") 
     parser.add_argument("--models_folder",default="/global/u2/n/nestor/scratch_perlmutter/chatbot/models",type=Path, help="path to the folder containing all the models")
+    parser.add_argument("--verbose", default=True, action='store_true', help="should we display messages as we run for debug purposes")
     args = parser.parse_args()
     # Convert the question list back to a string
     args.question = " ".join(args.question).strip()
@@ -21,6 +22,7 @@ def main():
     docs_folder = args.docs_folder
     database_folder = args.database_folder
     models_folder = args.models_folder
+    verbose = args.verbose
 
     # API details
     input_endpoint = "https://api-dev.nersc.gov/ai/doc/work"
@@ -35,9 +37,11 @@ def main():
 
     # run a loop to check on files
     # TODO harden it against errors
+    if verbose: lmntfy.user_interface.command_line.display_logo()
     while True:
         # gets conversations as a json
         conversations = requests.get(input_endpoint).json()
+        if verbose: print(f"GET: {conversations}")
         # loop on all conversation
         for id, messages in conversations.items():
             # gets an answer form the model
@@ -45,6 +49,7 @@ def main():
             # post the answer with the conversation key
             output={id: answer}
             requests.post(output_endpoint, data=output)
+            if verbose: print(f"POST: {output}")
  
 if __name__ == "__main__":
     main()
