@@ -1,4 +1,5 @@
 import json
+import time
 import requests
 import lmntfy
 import argparse
@@ -10,6 +11,7 @@ def parse_args():
     parser.add_argument("--docs_folder", default="/global/u2/n/nestor/scratch_perlmutter/chatbot/documentation/docs", type=Path, help="path to the NERSC documentation folder")
     parser.add_argument("--database_folder", default="/global/u2/n/nestor/scratch_perlmutter/chatbot/database", type=Path, help="path to the database saving folder") 
     parser.add_argument("--models_folder",default="/global/u2/n/nestor/scratch_perlmutter/chatbot/models",type=Path, help="path to the folder containing all the models")
+    parser.add_argument("--min_refresh_time", default=5, type=float, help="How many seconds should we wait before calls to the API")
     parser.add_argument("--verbose", default=True, action='store_true', help="should we display messages as we run for debug purposes")
     args = parser.parse_args()
     return args
@@ -20,6 +22,7 @@ def main():
     docs_folder = args.docs_folder
     database_folder = args.database_folder
     models_folder = args.models_folder
+    min_refresh_time = args.min_refresh_time
     verbose = args.verbose
 
     # API details
@@ -38,8 +41,9 @@ def main():
     if verbose: lmntfy.user_interface.command_line.display_logo()
     while True:
         # gets conversations as a json
+        get_time = time.time()
         conversations = requests.get(input_endpoint).json()
-        if verbose: print(f"GET: {conversations}")
+        if verbose: print(f"\nGET:\n{json.dumps(conversations, indent=4)}")
         # loop on all conversation
         for id, messages in conversations.items():
             # gets an answer form the model
@@ -47,7 +51,12 @@ def main():
             # post the answer with the conversation key
             output={id: answer}
             requests.post(output_endpoint, data=output)
-            if verbose: print(f"POST: {output}")
+            if verbose: print(f"POST:\n{json.dumps(output, indent=4)}")
+        # calculate how long the answering took
+        # if it took less than min_refresh_time seconds, sleep for the remaining time
+        elapsed_time = time.time() - get_time
+        if elapsed_time < min_refresh_time:
+            time.sleep(min_refresh_time - elapsed_time)
  
 if __name__ == "__main__":
     main()
