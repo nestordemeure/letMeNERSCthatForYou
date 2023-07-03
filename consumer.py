@@ -12,8 +12,6 @@ def parse_args():
     parser.add_argument("--models_folder",default="/global/u2/n/nestor/scratch_perlmutter/chatbot/models",type=Path, help="path to the folder containing all the models")
     parser.add_argument("--verbose", default=True, action='store_true', help="should we display messages as we run for debug purposes")
     args = parser.parse_args()
-    # Convert the question list back to a string
-    args.question = " ".join(args.question).strip()
     return args
 
 def main():
@@ -25,8 +23,8 @@ def main():
     verbose = args.verbose
 
     # API details
-    input_endpoint = "https://api-dev.nersc.gov/ai/doc/work"
-    output_endpoint = "https://api-dev.nersc.gov/ai/doc/work_results"
+    input_endpoint = "https://api-dev.nersc.gov/api/v1.2/ai/docs/work"
+    output_endpoint = "https://api-dev.nersc.gov/api/v1.2/ai/docs/work_results"
     # TODO use an api key (passed as input) for security reasons
 
     # initializes models
