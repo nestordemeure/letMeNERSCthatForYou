@@ -39,7 +39,6 @@ def main():
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
 
     # run a loop to check on files
-    # TODO harden it against errors
     if verbose: lmntfy.user_interface.command_line.display_logo()
     while True:
         # gets conversations as a json
@@ -55,8 +54,8 @@ def main():
                 answer = {'role':'assistant', 'content': f"ERROR: {str(e)}"}
             # post the answer with the conversation key
             output={id: [answer]}
-            requests.post(output_endpoint, data=output)
-            if verbose: print(f"POST:\n{json.dumps(output, indent=4)}")
+            response = requests.post(output_endpoint, json=output, headers={'accept': 'application/json', 'Content-Type': 'application/json'})
+            if verbose: print(f"POST (status code:{response.status_code}):\n{json.dumps(output, indent=4)}")
         # calculate how long the answering took
         # if it took less than min_refresh_time seconds, sleep for the remaining time
         elapsed_time = time.time() - get_time
