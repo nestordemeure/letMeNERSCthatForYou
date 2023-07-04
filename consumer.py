@@ -12,6 +12,7 @@ def parse_args():
     parser.add_argument("--database_folder", default="/global/u2/n/nestor/scratch_perlmutter/chatbot/database", type=Path, help="path to the database saving folder") 
     parser.add_argument("--models_folder",default="/global/u2/n/nestor/scratch_perlmutter/chatbot/models",type=Path, help="path to the folder containing all the models")
     parser.add_argument("--min_refresh_time", default=5, type=float, help="How many seconds should we wait before calls to the API")
+    parser.add_argument("--api_key", default=None, help="the API key used to access NERSC services")
     parser.add_argument("--verbose", default=True, action='store_true', help="should we display messages as we run for debug purposes")
     args = parser.parse_args()
     return args
@@ -23,12 +24,13 @@ def main():
     database_folder = args.database_folder
     models_folder = args.models_folder
     min_refresh_time = args.min_refresh_time
+    api_key = args.api_key
     verbose = args.verbose
 
     # API details
     input_endpoint = "https://api-dev.nersc.gov/api/v1.2/ai/docs/work"
     output_endpoint = "https://api-dev.nersc.gov/api/v1.2/ai/docs/work_results"
-    # TODO use an api key (passed as input) for security reasons
+    # TODO use the api key for security reasons
 
     # initializes models
     llm = lmntfy.models.llm.Vicuna(models_folder)
