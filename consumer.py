@@ -46,10 +46,13 @@ def main():
         if verbose: print(f"\nGET:\n{json.dumps(conversations, indent=4)}")
         # loop on all conversation
         for id, messages in conversations.items():
-            # gets an answer form the model
-            answer = question_answerer.continue_chat(messages, verbose=False)['content']
+            # gets an answer from the model
+            try:
+                answer = question_answerer.continue_chat(messages, verbose=False)
+            except Exception as e:
+                answer = {'role':'assistant', 'content': f"ERROR: {str(e)}"}
             # post the answer with the conversation key
-            output={id: answer}
+            output={id: [answer]}
             requests.post(output_endpoint, data=output)
             if verbose: print(f"POST:\n{json.dumps(output, indent=4)}")
         # calculate how long the answering took
