@@ -3,6 +3,7 @@ import time
 import requests
 import lmntfy
 import argparse
+import markdown
 from pathlib import Path
 
 def parse_args():
@@ -50,6 +51,8 @@ def main():
             # gets an answer from the model
             try:
                 answer = question_answerer.continue_chat(messages, verbose=False)
+                # renders the markdown as html
+                answer['content'] = markdown.markdown(answer['content'])
             except Exception as e:
                 answer = {'role':'assistant', 'content': f"ERROR: {str(e)}"}
             # post the answer with the conversation key
