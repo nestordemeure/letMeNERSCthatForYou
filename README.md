@@ -14,7 +14,7 @@ This bot is not made to replace the documentation but rather to improve informat
 
 - clone the repo
 - get an openai API key
-- get the dependency in your environement (openai, tiktoken, faiss-cpu, sentence_transformers, rich, fschat)
+- get the dependency in your environement (openai, tiktoken, faiss-cpu, sentence_transformers, rich, fschat, sfapi_client)
 - clone the [NERSC doc repository](https://gitlab.com/NERSC/nersc.gitlab.io/-/tree/main/docs) into a folder
 
 ## Usage
