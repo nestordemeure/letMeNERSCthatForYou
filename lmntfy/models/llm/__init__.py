@@ -55,3 +55,4 @@ class LanguageModel(ABC):
 from .chatgpt import GPT35
 from .vicuna import Vicuna
 from .wizard import Wizard
+from .llama2 import Llama2
