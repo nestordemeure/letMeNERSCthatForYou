@@ -59,15 +59,16 @@ In no particular order:
 
 * batch process questions and make sure we can load balance to deal with large number of users.
 
-## Developers
+## Contributors
 
 The current developers of the project are:
 
-* <img src="https://github.com/nestordemeure.png" width="60px;"/><br /><sub>Nestor Demeure - Leading the effort and writing the glue code</sub><br /><a href="https://github.com/nestordemeure">GitHub Profile</a>
-
-* <img src="https://github.com/ermalrrapaj.png" width="60px;"/><br /><sub>Ermal Rrapaj - Working on finetuning and testing home-made/trained architectures/models</sub><br /><a href="https://github.com/ermalrrapaj">GitHub Profile</a>
-
-* <img src="https://github.com/gabor-lbl.png" width="60px;"/><br /><sub>Gabor Torok - Working on the superfacility API integration and web front-end</sub><br /><a href="https://github.com/gabor-lbl">GitHub Profile</a>
-
-* <img src="https://github.com/asnaylor.png" width="60px;"/><br /><sub>Andrew Naylor - Working on scaling the model to production throughputs</sub><br /><a href="https://github.com/asnaylor">GitHub Profile</a>
+- ![Nestor Demeure](https://github.com/nestordemeure.png)
+  - **Nestor Demeure**: Leading the effort and writing the glue code.
+- ![Ermal Rrapaj](https://github.com/ermalrrapaj.png)
+  - **Ermal Rrapaj**: Working on finetuning and testing home-made/trained architectures/models.
+- ![Gabor Torok](https://github.com/gabor-lbl.png)
+  - **Gabor Torok**: Working on the superfacility API integration and web front-end.
+- ![Andrew Naylor](https://github.com/asnaylor.png)
+  - **Andrew Naylor**: Working on scaling the model to production throughputs.
 
