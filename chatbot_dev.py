@@ -4,11 +4,14 @@ from pathlib import Path
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--docs_folder", default="/global/u2/n/nestor/scratch_perlmutter/chatbot/documentation/docs", type=Path, help="path to the NERSC documentation folder")
-    parser.add_argument("--database_folder", default="/global/u2/n/nestor/scratch_perlmutter/chatbot/database", type=Path, help="path to the database saving folder") 
-    parser.add_argument("--models_folder",default="/global/u2/n/nestor/scratch_perlmutter/chatbot/models",type=Path, help="path to the folder containing all the models")
-    parser.add_argument("--model", default="vicuna", choices=["gpt", "vicuna", "wizard"], help="model to use: can be 'gpt', 'vicuna', or 'wizard'")
+    parser.add_argument("--docs_folder", default="./data/docs", type=Path, help="path to the NERSC documentation folder")
+    parser.add_argument("--database_folder", default="./data/database", type=Path, help="path to the database saving folder") 
+    parser.add_argument("--logs_folder", default=None, type=Path, help="path to the log saving folder") 
+    parser.add_argument("--models_folder",default="/pscratch/sd/e/ermal/vicuna/", type=Path, help="path to the folder containing all the models")
+    parser.add_argument("--update_database", default=True, action='store_true', help="whether to update database to the current documentation")
     parser.add_argument("--use_test_questions", default=True, action='store_true', help="whether to run on the test questions (for debugging purposes)")
+    parser.add_argument("--debug",default=False,action="store_true",help="Print useful debug information (e.g., prompts)",)
+    parser.add_argument("--llm_model", type=str, default='vicuna')
     args = parser.parse_args()
     return args
 
@@ -18,20 +21,19 @@ def main():
     docs_folder = args.docs_folder
     database_folder = args.database_folder
     models_folder = args.models_folder
-    model = args.model
+    logs_folder = args.logs_folder
+    update_database = args.update_database
     use_test_questions = args.use_test_questions
 
     # initializes models
     print("Loading the database and models...")
-    if model == 'gpt':
+    if args.llm_model == "GPT":
         llm = lmntfy.models.llm.GPT35(models_folder)
-    elif model == 'wizard':
-        llm = lmntfy.models.llm.Wizard(models_folder)
-    else:
+    elif args.llm_model == "Vicuna":
         llm = lmntfy.models.llm.Vicuna(models_folder)
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
-    database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
-    question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
+    database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=update_database)
+    question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)
 
     # answers questions
     lmntfy.user_interface.command_line.display_logo()

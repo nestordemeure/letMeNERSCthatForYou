@@ -5,29 +5,57 @@ This is a custom-made documentation Chatbot based on the [NERSC documentation](h
 ## Goals
 
 This bot is not made to replace the documentation but rather to improve information discoverability.
+Our goals are to:
 
 * Being able to answer questions on NERSC with up-to-date, *sourced*, answers,
-* make it fairly easy to switch the underlying models (embeddings and LLM) such that it can be run on-premise,
-* have a user-facing web-based user interface.
+* run fully *open source* technologies *on-premise* giving us control, security, and privacy,
+* serve this model to NERSC users in production with acceptable performance,
+* make it fairly easy to switch the underlying models, embeddings and LLM, to be able to follow a rapidly evolving technology.
 
 ## Installation
 
-- clone the repo
-- get an openai API key
-- get the dependency in your environement (openai, tiktoken, faiss-cpu, sentence_transformers, rich, fschat, sfapi_client)
-- clone the [NERSC doc repository](https://gitlab.com/NERSC/nersc.gitlab.io/-/tree/main/docs) into a folder
+* clone the repo,
+* get the dependency in your environement (openai[^openai], tiktoken, faiss-cpu, sentence_transformers, rich, fschat, sfapi_client),
+* clone the [NERSC doc repository](https://gitlab.com/NERSC/nersc.gitlab.io/-/tree/main/docs) into a folder.
+
+[^openai]: Note that, while we have an OpenAI backend used for tests, it is not deployed to users nor required.
 
 ## Usage
 
-- put the openai API key in environement
-- run lmntfy.py
+#### Basic use
+
+Those scripts are meant to be run locally, mainly by developers of the project:
+
+* `update_database.py` update the vector database (for a given llm, sentence embeder, and vector database)[^when]
+* `chatbot.py` this is a basic local question answering loop
+* `chatbot_dev.py` is a more feature rich version of local loop, making it easy to run test questions and switch models around.
+
+[^when]: This script is run once everyday (on a scron job).
+
+#### Superfacility API use
+
+Those scripts are meant to be user with the suprfacility API:
+
+* `api_client.py` this is a deonstration client, calling the chatbot via the superfacility API,
+* `api_consumer.py` this is a worker, answering questions asked to the superfacility API on a loop
 
 ## TODO
 
-Deployment:
-- turn the code into an API always running?
+In no particular order:
 
-Overall:
-- cleanup readme
-- can we speedup dependencies loading? or is speed mostly a matter of loading the model? (useless if we end up going the API way)
-- cleanup requirements.txt
+* move this code to the NERSC github,
+* clean up `requirements.txt` and the overall instalation process,
+* put all bits and pieces (code but also slurm scripts, database copy, and model weights) in a single folder,
+* have the model always running on Perlmuter,
+* document the inner-workings,
+* list developpers and their role here,
+* clean-up code and improve comments / documentation,
+* improve (/further standardize) abstraction to call on language models,
+* start a dedicated slack for developers of the project,
+* add a dedicated code formater?
+* establish a canonical list of test questions / conversations
+
+* try fine-tuning sentence embedder,
+* try a home-trained model,
+
+* batch process questions and make sure we can load balance to deal with large number of users.
