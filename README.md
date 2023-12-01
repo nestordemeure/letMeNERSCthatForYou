@@ -68,18 +68,17 @@ The current developers of the project are:
 * [Gabor Torok](https://github.com/gabor-lbl) working on the superfacility API integration and web front-end,
 * [Andrew Naylor](https://github.com/asnaylor) working on scaling the model to production throughputs.
 
-<div>
+<div align="center">
     <a href="https://github.com/nestordemeure">
-        <img src="https://github.com/nestordemeure.png" width="60" height="60" alt="Nestor Demeure" />
+        <img src="https://github.com/nestordemeure.png" width="60" height="60" alt="Nestor Demeure" style="border-radius:50%;" />
     </a>
     <a href="https://github.com/ermalrrapaj">
-        <img src="https://github.com/ermalrrapaj.png" width="60" height="60" alt="Ermal Rrapaj" />
+        <img src="https://github.com/ermalrrapaj.png" width="60" height="60" alt="Ermal Rrapaj" style="border-radius:50%;" />
     </a>
     <a href="https://github.com/gabor-lbl">
-        <img src="https://github.com/gabor-lbl.png" width="60" height="60" alt="Gabor Torok" />
+        <img src="https://github.com/gabor-lbl.png" width="60" height="60" alt="Gabor Torok" style="border-radius:50%;" />
     </a>
     <a href="https://github.com/asnaylor">
-        <img src="https://github.com/asnaylor.png" width="60" height="60" alt="Andrew Naylor" />
+        <img src="https://github.com/asnaylor.png" width="60" height="60" alt="Andrew Naylor" style="border-radius:50%;" />
     </a>
 </div>
-
