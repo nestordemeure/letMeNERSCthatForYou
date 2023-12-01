@@ -59,16 +59,11 @@ In no particular order:
 
 * batch process questions and make sure we can load balance to deal with large number of users.
 
-## Contributors
+## Developers
 
 The current developers of the project are:
 
-- ![Nestor Demeure](https://github.com/nestordemeure.png)
-  - **Nestor Demeure**: Leading the effort and writing the glue code.
-- ![Ermal Rrapaj](https://github.com/ermalrrapaj.png)
-  - **Ermal Rrapaj**: Working on finetuning and testing home-made/trained architectures/models.
-- ![Gabor Torok](https://github.com/gabor-lbl.png)
-  - **Gabor Torok**: Working on the superfacility API integration and web front-end.
-- ![Andrew Naylor](https://github.com/asnaylor.png)
-  - **Andrew Naylor**: Working on scaling the model to production throughputs.
-
+* [Nestor Demeure](https://github.com/nestordemeure) leading the effort and writing the glue code,
+* [Ermal Rrapaj](https://github.com/ermalrrapaj) working on finetuning and testing home-made/trained architectures/models,
+* [Gabor Torok](https://github.com/gabor-lbl) working on the superfacility API integration and web front-end,
+* [Andrew Naylor](https://github.com/asnaylor) working on scaling the model to production throughputs.
