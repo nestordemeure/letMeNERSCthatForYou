@@ -74,21 +74,21 @@ In no particular order:
       <a href="https://github.com/ermalrrapaj">
         <img src="https://github.com/ermalrrapaj.png" width="60" height="60" alt="Ermal Rrapaj" /><br>
         <a href="https://github.com/ermalrrapaj">Ermal Rrapaj</a><br>
-        working on finetuning and testing home-made/trained architectures/models
+        finetuning and testing home-made models
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/gabor-lbl">
         <img src="https://github.com/gabor-lbl.png" width="60" height="60" alt="Gabor Torok" /><br>
         <a href="https://github.com/gabor-lbl">Gabor Torok</a><br>
-        working on the superfacility API integration and web front-end
+        writing the superfacility API integration and web front-end
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/asnaylor">
         <img src="https://github.com/asnaylor.png" width="60" height="60" alt="Andrew Naylor" /><br>
         <a href="https://github.com/asnaylor">Andrew Naylor</a><br>
-        working on scaling the model to production throughputs
+        scaling the service to production throughputs
       </a>
     </td>
   </tr>
