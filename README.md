@@ -67,3 +67,41 @@ The current developers of the project are:
 * [Ermal Rrapaj](https://github.com/ermalrrapaj) working on finetuning and testing home-made/trained architectures/models,
 * [Gabor Torok](https://github.com/gabor-lbl) working on the superfacility API integration and web front-end,
 * [Andrew Naylor](https://github.com/asnaylor) working on scaling the model to production throughputs.
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contributors</title>
+    <style>
+        .contributor {
+            display: inline-block;
+            margin: 10px;
+            border-radius: 50%; /* Circular shape */
+            width: 60px;
+            height: 60px;
+            overflow: hidden;
+        }
+
+        .contributor img {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <a href="https://github.com/nestordemeure" class="contributor">
+            <img src="https://github.com/nestordemeure.png" alt="Nestor Demeure">
+        </a>
+        <a href="https://github.com/ermalrrapaj" class="contributor">
+            <img src="https://github.com/ermalrrapaj.png" alt="Ermal Rrapaj">
+        </a>
+        <a href="https://github.com/gabor-lbl" class="contributor">
+            <img src="https://github.com/gabor-lbl.png" alt="Gabor Torok">
+        </a>
+        <a href="https://github.com/asnaylor" class="contributor">
+            <img src="https://github.com/asnaylor.png" alt="Andrew Naylor">
+        </a>
+    </div>
+</body>
+</html>
