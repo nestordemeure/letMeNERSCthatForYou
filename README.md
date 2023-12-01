@@ -61,33 +61,34 @@ In no particular order:
 
 ## Developers
 
-The current developers of the project are:
-
-* [Nestor Demeure](https://github.com/nestordemeure) leading the effort and writing the glue code,
-* [Ermal Rrapaj](https://github.com/ermalrrapaj) working on finetuning and testing home-made/trained architectures/models,
-* [Gabor Torok](https://github.com/gabor-lbl) working on the superfacility API integration and web front-end,
-* [Andrew Naylor](https://github.com/asnaylor) working on scaling the model to production throughputs.
-
 <table width="100%">
   <tr>
     <td align="center">
       <a href="https://github.com/nestordemeure">
-        <img src="https://github.com/nestordemeure.png" width="60" height="60" alt="Nestor Demeure" />
+        <img src="https://github.com/nestordemeure.png" width="60" height="60" alt="Nestor Demeure" /><br>
+        <a href="https://github.com/nestordemeure">Nestor Demeure</a><br>
+        leading the effort and writing the glue code
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/ermalrrapaj">
-        <img src="https://github.com/ermalrrapaj.png" width="60" height="60" alt="Ermal Rrapaj" />
+        <img src="https://github.com/ermalrrapaj.png" width="60" height="60" alt="Ermal Rrapaj" /><br>
+        <a href="https://github.com/ermalrrapaj">Ermal Rrapaj</a><br>
+        working on finetuning and testing home-made/trained architectures/models
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/gabor-lbl">
-        <img src="https://github.com/gabor-lbl.png" width="60" height="60" alt="Gabor Torok" />
+        <img src="https://github.com/gabor-lbl.png" width="60" height="60" alt="Gabor Torok" /><br>
+        <a href="https://github.com/gabor-lbl">Gabor Torok</a><br>
+        working on the superfacility API integration and web front-end
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/asnaylor">
-        <img src="https://github.com/asnaylor.png" width="60" height="60" alt="Andrew Naylor" />
+        <img src="https://github.com/asnaylor.png" width="60" height="60" alt="Andrew Naylor" /><br>
+        <a href="https://github.com/asnaylor">Andrew Naylor</a><br>
+        working on scaling the model to production throughputs
       </a>
     </td>
   </tr>
