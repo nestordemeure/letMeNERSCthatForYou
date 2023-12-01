@@ -48,14 +48,26 @@ In no particular order:
 * put all bits and pieces (code but also slurm scripts, database copy, and model weights) in a single folder,
 * have the model always running on Perlmuter,
 * document the inner-workings,
-* list developpers and their role here,
 * clean-up code and improve comments / documentation,
 * improve (/further standardize) abstraction to call on language models,
-* start a dedicated slack for developers of the project,
 * add a dedicated code formater?
-* establish a canonical list of test questions / conversations
+* establish a canonical list of test questions / conversations,
+* move all code / data to the `nstaff` perlmuter folder
 
 * try fine-tuning sentence embedder,
 * try a home-trained model,
 
 * batch process questions and make sure we can load balance to deal with large number of users.
+
+## Developers
+
+The current developers of the project are:
+
+* <img src="https://github.com/nestordemeure.png" width="60px;"/><br /><sub>Nestor Demeure - Leading the effort and writing the glue code</sub><br /><a href="https://github.com/nestordemeure">GitHub Profile</a>
+
+* <img src="https://github.com/ermalrrapaj.png" width="60px;"/><br /><sub>Ermal Rrapaj - Working on finetuning and testing home-made/trained architectures/models</sub><br /><a href="https://github.com/ermalrrapaj">GitHub Profile</a>
+
+* <img src="https://github.com/gabor-lbl.png" width="60px;"/><br /><sub>Gabor Torok - Working on the superfacility API integration and web front-end</sub><br /><a href="https://github.com/gabor-lbl">GitHub Profile</a>
+
+* <img src="https://github.com/asnaylor.png" width="60px;"/><br /><sub>Andrew Naylor - Working on scaling the model to production throughputs</sub><br /><a href="https://github.com/asnaylor">GitHub Profile</a>
+
