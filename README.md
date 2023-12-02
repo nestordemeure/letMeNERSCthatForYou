@@ -52,7 +52,10 @@ In no particular order:
 * improve (/further standardize) abstraction to call on language models,
 * add a dedicated code formater?
 * establish a canonical list of test questions / conversations,
-* move all code / data to the `nstaff` perlmuter folder
+* process markdown links in the full file *before* chunking
+* explicitly fight hallucinaitons in the prompt? ("if the question is not covered by the documentation you have been provided, ...")
+* explore the use of something like microsoft guidance for structured answers (might not be future proof)
+* deal with answers that end abruptly due to the end of the context length (extremly rare with long enough context)
 
 * try fine-tuning sentence embedder,
 * try a home-trained model,
