@@ -47,6 +47,7 @@ In no particular order:
 * move to conda-lock for nicer more reproducible builds
 * have the model always running on Perlmuter,
 * add a dedicated code formater?
+* make sure the code runs fine in its new location
 
 * clean-up code and improve comments / documentation,
 * establish a canonical list of test questions / conversations,
