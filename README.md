@@ -44,18 +44,19 @@ Those scripts are meant to be user with the suprfacility API:
 In no particular order:
 
 * move this code to the NERSC github,
-* clean up `requirements.txt` and the overall instalation process,
-* put all bits and pieces (code but also slurm scripts, database copy, and model weights) in a single folder,
+* move to conda-lock for nicer more reproducible builds
 * have the model always running on Perlmuter,
-* document the inner-workings,
-* clean-up code and improve comments / documentation,
-* improve (/further standardize) abstraction to call on language models,
 * add a dedicated code formater?
+
+* clean-up code and improve comments / documentation,
 * establish a canonical list of test questions / conversations,
 * process markdown links in the full file *before* chunking
+* improve (/further standardize) abstraction to call on language models,
 * explicitly fight hallucinaitons in the prompt? ("if the question is not covered by the documentation you have been provided, ...")
-* explore the use of something like microsoft guidance for structured answers (might not be future proof)
 * deal with answers that end abruptly due to the end of the context length (extremly rare with long enough context)
+
+* explore the use of something like microsoft guidance for structured answers (might not be future proof)
+* document the inner-workings,
 
 * try fine-tuning sentence embedder,
 * try a home-trained model,
