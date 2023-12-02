@@ -43,10 +43,8 @@ Those scripts are meant to be user with the suprfacility API:
 
 In no particular order:
 
-* move this code to the NERSC github,
 * move to conda-lock for nicer more reproducible builds
-* have the model always running on Perlmuter,
-* add a dedicated code formater?
+* add a dedicated code formater? (yapf?)
 * make sure the code runs fine in its new location
 
 * clean-up code and improve comments / documentation,
@@ -56,7 +54,8 @@ In no particular order:
 * explicitly fight hallucinaitons in the prompt? ("if the question is not covered by the documentation you have been provided, ...")
 * deal with answers that end abruptly due to the end of the context length (extremly rare with long enough context)
 
-* explore the use of something like microsoft guidance for structured answers (might not be future proof)
+* move this code to the NERSC github,
+* have the model always running on Perlmuter,
 * document the inner-workings,
 
 * try fine-tuning sentence embedder,
