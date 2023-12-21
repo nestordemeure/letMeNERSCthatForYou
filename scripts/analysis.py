@@ -8,10 +8,10 @@ import json
 
 # Define your token_counter function here
 #token_counter = GPT35().token_counter
-token_counter = Vicuna(model_path="/global/u2/n/nestor/scratch_perlmutter/chatbot/models/vicuna-13b").token_counter
+token_counter = Vicuna(model_path="../models/vicuna-13b-v1.3").token_counter
 
 # Load JSON data
-with open('./data/questions.json', 'r') as f:
+with open('./data/various/questions.json', 'r') as f:
     data = json.load(f)
 
 for kind in ['answer', 'question']:
