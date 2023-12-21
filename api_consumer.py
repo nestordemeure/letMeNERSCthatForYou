@@ -8,9 +8,9 @@ from pathlib import Path
 def parse_args():
     # Read the arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("--docs_folder", default="/global/u2/n/nestor/scratch_perlmutter/chatbot/documentation/docs", type=Path, help="path to the NERSC documentation folder")
-    parser.add_argument("--database_folder", default="/global/u2/n/nestor/scratch_perlmutter/chatbot/database", type=Path, help="path to the database saving folder") 
-    parser.add_argument("--models_folder",default="/global/u2/n/nestor/scratch_perlmutter/chatbot/models",type=Path, help="path to the folder containing all the models")
+    parser.add_argument("--docs_folder", default="./data/nersc_docs", type=Path, help="path to the NERSC documentation folder")
+    parser.add_argument("--database_folder", default="./data/database", type=Path, help="path to the database saving folder") 
+    parser.add_argument("--models_folder", default="../models",type=Path, help="path to the folder containing all the models")
     parser.add_argument("--min_refresh_time", default=5, type=float, help="How many seconds should we wait before calls to the API")
     parser.add_argument("--api_key", default=None, help="the API key used to access NERSC services")
     parser.add_argument("--verbose", default=True, action='store_true', help="should we display messages as we run for debug purposes")
