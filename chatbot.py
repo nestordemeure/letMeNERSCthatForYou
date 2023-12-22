@@ -5,7 +5,7 @@ from pathlib import Path
 def parse_args():
     # Read the arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("--docs_folder", default="./data/nersc_docs", type=Path, help="path to the NERSC documentation folder")
+    parser.add_argument("--docs_folder", default="./data/nersc_doc/docs", type=Path, help="path to the NERSC documentation folder")
     parser.add_argument("--database_folder", default="./data/database", type=Path, help="path to the database saving folder") 
     parser.add_argument("--models_folder",default="../models",type=Path, help="path to the folder containing all the models")
     parser.add_argument("--logs_folder", default=None, type=Path, help="path to the log saving folder") 
