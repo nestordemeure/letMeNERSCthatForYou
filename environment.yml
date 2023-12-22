@@ -1,0 +1,13 @@
+name: chatbot
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - openai=0.27  # OpenAI's Python client library
+  - tiktoken=0.4  # OpenAI's tokenizer library
+  - faiss-cpu=1.7  # CPU version of the FAISS library for efficient similarity search
+  - sentence-transformers=2.2  # For generating sentence embeddings
+  - rich=13.4  # Rich text and formatting in the terminal
+  - fschat=0.2  # LLM serving library
+  - pip:
+    - sfapi_client=0.0.6 # Python client for NERSC SF API

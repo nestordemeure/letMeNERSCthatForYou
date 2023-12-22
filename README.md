@@ -15,10 +15,10 @@ Our goals are to:
 ## Installation
 
 * clone the repo,
-* get the dependency in your environement (openai[^openai], tiktoken, faiss-cpu, sentence_transformers, rich, fschat, sfapi_client),
+* use the `environment.yml` file to install dependencies with `conda`[^openai]
 * clone the [NERSC doc repository](https://gitlab.com/NERSC/nersc.gitlab.io/-/tree/main/docs) into a folder.
 
-[^openai]: Note that, while we have an OpenAI backend used for tests, it is not deployed to users nor required.
+[^openai]: Note that, while we have an OpenAI dependency (for a backend used in our tests), it is not deployed to users nor required.
 
 ## Usage
 
@@ -43,7 +43,6 @@ Those scripts are meant to be user with the suprfacility API:
 
 In no particular order:
 
-* move to conda-lock for nicer more reproducible builds
 * add a dedicated code formater? (yapf?)
 * make sure the code runs fine in its new location
 
