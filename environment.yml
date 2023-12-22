@@ -2,14 +2,14 @@ name: chatbot
 channels:
   - conda-forge
 dependencies:
-  - python=3.11
+  - python~=3.11
   - pip
-  - openai=1.6.0  # OpenAI's Python client library
-  - tiktoken=0.5.2  # OpenAI's tokenizer library
-  - faiss-cpu=1.7.4  # CPU version of the FAISS library for efficient similarity search
-  - sentence-transformers=2.2.2  # For generating sentence embeddings
-  - rich=13.7.0  # Rich text and formatting in the terminal
+  - openai~=1.6.0  # OpenAI's Python client library
+  - tiktoken~=0.5.2  # OpenAI's tokenizer library
+  - faiss-cpu~=1.7.4  # CPU version of the FAISS library for efficient similarity search
+  - sentence-transformers~=2.2.2  # For generating sentence embeddings
+  - rich~=13.7.0  # Rich text and formatting in the terminal
   - pip:
-    - fschat=0.2.34  # LLM serving library
-    - sfapi_client=0.0.6 # Python client for NERSC SF API
+    - fschat~=0.2.34  # LLM serving library
+    - sfapi_client~=0.0.6 # Python client for NERSC SF API
 # you might want to module load python cudatoolkit cudnn first

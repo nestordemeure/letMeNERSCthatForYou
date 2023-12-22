@@ -9,7 +9,7 @@ data_folder="$code_folder/data"
 # data folders
 documentation_folder="$data_folder/nersc_doc/docs"
 database_folder="$data_folder/database"
-python_instance="$chatbot_root/python/chatbot_env/bin/python3"
+python_instance="$chatbot_root/conda/bin/python3"
 
 # Change the current directory to the documentation folder
 cd $documentation_folder
