@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # load dependencies
-module load python cudatoolkit cudnn
+module load python cudatoolkit cudnn pytorch
 conda activate /global/cfs/cdirs/nstaff/chatbot/conda
 
 # base folder

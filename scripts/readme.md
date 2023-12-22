@@ -2,15 +2,16 @@
 
 ## SCRON Scripts
 
-* `update_database.sh` when run, this scripts causes the updating of the database (git pull of the repo then refreshing of the vector database)
-* `start_api_worker.sh` when run this script starts an API worker
+* `local_chatbot.sh` starts a chatbot running on the current node,
+* `update_database.sh` causes the updating of the database (git pull of the repo then refreshing of the vector database),
+* `start_api_worker.sh` starts an API worker.
 
 The current SCRON file looks like this:
 
 ```shell
-#SCRON -o /global/u2/n/nestor/scratch_perlmutter/chatbot/logs/output-%j.out                                                                                            
+#SCRON -o /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/data/logs/update_database/output-%j.out                                                                                            
 #SCRON --open-mode=append
-0 3 * * * /global/u2/n/nestor/scratch_perlmutter/chatbot/update_database.sh
+0 3 * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/update_database.sh
 ```
 
 ## Various Scripts

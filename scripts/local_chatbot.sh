@@ -16,5 +16,5 @@ database_folder="$data_folder/database"
 python_instance="$chatbot_root/conda/bin/python3"
 
 # runs the worker
-# Using python_instance to run the api_consumer script in code_folder
-$python_instance $code_folder/api_consumer.py --docs_folder $documentation_folder --database_folder $database_folder --models_folder $models_folder
+# Using python_instance to run the chatbot script in code_folder
+$python_instance $code_folder/chatbot.py --docs_folder $documentation_folder --database_folder $database_folder --models_folder $models_folder

@@ -30,6 +30,8 @@ Those scripts are meant to be run locally, mainly by developers of the project:
 * `chatbot.py` this is a basic local question answering loop
 * `chatbot_dev.py` is a more feature rich version of local loop, making it easy to run test questions and switch models around.
 
+On NERSC supercomputers, you might want to run `module load python cudatoolkit cudnn pytorch` before using those commands.
+
 [^when]: This script is run once everyday (on a scron job).
 
 #### Superfacility API use
@@ -44,7 +46,6 @@ Those scripts are meant to be user with the suprfacility API:
 In no particular order:
 
 * add a dedicated code formater? (yapf?)
-* make sure the code runs fine in its new location
 
 * clean-up code and improve comments / documentation,
 * establish a canonical list of test questions / conversations,

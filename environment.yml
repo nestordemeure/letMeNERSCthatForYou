@@ -10,10 +10,16 @@ dependencies:
   - sentence-transformers~=2.2.2  # For generating sentence embeddings
   - rich~=13.7.0  # Rich text and formatting in the terminal
   - accelerate~=0.25.0   # dependency of fschat
+  - pytorch  # we will use the local version anyway
   - pip:
     - fschat~=0.2.34  # LLM serving library
     - sfapi_client~=0.0.6 # Python client for NERSC SF API
+#
 # modules used:
-# module load python cudatoolkit cudnn
+# module load python cudatoolkit cudnn pytorch
+#
+# to activate the environment:
+# conda activate /global/cfs/cdirs/nstaff/chatbot/conda
+#
 # to update the environment:
 # conda env update --prefix /global/cfs/cdirs/nstaff/chatbot/conda --file environment.yml --prune
