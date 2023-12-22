@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# load dependencies
+module load python cudatoolkit cudnn
+conda activate /global/cfs/cdirs/nstaff/chatbot/conda
+
 # base folder
 chatbot_root="/global/cfs/cdirs/nstaff/chatbot"
 # main folders

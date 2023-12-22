@@ -9,7 +9,11 @@ dependencies:
   - faiss-cpu~=1.7.4  # CPU version of the FAISS library for efficient similarity search
   - sentence-transformers~=2.2.2  # For generating sentence embeddings
   - rich~=13.7.0  # Rich text and formatting in the terminal
+  - accelerate~=0.25.0   # dependency of fschat
   - pip:
     - fschat~=0.2.34  # LLM serving library
     - sfapi_client~=0.0.6 # Python client for NERSC SF API
-# you might want to module load python cudatoolkit cudnn first
+# modules used:
+# module load python cudatoolkit cudnn
+# to update the environment:
+# conda env update --prefix /global/cfs/cdirs/nstaff/chatbot/conda --file environment.yml --prune
