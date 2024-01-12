@@ -43,5 +43,4 @@ class Embedding(ABC):
         """
         pass
 
-from .openai_embedding import OpenAIEmbedding
 from .sbert_embedding import SBERTEmbedding

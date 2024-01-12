@@ -1,19 +1,25 @@
 name: chatbot
 channels:
+  - pytorch
+  - nvidia
+  - huggingface
   - conda-forge
 dependencies:
   - python~=3.11
   - pip
-  - openai~=1.6.0  # OpenAI's Python client library
-  - tiktoken~=0.5.2  # OpenAI's tokenizer library
   - faiss-cpu~=1.7.4  # CPU version of the FAISS library for efficient similarity search
   - sentence-transformers~=2.2.2  # For generating sentence embeddings
   - rich~=13.7.0  # Rich text and formatting in the terminal
-  - accelerate~=0.25.0   # dependency of fschat
-  - pytorch  # we will use the local version anyway
+  - pytorch
+  - pytorch-cuda=11.7 # compatible with perlmutter default
+  - cudatoolkit=11.7 # compatible with perlmutter default
+  - huggingface_hub
+  - transformers
+  - accelerate
   - pip:
-    - fschat~=0.2.34  # LLM serving library
     - sfapi_client~=0.0.6 # Python client for NERSC SF API
+# use the following to check that you have a GPU version of Pytorch:
+# conda list pytorch
 #
 # modules used:
 # module load python cudatoolkit cudnn pytorch

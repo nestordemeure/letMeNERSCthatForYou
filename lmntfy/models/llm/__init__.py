@@ -4,6 +4,24 @@ from typing import List, Dict
 from pathlib import Path
 from ...database.document_loader import Chunk
 
+#------------------------------------------------------------------------------
+# MODEL FUNCTIONS
+
+from fastchat.model.model_adapter import load_model, get_conversation_template
+from fastchat.serve.inference import generate_stream
+
+from transformers import AutoModel
+from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaTokenizerFast, MistralForCausalLM
+
+def _load_model(pretrained_model_name_or_path:str, device='cuda'):
+   tokeniser = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
+   model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path, trust_remote_code=False, low_cpu_mem_usage=True, torch_dtype='auto')
+   return model, tokeniser
+
+
+#------------------------------------------------------------------------------
+# MODEL CLASS
+
 def keep_references_only(input_str):
     # extract all urls
     url_pattern = re.compile(r'https?://(?:[a-zA-Z]|[0-9]|[-.#/]|[$@&+]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
@@ -52,7 +70,5 @@ class LanguageModel(ABC):
         """
         pass
 
-from .chatgpt import GPT35
 from .vicuna import Vicuna
-from .wizard import Wizard
 from .llama2 import Llama2
