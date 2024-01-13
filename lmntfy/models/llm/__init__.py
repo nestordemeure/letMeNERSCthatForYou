@@ -1,28 +1,22 @@
 import re
+import torch
 from abc import ABC, abstractmethod
-from typing import List, Dict
-from pathlib import Path
+from typing import Union, List, Dict
 from ...database.document_loader import Chunk
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
-#------------------------------------------------------------------------------
-# MODEL FUNCTIONS
+def keep_references_only(input_str: str) -> str:
+    """
+    Extracts and formats URLs from a given string into a bullet list. It identifies all URLs, removes any trailing '>'
+    often found in '<url>' patterns, eliminates duplicates while preserving order, and then formats them into a 
+    bullet list.
 
-from fastchat.model.model_adapter import load_model, get_conversation_template
-from fastchat.serve.inference import generate_stream
+    Args:
+        input_str (str): The string from which URLs are to be extracted.
 
-from transformers import AutoModel
-from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaTokenizerFast, MistralForCausalLM
-
-def _load_model(pretrained_model_name_or_path:str, device='cuda'):
-   tokeniser = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
-   model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path, trust_remote_code=False, low_cpu_mem_usage=True, torch_dtype='auto')
-   return model, tokeniser
-
-
-#------------------------------------------------------------------------------
-# MODEL CLASS
-
-def keep_references_only(input_str):
+    Returns:
+        str: A bullet list of unique URLs found in the input string.
+    """
     # extract all urls
     url_pattern = re.compile(r'https?://(?:[a-zA-Z]|[0-9]|[-.#/]|[$@&+]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
     urls = re.findall(url_pattern, input_str)
@@ -35,24 +29,78 @@ def keep_references_only(input_str):
     return bullet_list
 
 class LanguageModel(ABC):
-    def __init__(self, models_folder:Path, model_name:str, context_size:int):
-        self.models_folder = models_folder
-        self.model_name = model_name
-        self.context_size = context_size
+    """
+    Abstraction other large language models
+    by default, it is built upon hugginface Transformers library
+    """
+    def __init__(self, pretrained_model_name_or_path:str, device='cuda'):
+        self.pretrained_model_name_or_path = str(pretrained_model_name_or_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.pretrained_model_name_or_path)
+        self.model = AutoModelForCausalLM.from_pretrained(self.pretrained_model_name_or_path, trust_remote_code=False, low_cpu_mem_usage=True, torch_dtype='auto').to(device)
+        self.context_size = self.model.config.max_position_embeddings
+        self.device = device
 
-    @abstractmethod
-    def token_counter(self, input_string:str) -> int:
+    def tokenize(self, input_data: Union[str, List[Dict[str, str]]]) -> torch.Tensor:
         """
-        Abstract method for counting tokens in an input string.
-        """
-        pass
+        Tokenizes a single string or a conversation (list of dictionaries with 'role' and 'content' fields) using the model's tokenizer.
 
-    @abstractmethod
-    def query(self, input_string:str, verbose=False) -> str:
+        Args:
+            input_data (Union[str, List[Dict[str, str]]]): Input data to tokenize.
+
+        Returns:
+            torch.Tensor: Tensor of token IDs.
         """
-        Abstract method for querying the model and getting a response.
+        # Check if input is a string or a list of dicts and process accordingly
+        if isinstance(input_data, str):
+            # Process a single string input
+            return self.tokenizer.encode(input_data, return_tensors='pt')
+        elif isinstance(input_data, list) and all(isinstance(i, dict) for i in input_data):
+            # Process a conversation represented as a list of dictionaries
+            return self.tokenizer.apply_chat_template(conversation=input_data, tokenize=True, return_tensors='pt')
+        else:
+            raise ValueError("Input data must be either a string or a list of dictionaries.")
+
+    def token_counter(self, input_data: Union[str, List[Dict[str, str]]]) -> int:
         """
-        pass
+        Counts the number of tokens in a string or a conversation (list of dictionaries).
+
+        Args:
+            input_data (Union[str, List[Dict[str, str]]]): Input data to be tokenized.
+
+        Returns:
+            int: Count of tokens in the input.
+        """
+        input_tokens = self.tokenize(input_data)
+        return len(input_tokens)
+
+    def query(self, input_data: Union[str, List[Dict[str, str]]], temperature=0.0, verbose=False) -> str:
+        """
+        Query the model and get a response.
+
+        Args:
+            input_data (Union[str, List[Dict[str, str]]]): The input text or conversation history to generate a response for.
+            verbose (bool): If True, print additional information.
+
+        Returns:
+            str: The generated response from the model.
+        """
+        # tokenize input
+        input_tokens = self.tokenize(input_data).to(self.device)
+
+        # Generate a response from the model
+        with torch.no_grad():
+            output_tokens = self.model.generate(input_tokens, max_length=self.context_size, temperature=temperature)[0]
+
+        # keep only the answer and not the full conversation
+        answer_tokens = output_tokens[input_tokens.size(-1):]
+        # Decode the answer tokens to a string
+        answer_string = self.tokenizer.decode(answer_tokens, skip_special_tokens=True).strip()
+
+        # returns
+        if verbose:
+            print("Input:", input_data)
+            print("Response:", answer_string)
+        return answer_string
 
     @abstractmethod
     def get_answer(self, question:str, chunks:List[Chunk], verbose=False) -> str:
