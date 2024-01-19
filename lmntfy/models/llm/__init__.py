@@ -114,7 +114,7 @@ class LanguageModel(ABC):
         conversation_size = self.token_counter(messages)
 
         # Check if the conversation size is within the valid range
-        if conversation_size <= self.context_size - expected_answer_size:
+        if (conversation_size + expected_answer_size) <= self.context_size:
             return messages
 
         # Find the index of the least relevant message, if any

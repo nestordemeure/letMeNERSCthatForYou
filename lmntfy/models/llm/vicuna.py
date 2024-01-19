@@ -50,52 +50,38 @@ class Vicuna(LanguageModel):
         """
         Method to get an answer given a question and some chunks passed for context.
         """
+        nb_chunks = len(chunks)
         # builds the prompt
         system_message = {"role": "system", "content": ANSWERING_PROMPT}
-        context_messages = [{"role": "system", "content": f"\n\n{str(chunk)}"} for chunk in chunks]
+        context_messages = [{"role": "system", "content": f"\n\n{str(chunk)}", "relevancy": (nb_chunks-i)} for (i,chunk) in enumerate(chunks)]
         question_message = {"role": "user", "content": question}
         messages = [system_message] + context_messages + [question_message]
-        prompt = self.messages_to_prompt(messages)
-        prompt_size = self.token_counter(prompt)
-        # keep as many context messages as we can
-        while prompt_size + self.upper_answer_size > self.context_size:
-            if len(context_messages) > 1:
-                # reduce the context size by popping the latest context message
-                # (which is likely the least relevant)
-                chunks.pop(-1)
-                context_messages.pop(-1)
-                messages = [system_message] + context_messages + [question_message]
-                prompt = self.messages_to_prompt(messages)
-                prompt_size = self.token_counter(prompt)
-            else:
-                # no more space to reduce context size
-                raise ValueError("You query is too long for the model's context size.")
         # runs the query
-        answer = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
+        answer = self.query(messages, expected_answer_size=self.upper_answer_size, verbose=verbose)
         # adds sources at the end of the query
-        answer = self.add_references(question, answer, chunks, verbose=verbose)
+        # TODO answer = self.add_references(question, answer, chunks, verbose=verbose)
         # returns
         return answer
         
-    def add_references(self, question, answer, chunks, verbose=False):
-        """
-        Adds references to an answer.
-        """
-        # builds the prompt
-        system_message  = {"role": "system", "content": "URLs available:"}
-        context_messages = [{"role": "system", "content": f"\n\n{str(chunk)}"} for chunk in chunks]
-        question_message = {"role": "user", "content": question}
-        answer_message = {"role": "assistant", "content": answer}
-        reference_message = {"role": "user", "content": REFERENCE_PROMPT}
-        messages = [system_message] + context_messages + [question_message, answer_message, reference_message]
-        # runs the query
-        prompt = self.messages_to_prompt(messages)
-        references = self.query(prompt, verbose=verbose)
-        # remove any irrelevant lines
-        references = keep_references_only(references)
-        # updates the answer
-        answer = f"{answer}\n\nReferences:\n{references}"
-        return answer
+    # def add_references(self, question, answer, chunks, verbose=False):
+    #     """
+    #     Adds references to an answer.
+    #     """
+    #     # builds the prompt
+    #     system_message  = {"role": "system", "content": "URLs available:"}
+    #     context_messages = [{"role": "system", "content": f"\n\n{str(chunk)}"} for chunk in chunks]
+    #     question_message = {"role": "user", "content": question}
+    #     answer_message = {"role": "assistant", "content": answer}
+    #     reference_message = {"role": "user", "content": REFERENCE_PROMPT}
+    #     messages = [system_message] + context_messages + [question_message, answer_message, reference_message]
+    #     # runs the query
+    #     prompt = self.messages_to_prompt(messages)
+    #     references = self.query(prompt, verbose=verbose)
+    #     # remove any irrelevant lines
+    #     references = keep_references_only(references)
+    #     # updates the answer
+    #     answer = f"{answer}\n\nReferences:\n{references}"
+    #     return answer
 
     def extract_question(self, previous_messages, verbose=False):
         """
@@ -103,31 +89,19 @@ class Vicuna(LanguageModel):
         Message are expectted to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
         the question returned will be a string.
         """
+        # shortcut for single (first) questions
+        if len(previous_messages) == 1:
+            return previous_messages[0]
         # builds the prompt
         system_message = {"role": "system", "content": QUESTION_EXTRACTION_PROMPT_SYSTEM}
+        previous_messages = [{**message, 'relevancy': i} for (i,message) in enumerate(previous_messages)]
         user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
         messages = [system_message] + previous_messages + [user_message]
-        prompt = self.messages_to_prompt(messages)
-        prompt_size = self.token_counter(prompt)
-        # keep as many context messages as we can
-        while prompt_size + self.upper_question_size > self.context_size:
-            if len(messages) > 3:
-                # reduce the context size by popping the oldest context message
-                # ensuring there is at least one context message
-                messages.pop(1)
-                prompt = self.messages_to_prompt(messages)
-                prompt_size = self.token_counter(prompt)
-            else:
-                # no more space to reduce context size
-                raise ValueError("You query is too long for the model's context size.")
-        # shortcut if there is only one message
+        # queries the system
+        question = self.query(messages, expected_answer_size=self.upper_question_size, verbose=verbose)
+        # remove an eventual prefix
+        # TODO if question.startswith('user: '): question = question[6:]
+        # combine it with the last nessage so that we cover all of our bases
         last_message = previous_messages[-1]['content']
-        if len(messages) == 3:
-            return last_message
-        else:
-            question = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
-            # remove an eventual prefix
-            if question.startswith('user: '): question = question[6:]
-            # combine it with the last nessage so that we cover all of our bases
-            question = f"{last_message} ({question})"
-            return question
+        question = f"{last_message} ({question})"
+        return question

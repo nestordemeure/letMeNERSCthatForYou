@@ -35,7 +35,7 @@ class FaissDatabase(Database):
     def _index_get_closest(self, input_embedding: np.ndarray, k=3) -> List[int]:
         assert (input_embedding.size == self.embedding_length), "Invalid shape for input_embedding"
         input_embedding_batch = input_embedding.reshape((1,-1))
-        _, indices = self.index.search(input_embedding_batch, k)
+        distances, indices = self.index.search(input_embedding_batch, k)
         return indices.flatten().tolist()
 
     def exists(self) -> bool:
