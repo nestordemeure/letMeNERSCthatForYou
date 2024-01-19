@@ -50,10 +50,8 @@ In no particular order:
 * clean-up code and improve comments / documentation,
 * establish a canonical list of test questions / conversations,
 * process markdown links in the full file *before* chunking
-* improve (/further standardize) abstraction to call on language models,
 * explicitly fight hallucinaitons in the prompt? ("if the question is not covered by the documentation you have been provided, ...")
 * deal with answers that end abruptly due to the end of the context length (extremly rare with long enough context)
-* move away from `fastchat`, relying on hugginface's transformers only
 
 * move this code to the NERSC github,
 * have the model always running on Perlmuter,
