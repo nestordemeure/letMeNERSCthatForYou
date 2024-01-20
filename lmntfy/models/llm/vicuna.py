@@ -86,12 +86,12 @@ class Vicuna(LanguageModel):
     def extract_question(self, previous_messages, verbose=False):
         """
         Extracts the latest question given a list of messages.
-        Message are expectted to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
+        Message are expected to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
         the question returned will be a string.
         """
         # shortcut for single (first) questions
         if len(previous_messages) == 1:
-            return previous_messages[0]
+            return previous_messages[0]['content']
         # builds the prompt
         system_message = {"role": "system", "content": QUESTION_EXTRACTION_PROMPT_SYSTEM}
         previous_messages = [{**message, 'relevancy': i} for (i,message) in enumerate(previous_messages)]

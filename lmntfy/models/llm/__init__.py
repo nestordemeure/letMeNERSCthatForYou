@@ -45,6 +45,9 @@ class LanguageModel(ABC):
         self.model = AutoModelForCausalLM.from_pretrained(self.pretrained_model_name_or_path, trust_remote_code=False, low_cpu_mem_usage=True, torch_dtype='auto').to(device)
         self.context_size = self.model.config.max_position_embeddings
         self.device = device
+        # ensures the tokenizer has a chat_template
+        if self.tokenizer.chat_template is None:
+            self.tokenizer.chat_template = self.tokenizer.default_chat_template
 
     def _merge_systems(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         """
@@ -103,7 +106,7 @@ class LanguageModel(ABC):
             int: Count of tokens in the input.
         """
         input_tokens = self.tokenize(input_data)
-        return len(input_tokens)
+        return input_tokens.size(-1)
 
     def _drop_irrelevant_messages(self, messages: List[Dict[str, str]], expected_answer_size: int) -> List[Dict[str, str]]:
         """
@@ -136,14 +139,13 @@ class LanguageModel(ABC):
         # Recursively call trim_conversation if needed
         return self.trim_conversation(messages, expected_answer_size)
 
-    def query(self, input_data: Union[str, List[Dict[str, str]]], expected_answer_size=None, temperature=0.0, verbose=False) -> str:
+    def query(self, input_data: Union[str, List[Dict[str, str]]], expected_answer_size=None, verbose=False) -> str:
         """
         Query the model and get a response.
 
         Args:
             input_data (Union[str, List[Dict[str, str]]]): The input text or conversation history to generate a response for.
             expected_answer_size (int): how long (in number of tokens) do we expect the answer to be? (default to None)
-            temperature (float): how imaginative the model is allowed to be (default to 0.0).
             verbose (bool): If True, print additional information (defaults to False).
 
         Returns:
@@ -158,7 +160,8 @@ class LanguageModel(ABC):
 
         # Generate a response from the model
         with torch.no_grad():
-            output_tokens = self.model.generate(input_tokens, max_length=self.context_size, temperature=temperature)[0]
+            max_new_tokens = self.context_size - input_tokens.size(-1)
+            output_tokens = self.model.generate(input_tokens, max_new_tokens=max_new_tokens)[0]
 
         # keep only the answer and not the full conversation
         answer_tokens = output_tokens[input_tokens.size(-1):]

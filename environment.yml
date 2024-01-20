@@ -16,6 +16,7 @@ dependencies:
   - huggingface_hub
   - transformers
   - accelerate
+  - protobuf
   - pip:
     - sfapi_client~=0.0.6 # Python client for NERSC SF API
 # use the following to check that you have a GPU version of Pytorch:
