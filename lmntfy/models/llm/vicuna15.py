@@ -14,11 +14,6 @@ Combine search results together into a coherent answer. \
 Only cite the most relevant results that answer the question accurately. \
 Try and be careful not to go off-topics."
 
-# prompt to get references for an answer
-REFERENCE_PROMPT="Produce a bullet list of the urls you found useful to answer the question, \
-sorted from most relevant to least relevant. \
-Keep the bullet list short, keeping *only* the relevant urls (there are rarely more than three relevant urls)."
-
 # prompt to summarize a conversation into its latest question
 QUESTION_EXTRACTION_PROMPT_SYSTEM="You are a question extraction system. \
 You will be provided the last messages of a conversation between a user of the NERSC supercomputing center and an assistant from its support, ending on a question by the user. \
@@ -28,10 +23,10 @@ QUESTION_EXTRACTION_PROMPT_USER="Reframe my last question so that I can forward 
 #----------------------------------------------------------------------------------------
 # MODEL
 
-class Vicuna(LanguageModel):
+class Vicuna15(LanguageModel):
     def __init__(self, 
                  models_folder: Path,
-                 model_name: str='vicuna-13b-v1.3',
+                 model_name: str='vicuna-13b-v1.5',
                  device='cuda'):
         super().__init__(models_folder / model_name, device)
         self.upper_answer_size = 450
@@ -74,30 +69,7 @@ class Vicuna(LanguageModel):
         messages = [system_message] + context_messages + [question_message]
         # runs the query
         answer = self.query(messages, expected_answer_size=self.upper_answer_size, verbose=verbose)
-        # adds sources at the end of the query
-        # TODO answer = self.add_references(question, answer, chunks, verbose=verbose)
-        # returns
         return answer
-        
-    # def add_references(self, question, answer, chunks, verbose=False):
-    #     """
-    #     Adds references to an answer.
-    #     """
-    #     # builds the prompt
-    #     system_message  = {"role": "system", "content": "URLs available:"}
-    #     context_messages = [{"role": "system", "content": f"\n\n{str(chunk)}"} for chunk in chunks]
-    #     question_message = {"role": "user", "content": question}
-    #     answer_message = {"role": "assistant", "content": answer}
-    #     reference_message = {"role": "user", "content": REFERENCE_PROMPT}
-    #     messages = [system_message] + context_messages + [question_message, answer_message, reference_message]
-    #     # runs the query
-    #     prompt = self.messages_to_prompt(messages)
-    #     references = self.query(prompt, verbose=verbose)
-    #     # remove any irrelevant lines
-    #     references = keep_references_only(references)
-    #     # updates the answer
-    #     answer = f"{answer}\n\nReferences:\n{references}"
-    #     return answer
 
     def extract_question(self, previous_messages, verbose=False):
         """
@@ -117,8 +89,6 @@ class Vicuna(LanguageModel):
         messages = [system_message, discussion_introduction] + formatted_discussion + [user_message]
         # queries the system
         question = self.query(messages, expected_answer_size=self.upper_question_size, verbose=verbose)
-        # remove an eventual prefix
-        # TODO if question.startswith('user: '): question = question[6:]
         # combine it with the last nessage so that we cover all of our bases
         last_message = previous_messages[-1]['content']
         question = f"{last_message} ({question})"
