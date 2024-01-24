@@ -46,10 +46,19 @@ class LanguageModel(ABC):
                                                           trust_remote_code=False, low_cpu_mem_usage=True, torch_dtype='auto').to(device)
         self.context_size = self.model.config.max_position_embeddings
         self.device = device
-        # update the generation config to a Greedy search
-        # (equivalent to temperature=0 but faster)
-        # NOTE: we set temperature and top_p to there default values as a way to unset them
-        self.model.generation_config.update(do_sample=False, temperature=1.0, top_p=1.0)
+        # Pick our prefered Generation Strategy
+        # see: https://huggingface.co/docs/transformers/generation_strategies
+        # Greedy search
+        self.model.generation_config.update(do_sample=False, # greedy generation (<=> temp=0)
+                                            temperature=1.0, top_p=1.0) # unset by setting to default
+        # Beam search
+        #self.model.generation_config.update(
+        #    do_sample=False,  # Keep deterministic behavior
+        #    num_beams=5,  # Use beam search with 5 beams
+        #    temperature=1.0,  # Default temperature setting
+        #    top_p=1.0,  # Default top_p setting (not used in beam search)
+        #    length_penalty=2.0  # Default length penalty is 1.0, adjust if shorter or longer outputs are desired
+        #)
 
     def _merge_systems(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         """
