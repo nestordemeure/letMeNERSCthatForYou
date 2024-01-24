@@ -45,20 +45,29 @@ class Vicuna(LanguageModel):
         super().__init__(models_folder / model_name, device)
         self.upper_answer_size = 450
         self.upper_question_size = 200
-        # Vicuna comes without a template and the default is not a fit.
-        # follows the template given [here](https://github.com/lm-sys/FastChat/blob/main/docs/vicuna_weights_version.md#prompt-template)
+        # Vicuna comes without a template
+        # found [here](https://github.com/chujiezheng/chat_templates/blob/main/chat_templates/vicuna.jinja)
         self.tokenizer.chat_template = """
-{% for message in messages %}
-    {% if message.role == 'system' %}
-        {{ message.content.strip() }}\n\n
-    {% elif message.role == 'USER' %}
-        USER: {{ message.content.strip() }}\n
-    {% elif message.role == 'ASSISTANT' %}
-        ASSISTANT: {{ message.content.strip() }}{{ sep2 }}\n
+{% if messages[0]['role'] == 'system' %}
+    {% set loop_messages = messages[1:] %}
+    {% set system_message = messages[0]['content'].strip() + '\n\n' %}
+{% else %}
+    {% set loop_messages = messages %}
+    {% set system_message = '' %}
+{% endif %}
+{{ bos_token + system_message }}
+{% for message in loop_messages %}
+    {% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}
+        {{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}
+    {% endif %}
+    {% if message['role'] == 'user' %}
+        {{ 'USER: ' + message['content'].strip() + '\n' }}
+    {% elif message['role'] == 'assistant' %}
+        {{ 'ASSISTANT: ' + message['content'].strip() + eos_token + '\n' }}
     {% endif %}
 {% endfor %}
 {% if add_generation_prompt %}
-    ASSISTANT:
+    {{ 'ASSISTANT:' }}
 {% endif %}
 """
 

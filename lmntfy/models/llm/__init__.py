@@ -87,11 +87,11 @@ class LanguageModel(ABC):
         elif isinstance(input_data, list) and all(isinstance(i, dict) for i in input_data):
             # fails hard if the tokeniser does not have a chat_template
             if self.tokenizer.chat_template is None:
-                raise RuntimeError(f"Your tokeniser ({type(self.tokenizer)}) of choice does not have a chat_template.")
+                raise RuntimeError(f"Your tokeniser ({type(self.tokenizer)}) of choice does not have a chat_template. See [this repository](https://github.com/chujiezheng/chat_templates/tree/main) for common options.")
             # merge system messages (in case there is more than one)
             input_data = self._merge_systems(input_data)
             # Process a conversation represented as a list of dictionaries
-            return self.tokenizer.apply_chat_template(conversation=input_data, tokenize=True, add_generation_prompt=True, return_tensors='pt')
+            return self.tokenizer.apply_chat_template(conversation=input_data, tokenize=True, return_tensors='pt')
         else:
             raise ValueError("Input data must be either a string or a list of dictionaries.")
 
