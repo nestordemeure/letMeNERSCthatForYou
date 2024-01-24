@@ -20,20 +20,9 @@ You will be provided the last messages of a conversation between a user of the N
 Your task is to summarize the user's last message."
 QUESTION_EXTRACTION_PROMPT_USER="Reframe my last question so that I can forward it to support without the rest of this conversation."
 
-#----------------------------------------------------------------------------------------
-# MODEL
-
-class Vicuna(LanguageModel):
-    def __init__(self, 
-                 models_folder: Path,
-                 model_name: str='vicuna-13b-v1.5',
-                 device='cuda'):
-        super().__init__(models_folder / model_name, device)
-        self.upper_answer_size = 450
-        self.upper_question_size = 200
-        # Vicuna comes without a template
-        # found [here](https://github.com/chujiezheng/chat_templates/blob/main/chat_templates/vicuna.jinja)
-        self.tokenizer.chat_template = """
+# Jinja chat template for Vicuna
+# found [here](https://github.com/chujiezheng/chat_templates/blob/main/chat_templates/vicuna.jinja)
+VICUNA_CHAT_TEMPLATE = """
 {% if messages[0]['role'] == 'system' %}
     {% set loop_messages = messages[1:] %}
     {% set system_message = messages[0]['content'].strip() + '\n\n' %}
@@ -56,6 +45,19 @@ class Vicuna(LanguageModel):
     {{ 'ASSISTANT:' }}
 {% endif %}
 """
+
+#----------------------------------------------------------------------------------------
+# MODEL
+
+class Vicuna(LanguageModel):
+    def __init__(self, 
+                 models_folder: Path,
+                 model_name: str='vicuna-13b-v1.5',
+                 device='cuda'):
+        super().__init__(models_folder / model_name, device)
+        self.tokenizer.chat_template = VICUNA_CHAT_TEMPLATE
+        self.upper_answer_size = 450
+        self.upper_question_size = 200
 
     def get_answer(self, question, chunks, verbose=False):
         """
