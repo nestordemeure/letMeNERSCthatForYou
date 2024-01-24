@@ -50,7 +50,7 @@ In no particular order:
 * clean-up code and improve comments / documentation,
 * establish a canonical list of test questions / conversations,
 * process markdown links in the full file *before* chunking
-* explicitly fight hallucinaitons in the prompt? ("if the question is not covered by the documentation you have been provided, ...")
+* explicitly fight hallucinations in the prompt? ("if the question is not covered by the documentation you have been provided, ...")
 * deal with answers that end abruptly due to the end of the context length (extremly rare with long enough context)
 
 * prompt wise, we could try and pass markdown footnote markers (ie `[^nersc_ssh]`) to the llm, asking it to use the relevant ones to reference its text.

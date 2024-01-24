@@ -191,5 +191,4 @@ class LanguageModel(ABC):
         pass
 
 from .vicuna import Vicuna
-from .vicuna15 import Vicuna15
 from .llama2 import Llama2
