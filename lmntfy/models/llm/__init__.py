@@ -42,7 +42,8 @@ class LanguageModel(ABC):
     def __init__(self, pretrained_model_name_or_path:str, device='cuda'):
         self.pretrained_model_name_or_path = str(pretrained_model_name_or_path)
         self.tokenizer = AutoTokenizer.from_pretrained(self.pretrained_model_name_or_path)
-        self.model = AutoModelForCausalLM.from_pretrained(self.pretrained_model_name_or_path, trust_remote_code=False, low_cpu_mem_usage=True, torch_dtype='auto').to(device)
+        self.model = AutoModelForCausalLM.from_pretrained(self.pretrained_model_name_or_path, 
+                                                          trust_remote_code=False, low_cpu_mem_usage=True, torch_dtype='auto').to(device)
         self.context_size = self.model.config.max_position_embeddings
         self.device = device
 
@@ -161,7 +162,8 @@ class LanguageModel(ABC):
         # Generate a response from the model
         with torch.no_grad():
             max_new_tokens = self.context_size - input_tokens.size(-1)
-            output_tokens = self.model.generate(input_tokens, max_new_tokens=max_new_tokens)[0]
+            do_sample = False # fast equivalent to temperature=0
+            output_tokens = self.model.generate(input_tokens, max_new_tokens=max_new_tokens, do_sample=do_sample)[0]
 
         # keep only the answer and not the full conversation
         answer_tokens = output_tokens[input_tokens.size(-1):]
