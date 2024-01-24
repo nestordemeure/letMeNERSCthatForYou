@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from copy import copy
 from typing import Union, List, Dict
 from ...database.document_loader import Chunk
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 
 def keep_references_only(input_str: str) -> str:
     """
@@ -46,6 +46,10 @@ class LanguageModel(ABC):
                                                           trust_remote_code=False, low_cpu_mem_usage=True, torch_dtype='auto').to(device)
         self.context_size = self.model.config.max_position_embeddings
         self.device = device
+        # update the generation config to a Greedy search
+        # (equivalent to temperature=0 but faster)
+        # NOTE: we set temperature and top_p to there default values as a way to unset them
+        self.model.generation_config.update(do_sample=False, temperature=1.0, top_p=1.0)
 
     def _merge_systems(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         """
@@ -162,8 +166,7 @@ class LanguageModel(ABC):
         # Generate a response from the model
         with torch.no_grad():
             max_new_tokens = self.context_size - input_tokens.size(-1)
-            do_sample = False # fast equivalent to temperature=0
-            output_tokens = self.model.generate(input_tokens, max_new_tokens=max_new_tokens, do_sample=do_sample)[0]
+            output_tokens = self.model.generate(input_tokens, max_new_tokens=max_new_tokens)[0]
 
         # keep only the answer and not the full conversation
         answer_tokens = output_tokens[input_tokens.size(-1):]

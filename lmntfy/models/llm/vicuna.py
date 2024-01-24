@@ -95,14 +95,3 @@ class Vicuna(LanguageModel):
         last_message = previous_messages[-1]['content']
         question = f"{last_message} ({question})"
         return question
-
-"""
-WARNINGS to eliminate:
-
-at first answer:
-transformers/generation/utils.py:1518: UserWarning:
-You have modified the pretrained model configuration to control generation.
-This is a deprecated strategy to control generation and will be removed soon, in a future version.
-Please use and modify the model generation configuration
-(see https://huggingface.co/docs/transformers/generation_strategies#default-text-generation-configuration )
-"""
