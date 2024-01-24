@@ -45,9 +45,6 @@ class LanguageModel(ABC):
         self.model = AutoModelForCausalLM.from_pretrained(self.pretrained_model_name_or_path, trust_remote_code=False, low_cpu_mem_usage=True, torch_dtype='auto').to(device)
         self.context_size = self.model.config.max_position_embeddings
         self.device = device
-        # ensures the tokenizer has a chat_template
-        if self.tokenizer.chat_template is None:
-            self.tokenizer.chat_template = self.tokenizer.default_chat_template
 
     def _merge_systems(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         """
@@ -88,10 +85,13 @@ class LanguageModel(ABC):
             # Process a single string input
             return self.tokenizer.encode(input_data, return_tensors='pt')
         elif isinstance(input_data, list) and all(isinstance(i, dict) for i in input_data):
+            # fails hard if the tokeniser does not have a chat_template
+            if self.tokenizer.chat_template is None:
+                raise RuntimeError(f"Your tokeniser ({type(self.tokenizer)}) of choice does not have a chat_template.")
             # merge system messages (in case there is more than one)
             input_data = self._merge_systems(input_data)
             # Process a conversation represented as a list of dictionaries
-            return self.tokenizer.apply_chat_template(conversation=input_data, tokenize=True, return_tensors='pt')
+            return self.tokenizer.apply_chat_template(conversation=input_data, tokenize=True, add_generation_prompt=True, return_tensors='pt')
         else:
             raise ValueError("Input data must be either a string or a list of dictionaries.")
 
@@ -137,7 +137,7 @@ class LanguageModel(ABC):
             return messages
 
         # Recursively call trim_conversation if needed
-        return self.trim_conversation(messages, expected_answer_size)
+        return self._drop_irrelevant_messages(messages, expected_answer_size)
 
     def query(self, input_data: Union[str, List[Dict[str, str]]], expected_answer_size=None, verbose=False) -> str:
         """

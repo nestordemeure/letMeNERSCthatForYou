@@ -45,6 +45,22 @@ class Vicuna(LanguageModel):
         super().__init__(models_folder / model_name, device)
         self.upper_answer_size = 450
         self.upper_question_size = 200
+        # Vicuna comes without a template and the default is not a fit.
+        # follows the template given [here](https://github.com/lm-sys/FastChat/blob/main/docs/vicuna_weights_version.md#prompt-template)
+        self.tokenizer.chat_template = """
+{% for message in messages %}
+    {% if message.role == 'system' %}
+        {{ message.content.strip() }}\n\n
+    {% elif message.role == 'USER' %}
+        USER: {{ message.content.strip() }}\n
+    {% elif message.role == 'ASSISTANT' %}
+        ASSISTANT: {{ message.content.strip() }}{{ sep2 }}\n
+    {% endif %}
+{% endfor %}
+{% if add_generation_prompt %}
+    ASSISTANT:
+{% endif %}
+"""
 
     def get_answer(self, question, chunks, verbose=False):
         """
@@ -94,9 +110,11 @@ class Vicuna(LanguageModel):
             return previous_messages[0]['content']
         # builds the prompt
         system_message = {"role": "system", "content": QUESTION_EXTRACTION_PROMPT_SYSTEM}
-        previous_messages = [{**message, 'relevancy': i} for (i,message) in enumerate(previous_messages)]
+        # the conversation is put inside the system prompt
+        discussion_introduction = {'role':'system', 'content': "\n\nConversation:\n"}
+        formatted_discussion = [{'role':'system', 'content': f"{message['role']}:{message['content']}\n", 'relevancy': i} for (i,message) in enumerate(previous_messages)]
         user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
-        messages = [system_message] + previous_messages + [user_message]
+        messages = [system_message, discussion_introduction] + formatted_discussion + [user_message]
         # queries the system
         question = self.query(messages, expected_answer_size=self.upper_question_size, verbose=verbose)
         # remove an eventual prefix
