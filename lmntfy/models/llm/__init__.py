@@ -48,17 +48,8 @@ class LanguageModel(ABC):
         self.device = device
         # Pick our prefered Generation Strategy
         # see: https://huggingface.co/docs/transformers/generation_strategies
-        # Greedy search
         self.model.generation_config.update(do_sample=False, # greedy generation (<=> temp=0)
                                             temperature=1.0, top_p=1.0) # unset by setting to default
-        # Beam search
-        #self.model.generation_config.update(
-        #    do_sample=False,  # Keep deterministic behavior
-        #    num_beams=5,  # Use beam search with 5 beams
-        #    temperature=1.0,  # Default temperature setting
-        #    top_p=1.0,  # Default top_p setting (not used in beam search)
-        #    length_penalty=2.0  # Default length penalty is 1.0, adjust if shorter or longer outputs are desired
-        #)
 
     def _merge_systems(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         """
@@ -69,6 +60,7 @@ class LanguageModel(ABC):
             raise RuntimeError("Your messages do not start with a system prompt!")
         else:
             system_message = copy(messages[0])
+            messages = messages[1:]
         # accumulate system messages
         nonsystem_messages = []
         for message in messages:
@@ -184,8 +176,8 @@ class LanguageModel(ABC):
 
         # returns
         if verbose:
-            print("Input:", input_data)
-            print("Response:", answer_string)
+            output_string = self.tokenizer.decode(output_tokens, skip_special_tokens=True).strip()
+            print(f"Conversation:\n\n{output_string}")
         return answer_string
 
     @abstractmethod

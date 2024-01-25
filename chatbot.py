@@ -37,7 +37,7 @@ def main():
     else:
         # chat with the model
         lmntfy.user_interface.command_line.display_logo()
-        lmntfy.user_interface.command_line.chat(question_answerer)
+        lmntfy.user_interface.command_line.chat(question_answerer, verbose=True)
  
 if __name__ == "__main__":
     main()

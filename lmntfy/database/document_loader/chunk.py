@@ -50,6 +50,11 @@ class Chunk:
         """turns a chunk into a string representation suitable for usage in a prompt"""
         return f"URL: {self.url}\n\n{self.content}"
 
+    def to_markdown(self):
+        """turns a chunk into a markdown representation suitable for usage in a prompt"""
+        markdown_content = "\n".join([f"> {line}" for line in self.content.split('\n')])
+        return f"Source URL: <{self.url}>\n\nExtract:\n{markdown_content}\n\n---\n"
+
     def to_dict(self):
         return {
             'url': self.url,

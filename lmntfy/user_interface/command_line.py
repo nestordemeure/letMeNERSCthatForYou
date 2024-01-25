@@ -14,10 +14,10 @@ def display_logo():
 ╚══════╝╚═╝     ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝        ╚═╝   "
     print(lmntfy)
 
-def answer_question(question_answerer:QuestionAnswerer, question) -> str:
+def answer_question(question_answerer:QuestionAnswerer, question, verbose=False) -> str:
     """answers a single question"""
     # gets an answer
-    answer = question_answerer.get_answer(question, verbose=False)
+    answer = question_answerer.get_answer(question, verbose=verbose)
     # pretty prints the answer
     markdown_answer = Markdown(answer)
     print()
@@ -25,7 +25,7 @@ def answer_question(question_answerer:QuestionAnswerer, question) -> str:
     print()
     return answer
 
-def answer_questions(question_answerer:QuestionAnswerer, questions:List[str]) -> List[str]:
+def answer_questions(question_answerer:QuestionAnswerer, questions:List[str], verbose=False) -> List[str]:
     """run on a handful of test question for quick evaluation purposes"""
     answers = []
     console = Console()
@@ -34,7 +34,7 @@ def answer_questions(question_answerer:QuestionAnswerer, questions:List[str]) ->
         # displays question
         print(f"> {question}")
         # gets an answer and stores it
-        answer = question_answerer.get_answer(question, verbose=False)
+        answer = question_answerer.get_answer(question, verbose=verbose)
         answers.append(answer)
         # pretty prints the answer
         markdown_answer = Markdown(answer)
@@ -43,7 +43,7 @@ def answer_questions(question_answerer:QuestionAnswerer, questions:List[str]) ->
         print()
     return answers
 
-def chat(question_answerer:QuestionAnswerer) -> List[Dict]:
+def chat(question_answerer:QuestionAnswerer, verbose=False) -> List[Dict]:
     """chat with the model"""
     messages = []
     console = Console()
@@ -53,7 +53,7 @@ def chat(question_answerer:QuestionAnswerer) -> List[Dict]:
         question = input("> ")
         messages.append({'role':'user', 'content': question})
         # gets an answer and stores it
-        answer_message = question_answerer.continue_chat(messages, verbose=False)
+        answer_message = question_answerer.continue_chat(messages, verbose=verbose)
         messages.append(answer_message)
         # pretty prints the answer
         markdown_answer = Markdown(answer_message['content'])
