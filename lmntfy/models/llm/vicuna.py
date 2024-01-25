@@ -26,28 +26,34 @@ Question: How can I optimize my code for CPU at NERSC?
 Answer: To optimize your code for CPU usage at NERSC, it's crucial to focus on vectorization and parallelization. Vectorization allows your code to process multiple data points with a single instruction, effectively reducing the time your code takes to run through large datasets. Parallelization, on the other hand, involves dividing your code into multiple tasks that can be processed simultaneously, maximizing the use of available CPU resources. Combining these two strategies can lead to significant improvements in your code's performance on NERSC systems.
 
 References:
-* https://nersc.example.com/documentation/cpu-optimization
-* https://nersc.example.com/documentation/parallel-computing
+* <https://nersc.example.com/documentation/cpu-optimization>
+* <https://nersc.example.com/documentation/parallel-computing>
 
 ### Information Sources:
 """
 
 # prompt to summarize a conversation into its latest question
-QUESTION_EXTRACTION_PROMPT_SYSTEM="You are a question extraction system. \
-You will be provided the last messages of a conversation between a user of the NERSC supercomputing center and an assistant from its support, ending on a question by the user. \
-Your task is to summarize the user's last message."
-QUESTION_EXTRACTION_PROMPT_USER="Reframe my last question so that I can forward it to support without the rest of this conversation."
-
-# prompt to summarize a conversation into its latest question
+# NOTE: 
+# * we do a single shot prompt (with an example answer) to ensure proper formating of the answer at the price of a few tokens
+# * note that the end of the prompt is ready to accomodate the conversation
 QUESTION_EXTRACTION_PROMPT_SYSTEM = """
-You are a question extraction system.
-You will be provided the last messages of a conversation between a user of the NERSC supercomputing center and an assistant from its support, ending on a question by the user.
-Your task is to summarize the user's last message.
+Your task is to function as a question extraction system.
+Your input will be the concluding part of an exchange between a NERSC supercomputing center user and a support assistant.
+Your primary objective is to distill and rephrase the final inquiry posed by the user.
+The restructured question should stand independently, crafted in such a way that the support team can comprehend and respond to it without referring back to the full conversation.
+The refined question should be enclosed within a code block.
+
+### Example Answer Format:
+
+```
+How can I optimize my code to efficiently utilize more nodes in the NERSC supercomputing center?
+```
 
 ### Conversation:
 """
-QUESTION_EXTRACTION_PROMPT_USER="Reframe the last question of the conversation so that I can forward it to support without the rest of this conversation."
-
+QUESTION_EXTRACTION_PROMPT_USER = """
+Extract the user's last message from the conversation.
+"""
 
 # Jinja chat template for Vicuna
 # found [here](https://github.com/chujiezheng/chat_templates/blob/main/chat_templates/vicuna.jinja)
@@ -100,6 +106,10 @@ class Vicuna(LanguageModel):
         messages = [system_message] + context_messages + [question_message]
         # runs the query
         answer = self.query(messages, expected_answer_size=self.upper_answer_size, verbose=verbose)
+        # remove potential prefix
+        answer = answer.split("Answer: ", 1)[1] if ("Answer: " in answer) and answer.startswith(("Answer: ", "Question: ")) else answer
+        # remove potential suffix
+        answer = answer.split("URLs:")[0].strip() if ("URLs:" in answer) and ("References:" in answer) and (answer.index("URLs:") > answer.index("References:")) else answer
         return answer
 
     def extract_question(self, previous_messages, verbose=False):
@@ -113,12 +123,24 @@ class Vicuna(LanguageModel):
             return previous_messages[0]['content']
         # builds the prompt
         system_message = {"role": "system", "content": QUESTION_EXTRACTION_PROMPT_SYSTEM}
-        formatted_discussion = [{'role':'system', 'content': f"\n{message['role']}: {message['content']}\n", 'relevancy': i} for (i,message) in enumerate(previous_messages)]
+        formatted_discussion = [{'role':'system', 'content': f"\n**{message['role']}**: {message['content']}\n", 'relevancy': i} for (i,message) in enumerate(previous_messages)]
         user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
         messages = [system_message] + formatted_discussion + [user_message]
         # queries the system
         question = self.query(messages, expected_answer_size=self.upper_question_size, verbose=verbose)
-        # combine it with the last nessage so that we cover all of our bases
-        last_message = previous_messages[-1]['content']
-        question = f"{last_message} ({question})"
+        # extract question from code block
+        print(f"DEBUGGING: <{question}>")
+        question = question.split('```')[-2].strip() if (question.count('```') >= 2) else question
+        # deal with empty string failure case
+        question = previous_messages[-1]['content'] if (len(question) == 0) else question
+        print(f"DEBUGGING: `{question}`")
         return question
+
+"""
+out of topic questions tend to be failure points
+a model could detect those and politly decline to answer?
+or maybe do some triage, should we answer as:
+- a text model conversing
+- a RAG model using the doc
+- a polite decline as the question is out of scope
+"""
