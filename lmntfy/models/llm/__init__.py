@@ -4,7 +4,8 @@ from abc import ABC, abstractmethod
 from copy import copy
 from typing import Union, List, Dict
 from ...database.document_loader import Chunk
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
+from ...question_answering import Answer
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 def keep_references_only(input_str: str) -> str:
     """
@@ -179,6 +180,16 @@ class LanguageModel(ABC):
             output_string = self.tokenizer.decode(output_tokens, skip_special_tokens=True).strip()
             print(f"Conversation:\n\n{output_string}")
         return answer_string
+
+    @abstractmethod
+    def triage(self, messages:List[Dict], verbose=False) -> Answer:
+        """
+        Decides whether the message is:
+        * out of scope,
+        * a normal discussion (ie: "thank you!") that does not require a documentation call,
+        * something that requires a documentation call
+        """
+        pass
 
     @abstractmethod
     def get_answer(self, question:str, chunks:List[Chunk], verbose=False) -> str:

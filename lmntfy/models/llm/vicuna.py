@@ -1,9 +1,36 @@
-import sys
 from pathlib import Path
+from typing import List, Dict
+from ...question_answering import Answer
 from . import LanguageModel
 
 #----------------------------------------------------------------------------------------
 # PROMPTS
+
+# Jinja chat template for Vicuna
+# found [here](https://github.com/chujiezheng/chat_templates/blob/main/chat_templates/vicuna.jinja)
+VICUNA_CHAT_TEMPLATE = """
+{% if messages[0]['role'] == 'system' %}
+    {% set loop_messages = messages[1:] %}
+    {% set system_message = messages[0]['content'].strip() + '\n\n' %}
+{% else %}
+    {% set loop_messages = messages %}
+    {% set system_message = '' %}
+{% endif %}
+{{ bos_token + system_message }}
+{% for message in loop_messages %}
+    {% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}
+        {{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}
+    {% endif %}
+    {% if message['role'] == 'user' %}
+        {{ 'USER: ' + message['content'].strip() + '\n' }}
+    {% elif message['role'] == 'assistant' %}
+        {{ 'ASSISTANT: ' + message['content'].strip() + eos_token + '\n' }}
+    {% endif %}
+{% endfor %}
+{% if add_generation_prompt %}
+    {{ 'ASSISTANT:' }}
+{% endif %}
+"""
 
 # prompt to answer a question
 # NOTE: 
@@ -55,30 +82,42 @@ QUESTION_EXTRACTION_PROMPT_USER = """
 Extract the user's last message from the conversation.
 """
 
-# Jinja chat template for Vicuna
-# found [here](https://github.com/chujiezheng/chat_templates/blob/main/chat_templates/vicuna.jinja)
-VICUNA_CHAT_TEMPLATE = """
-{% if messages[0]['role'] == 'system' %}
-    {% set loop_messages = messages[1:] %}
-    {% set system_message = messages[0]['content'].strip() + '\n\n' %}
-{% else %}
-    {% set loop_messages = messages %}
-    {% set system_message = '' %}
-{% endif %}
-{{ bos_token + system_message }}
-{% for message in loop_messages %}
-    {% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}
-        {{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}
-    {% endif %}
-    {% if message['role'] == 'user' %}
-        {{ 'USER: ' + message['content'].strip() + '\n' }}
-    {% elif message['role'] == 'assistant' %}
-        {{ 'ASSISTANT: ' + message['content'].strip() + eos_token + '\n' }}
-    {% endif %}
-{% endfor %}
-{% if add_generation_prompt %}
-    {{ 'ASSISTANT:' }}
-{% endif %}
+# system prompt used to pick an answer type
+TRIAGE_PROMPT_SYSTEM = """
+Your task is to function as triage.
+Your input will be the concluding part of an exchange between a NERSC supercomputing center user and a support assistant.
+Your primary objective is to decide if the final inquiry posed by the user is a technical question, out of scope, or small talk.
+
+### Answer Format:
+
+#### Technical Question
+
+This is the most common case, a technical question that requires consulting the documentation in order to produce a proper answer.
+
+For example, "Can I use SSH to do this?" (in a discussion about connecting to NERSC).
+
+You answer should be of the form `QUESTION(question:str)`, for example: `QUESTION(Can I connect to NERSC using SSH?)`.
+The restructured question should stand independently, crafted in such a way that the support team can comprehend and respond to it without referring back to the full conversation.
+
+#### Out of scope
+
+For example, asking about facts (such as world facts) that are not covered by NERSC's documentation.
+
+You answer should be `OUT_OF_SCOPE`.
+
+#### Small Talk
+
+For example, thanking you for your help.
+
+You answer should be of the form `SMALL_TALK(answer:str)`, for example: `SMALL_TALK(You are welcome!)`.
+Your answer will be forwarded to the user.
+
+### Conversation:
+"""
+
+# user prompt used to pick an answer type
+TRIAGE_PROMPT_USER = """
+Pick an answer type for the user's last message.
 """
 
 #----------------------------------------------------------------------------------------
@@ -129,18 +168,26 @@ class Vicuna(LanguageModel):
         # queries the system
         question = self.query(messages, expected_answer_size=self.upper_question_size, verbose=verbose)
         # extract question from code block
-        print(f"DEBUGGING: <{question}>")
         question = question.split('```')[-2].strip() if (question.count('```') >= 2) else question
         # deal with empty string failure case
         question = previous_messages[-1]['content'] if (len(question) == 0) else question
-        print(f"DEBUGGING: `{question}`")
         return question
 
-"""
-out of topic questions tend to be failure points
-a model could detect those and politly decline to answer?
-or maybe do some triage, should we answer as:
-- a text model conversing
-- a RAG model using the doc
-- a polite decline as the question is out of scope
-"""
+    def triage(self, messages:List[Dict], verbose=False) -> Answer:
+        """
+        Decides whether the message is:
+        * out of scope,
+        * a normal discussion (ie: "thank you!") that does not require a documentation call,
+        * something that requires a documentation call
+        """
+        # builds the prompt
+        system_message = {"role": "system", "content": TRIAGE_PROMPT_SYSTEM}
+        formatted_discussion = [{'role':'system', 'content': f"\n**{message['role']}**: {message['content']}\n", 'relevancy': i} for (i,message) in enumerate(messages)]
+        user_message = {"role": "user", "content": TRIAGE_PROMPT_USER}
+        messages = [system_message] + formatted_discussion + [user_message]
+        # queries the system
+        raw_answer = self.query(messages, expected_answer_size=self.upper_question_size, verbose=verbose)
+        print(f"DEBUGGING: <{raw_answer}>")
+        # decide on the type of answer
+        answer = Answer.is_out_of_scope()
+        return answer
