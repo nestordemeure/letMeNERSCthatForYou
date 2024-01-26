@@ -1,5 +1,4 @@
 from typing import List, Dict
-from enum import Enum, auto
 from .models import LanguageModel, Embedding
 from .database import Database
 from pathlib import Path
@@ -7,57 +6,11 @@ from datetime import datetime
 import traceback
 import json
 
-#----------------------------------------------------------------------------------------
-# ANSWER TYPE
-
-class AnswerType(Enum):
-    OUT_OF_SCOPE = auto()
-    QUESTION = auto()
-    SMALL_TALK = auto()
-
-class Answer:
-    """output of the triage operation"""
-    def __init__(self, answer_type: AnswerType, content: str = None, raw:str = None):
-        self.answer_type = answer_type
-        self.content = content
-        self.raw = raw
-
-    @classmethod
-    def out_of_scope(cls, raw:str=None):
-        return cls(AnswerType.OUT_OF_SCOPE, raw=raw)
-
-    @classmethod
-    def question(cls, question: str, raw:str=None):
-        return cls(AnswerType.QUESTION, content=question, raw=raw)
-
-    @classmethod
-    def smallTalk(cls, answer: str, raw:str=None):
-        return cls(AnswerType.SMALL_TALK, content=answer, raw=raw)
-
-    def is_out_of_scope(self):
-        return self.answer_type == AnswerType.OUT_OF_SCOPE
-
-    def is_question(self):
-        return self.answer_type == AnswerType.QUESTION
-
-    def is_smallTalk(self):
-        return self.answer_type == AnswerType.SMALL_TALK
-
-    def __str__(self):
-        if self.is_out_of_scope():
-            return "OUT_OF_SCOPE"
-        elif self.is_question():
-            return f"QUESTION({self.content})"
-        elif self.is_smallTalk():
-            return f"SMALL_TALK({self.content})"
-        else:
-            return "Invalid Answer Type"
-
 # answer returned if the model decides the question is out of scope
 out_of_scope_answer = """
-It seems your inquiry is outside the scope of this documentation chatbot.\
-We focus on providing assistance within the scope of NERSC's documentation.\
-For general or unrelated queries, we recommend consulting appropriate resources such as NERSC support or experts in that field.\
+It seems your inquiry is outside the scope of this documentation chatbot. \
+We focus on providing assistance within the scope of NERSC's documentation. \
+For general or unrelated queries, we recommend consulting appropriate resources such as NERSC support or experts in that field. \
 If you have any NERSC-related questions, feel free to ask!
 
 References:
@@ -65,9 +18,6 @@ References:
 * <https://docs.nersc.gov/>
 * <https://www.nersc.gov/users/getting-help/online-help-desk/>
 """
-
-#----------------------------------------------------------------------------------------
-# MODEL CALLS
 
 class QuestionAnswerer:
     def __init__(self, llm:LanguageModel, embeder:Embedding, database:Database, logs_folder:Path=None):

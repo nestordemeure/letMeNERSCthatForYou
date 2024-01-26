@@ -1,7 +1,7 @@
+import re
 from pathlib import Path
 from typing import List, Dict
-from ...question_answering import Answer
-from . import LanguageModel
+from . import LanguageModel, Answer
 
 #----------------------------------------------------------------------------------------
 # PROMPTS
@@ -59,69 +59,54 @@ References:
 ### Information Sources:
 """
 
-# prompt to summarize a conversation into its latest question
-# NOTE: 
-# * we do a single shot prompt (with an example answer) to ensure proper formating of the answer at the price of a few tokens
-# * note that the end of the prompt is ready to accomodate the conversation
-QUESTION_EXTRACTION_PROMPT_SYSTEM = """
-Your task is to function as a question extraction system.
-Your input will be the concluding part of an exchange between a NERSC supercomputing center user and a support assistant.
-Your primary objective is to distill and rephrase the final inquiry posed by the user.
-The restructured question should stand independently, crafted in such a way that the support team can comprehend and respond to it without referring back to the full conversation.
-The refined question should be enclosed within a code block.
-
-### Example Answer Format:
-
-```
-How can I optimize my code to efficiently utilize more nodes in the NERSC supercomputing center?
-```
-
-### Conversation:
-"""
-QUESTION_EXTRACTION_PROMPT_USER = """
-Extract the user's last message from the conversation.
-"""
-
 # system prompt used to pick an answer type
 TRIAGE_PROMPT_SYSTEM = """
-Your task is to function as triage.
-Your input will be the concluding part of an exchange between a NERSC supercomputing center user and a support assistant.
-Your primary objective is to decide if the final inquiry posed by the user is a technical question, out of scope, or small talk.
+Your task is to act as a triage system for exchanges between NERSC supercomputing center users and support assistants. You must categorize the user's final message in the conversation into one of three categories: Technical Question, Out of Scope, or Small Talk. Do not attempt to answer the question or engage further. Your sole responsibility is to categorize and format the message appropriately.
 
-### Answer Format:
+### Categories and Formats:
 
-#### Technical Question
+1. **Technical Question**
+   - **Action:** Identify technical inquiries needing documentation.
+   - **Format:** Use `QUESTION(question:str)`.
+   - **Example:** User asks about SSH connection → `QUESTION(How do I connect to NERSC using SSH?)`
 
-This is the most common case, a technical question that requires consulting the documentation in order to produce a proper answer.
+2. **Out of Scope**
+   - **Action:** Recognize questions unrelated to NERSC's support scope.
+   - **Format:** Use `OUTOFSCOPE()`.
+   - **Example:** User asks about general world facts → `OUTOFSCOPE()`
 
-For example, "Can I use SSH to do this?" (in a discussion about connecting to NERSC).
+3. **Small Talk**
+   - **Action:** Identify casual, non-technical interactions.
+   - **Format:** Use `SMALLTALK(response:str)`.
+   - **Example:** User says thanks → `SMALLTALK(You're welcome!)`
 
-You answer should be of the form `QUESTION(question:str)`, for example: `QUESTION(Can I connect to NERSC using SSH?)`.
-The restructured question should stand independently, crafted in such a way that the support team can comprehend and respond to it without referring back to the full conversation.
+### Important:
+- Stick STRICTLY to the specified format (`QUESTION(str)`, `OUTOFSCOPE()`, or `SMALLTALK(str)`).
+- Your response should ONLY categorize and format the user's message.
+- Direct answers or further engagement beyond categorization are not required and should be avoided.
 
-#### Out of scope
+Failure to adhere to these instructions can disrupt automated processing systems relying on your output.
 
-For example, asking about facts (such as world facts) that are not covered by NERSC's documentation.
-
-You answer should be `OUT_OF_SCOPE`.
-
-#### Small Talk
-
-For example, thanking you for your help.
-
-You answer should be of the form `SMALL_TALK(answer:str)`, for example: `SMALL_TALK(You are welcome!)`.
-Your answer will be forwarded to the user.
-
-### Conversation:
+### Conversation to be analyzed:
 """
 
 # user prompt used to pick an answer type
 TRIAGE_PROMPT_USER = """
-Pick an answer type for the user's last message.
+Categorize the user's final message.
 """
 
 #----------------------------------------------------------------------------------------
 # MODEL
+
+def comment_text(input_string:str) -> str:
+    """Puts a "> " in front of each line of the given text."""
+    # Split the input string into lines
+    lines = input_string.split('\n')
+    # Add '> ' in front of each line
+    prefixed_lines = [f'> {line}' for line in lines]
+    # Join the prefixed lines back into a single string
+    result = '\n'.join(prefixed_lines)
+    return result
 
 class Vicuna(LanguageModel):
     def __init__(self, 
@@ -151,29 +136,7 @@ class Vicuna(LanguageModel):
         answer = answer.split("URLs:")[0].strip() if ("URLs:" in answer) and ("References:" in answer) and (answer.index("URLs:") > answer.index("References:")) else answer
         return answer
 
-    def extract_question(self, previous_messages, verbose=False):
-        """
-        Extracts the latest question given a list of messages.
-        Message are expected to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
-        the question returned will be a string.
-        """
-        # shortcut for single (first) questions
-        if len(previous_messages) == 1:
-            return previous_messages[0]['content']
-        # builds the prompt
-        system_message = {"role": "system", "content": QUESTION_EXTRACTION_PROMPT_SYSTEM}
-        formatted_discussion = [{'role':'system', 'content': f"\n**{message['role']}**: {message['content']}\n", 'relevancy': i} for (i,message) in enumerate(previous_messages)]
-        user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
-        messages = [system_message] + formatted_discussion + [user_message]
-        # queries the system
-        question = self.query(messages, expected_answer_size=self.upper_question_size, verbose=verbose)
-        # extract question from code block
-        question = question.split('```')[-2].strip() if (question.count('```') >= 2) else question
-        # deal with empty string failure case
-        question = previous_messages[-1]['content'] if (len(question) == 0) else question
-        return question
-
-    def triage(self, messages:List[Dict], verbose=False) -> Answer:
+    def triage(self, previous_messages:List[Dict], verbose=False) -> Answer:
         """
         Decides whether the message is:
         * out of scope,
@@ -182,12 +145,30 @@ class Vicuna(LanguageModel):
         """
         # builds the prompt
         system_message = {"role": "system", "content": TRIAGE_PROMPT_SYSTEM}
-        formatted_discussion = [{'role':'system', 'content': f"\n**{message['role']}**: {message['content']}\n", 'relevancy': i} for (i,message) in enumerate(messages)]
+        formatted_discussion = [{'role':'system', 'content': comment_text(f"\n**{message['role']}**: {message['content']}\n"), 'relevancy': i} for (i,message) in enumerate(previous_messages)]
         user_message = {"role": "user", "content": TRIAGE_PROMPT_USER}
         messages = [system_message] + formatted_discussion + [user_message]
         # queries the system
         raw_answer = self.query(messages, expected_answer_size=self.upper_question_size, verbose=verbose)
         print(f"DEBUGGING: <{raw_answer}>")
-        # decide on the type of answer
-        answer = Answer.is_out_of_scope()
-        return answer
+        # parse the raw answer
+        if "OUTOFSCOPE" in raw_answer:
+            return Answer.out_of_scope(raw=raw_answer)
+        question_match = re.search(r'QUESTION\((.*?)\)', raw_answer)
+        if question_match:
+            question_content = question_match.group(1)
+            return Answer.question(question_content, raw=raw_answer)
+        small_talk_match = re.search(r'SMALLTALK\((.*?)\)', raw_answer)
+        if small_talk_match:
+            small_talk_content = small_talk_match.group(1)
+            return Answer.smallTalk(small_talk_content, raw=raw_answer)
+        # default fallthought case
+        print(f"DEBUGGING: FELL TRHOUGH")
+        question_content = previous_messages[-1]['content']
+        return Answer.question(question_content, raw=raw_answer)
+
+"""
+also sometimes the text is prefixed with 'question: "',
+that failure case might be avoided at the prompt level?
+or cleaned afterward
+"""

@@ -1,34 +1,59 @@
-import re
 import torch
+from enum import Enum, auto
 from abc import ABC, abstractmethod
 from copy import copy
 from typing import Union, List, Dict
 from ...database.document_loader import Chunk
-from ...question_answering import Answer
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-def keep_references_only(input_str: str) -> str:
-    """
-    Extracts and formats URLs from a given string into a bullet list. It identifies all URLs, removes any trailing '>'
-    often found in '<url>' patterns, eliminates duplicates while preserving order, and then formats them into a 
-    bullet list.
+#----------------------------------------------------------------------------------------
+# TRIAGE ANSWER TYPE
 
-    Args:
-        input_str (str): The string from which URLs are to be extracted.
+class AnswerType(Enum):
+    OUT_OF_SCOPE = auto()
+    QUESTION = auto()
+    SMALL_TALK = auto()
 
-    Returns:
-        str: A bullet list of unique URLs found in the input string.
-    """
-    # extract all urls
-    url_pattern = re.compile(r'https?://(?:[a-zA-Z]|[0-9]|[-.#/]|[$@&+]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-    urls = re.findall(url_pattern, input_str)
-    # remove trailing `>` (from <url> types of pattern)
-    urls = [url[:-1] if url.endswith('>') else url for url in urls]
-    # remove duplicates while preserving order
-    urls = list(dict.fromkeys(urls))
-    # convert list into a bullet list of URLs
-    bullet_list = "\n".join(f"* <{url}>" for url in urls)
-    return bullet_list
+class Answer:
+    """output of the triage operation"""
+    def __init__(self, answer_type:AnswerType, content:str = None, raw:str = None):
+        self.answer_type = answer_type
+        self.content = content
+        self.raw = raw
+
+    @classmethod
+    def out_of_scope(cls, raw:str=None):
+        return cls(AnswerType.OUT_OF_SCOPE, raw=raw)
+
+    @classmethod
+    def question(cls, question:str, raw:str=None):
+        return cls(AnswerType.QUESTION, content=question, raw=raw)
+
+    @classmethod
+    def smallTalk(cls, answer:str, raw:str=None):
+        return cls(AnswerType.SMALL_TALK, content=answer, raw=raw)
+
+    def is_out_of_scope(self):
+        return self.answer_type == AnswerType.OUT_OF_SCOPE
+
+    def is_question(self):
+        return self.answer_type == AnswerType.QUESTION
+
+    def is_smallTalk(self):
+        return self.answer_type == AnswerType.SMALL_TALK
+
+    def __str__(self):
+        if self.is_out_of_scope():
+            return "OUT_OF_SCOPE"
+        elif self.is_question():
+            return f"QUESTION({self.content})"
+        elif self.is_smallTalk():
+            return f"SMALL_TALK({self.content})"
+        else:
+            return "Invalid Answer Type"
+
+#----------------------------------------------------------------------------------------
+# MODEL ABSTRACTION
 
 class LanguageModel(ABC):
     """
@@ -198,14 +223,5 @@ class LanguageModel(ABC):
         """
         pass
 
-    @abstractmethod
-    def extract_question(self, messages:List[Dict], verbose=False) -> str:
-        """
-        Abstract method to extract the latest question given a list of messages.
-        Message are expected to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
-        the question returned will be a string.
-        """
-        pass
-
 from .vicuna import Vicuna
-from .llama2 import Llama2
+#from .llama2 import Llama2
