@@ -122,14 +122,17 @@ class Vicuna(LanguageModel):
         """
         Method to get an answer given a question and some chunks passed for context.
         """
+        # builds the messages
         nb_chunks = len(chunks)
-        # builds the prompt
         system_message = {"role": "system", "content": ANSWERING_PROMPT}
         context_messages = [{"role": "system", "content": f"\n{chunk.to_markdown()}", "relevancy": (nb_chunks-i)} for (i,chunk) in enumerate(chunks)]
         question_message = {"role": "user", "content": question}
         messages = [system_message] + context_messages + [question_message]
-        # runs the query
-        answer = self.query(messages, expected_answer_size=self.upper_answer_size, verbose=verbose)
+        # builds the prompt
+        prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_answer_size)
+        # generates an answer
+        answer = self.generate(prompt, verbose)
+        print(f"DEBUGGING (get_answer): {answer}")
         # remove potential prefix
         answer = answer.split("Answer: ", 1)[1] if ("Answer: " in answer) and answer.startswith(("Answer: ", "Question: ")) else answer
         # remove potential suffix
@@ -143,14 +146,16 @@ class Vicuna(LanguageModel):
         * a normal discussion (ie: "thank you!") that does not require a documentation call,
         * something that requires a documentation call
         """
-        # builds the prompt
+        # builds the messages
         system_message = {"role": "system", "content": TRIAGE_PROMPT_SYSTEM}
         formatted_discussion = [{'role':'system', 'content': comment_text(f"\n**{message['role']}**: {message['content']}\n"), 'relevancy': i} for (i,message) in enumerate(previous_messages)]
         user_message = {"role": "user", "content": TRIAGE_PROMPT_USER}
         messages = [system_message] + formatted_discussion + [user_message]
-        # queries the system
-        raw_answer = self.query(messages, expected_answer_size=self.upper_question_size, verbose=verbose)
-        print(f"DEBUGGING: <{raw_answer}>")
+        # builds the prompt
+        prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_question_size)
+        # generates an answer
+        raw_answer = self.generate(prompt, verbose)
+        print(f"DEBUGGING (triage): {raw_answer}")
         # parse the raw answer
         if "OUTOFSCOPE" in raw_answer:
             return Answer.out_of_scope(raw=raw_answer)
@@ -166,9 +171,3 @@ class Vicuna(LanguageModel):
         print(f"DEBUGGING: FELL TRHOUGH")
         question_content = previous_messages[-1]['content']
         return Answer.question(question_content, raw=raw_answer)
-
-"""
-also sometimes the text is prefixed with 'question: "',
-that failure case might be avoided at the prompt level?
-or cleaned afterward
-"""

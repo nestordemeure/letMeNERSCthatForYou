@@ -131,7 +131,7 @@ class LanguageModel(ABC):
 
     def apply_chat_template(self, messages: List[Dict[str, str]], nb_tokens_max:int=None) -> str:
         """
-        Takes messages and applies the model's chat template.
+        Takes a list of messages and applies the model's chat template.
 
         NOTE:
         - drops optional messages until the result fits in the given size
