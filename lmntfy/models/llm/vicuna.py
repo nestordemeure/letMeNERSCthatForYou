@@ -61,31 +61,27 @@ References:
 
 # system prompt used to pick an answer type
 TRIAGE_PROMPT_SYSTEM = """
-Your task is to act as a triage system for exchanges between NERSC supercomputing center users and support assistants. You must categorize the user's final message in the conversation into one of three categories: Technical Question, Out of Scope, or Small Talk. Do not attempt to answer the question or engage further. Your sole responsibility is to categorize and format the message appropriately.
+You are a member of the NERSC supercomputing center's support staff.
+Your task is to act as a triage system for exchanges between NERSC supercomputing center users and support assistants. \
+You must categorize the user's final message in the conversation into one of three categories: Technical Question, Out of Scope, or Small Talk. \
+Do not attempt to answer the question or engage further. Your sole responsibility is to categorize and format the message appropriately.
 
 ### Categories and Formats:
 
 1. **Technical Question**
    - **Action:** Identify technical inquiries needing documentation.
-   - **Format:** Use `QUESTION(question:str)`.
-   - **Example:** User asks about SSH connection → `QUESTION(How do I connect to NERSC using SSH?)`
+   - **Format:** Use `TECHNICAL_QUESTION(question:str)`.
+   - **Example:** User asks about SSH connection → `TECHNICAL_QUESTION("How do I connect to NERSC using SSH?")`
 
 2. **Out of Scope**
    - **Action:** Recognize questions unrelated to NERSC's support scope.
-   - **Format:** Use `OUTOFSCOPE()`.
-   - **Example:** User asks about general world facts → `OUTOFSCOPE()`
+   - **Format:** Use `OUT_OF_SCOPE`.
+   - **Example:** User asks about general world facts → `OUTOFSCOPE`
 
 3. **Small Talk**
    - **Action:** Identify casual, non-technical interactions.
-   - **Format:** Use `SMALLTALK(response:str)`.
-   - **Example:** User says thanks → `SMALLTALK(You're welcome!)`
-
-### Important:
-- Stick STRICTLY to the specified format (`QUESTION(str)`, `OUTOFSCOPE()`, or `SMALLTALK(str)`).
-- Your response should ONLY categorize and format the user's message.
-- Direct answers or further engagement beyond categorization are not required and should be avoided.
-
-Failure to adhere to these instructions can disrupt automated processing systems relying on your output.
+   - **Format:** Use `SMALL_TALK(response:str)`.
+   - **Example:** User says thanks → `SMALL_TALK("You're welcome!")`
 
 ### Conversation to be analyzed:
 """
@@ -157,17 +153,16 @@ class Vicuna(LanguageModel):
         raw_answer = self.generate(prompt, verbose=verbose, generator=self.triage_generator)
         print(f"DEBUGGING (triage): {raw_answer}")
         # parse the raw answer
-        if "OUTOFSCOPE" in raw_answer:
+        if "OUT_OF_SCOPE" in raw_answer:
             return Answer.out_of_scope(raw=raw_answer)
-        question_match = re.search(r'QUESTION\((.*?)\)', raw_answer)
+        question_match = re.search(r'TECHNICAL\_QUESTION\("(.*?)"\)', raw_answer)
         if question_match:
             question_content = question_match.group(1)
             return Answer.question(question_content, raw=raw_answer)
-        small_talk_match = re.search(r'SMALLTALK\((.*?)\)', raw_answer)
+        small_talk_match = re.search(r'SMALL\_TALK\("(.*?)"\)', raw_answer)
         if small_talk_match:
             small_talk_content = small_talk_match.group(1)
             return Answer.smallTalk(small_talk_content, raw=raw_answer)
-        # default fallthought case
-        print(f"DEBUGGING: FELL TRHOUGH")
+        # default fallthought case (should be impossible with guided generation)
         question_content = previous_messages[-1]['content']
         return Answer.question(question_content, raw=raw_answer)

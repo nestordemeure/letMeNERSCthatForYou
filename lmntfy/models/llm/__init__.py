@@ -9,9 +9,9 @@ import outlines
 from outlines.models.transformers import Transformer
 from outlines.generate import SequenceGenerator
 
-# NOTE: this is needed as outlines's caching system will try to write to $HOME/.chache/outlines
+# NOTE: this is needed as the initialization of outlines's caching system will try to write to $HOME/.chache/outlines
 os.environ['OUTLINES_CACHE_DIR'] = os.environ.get('TMPDIR')
-# tries to disable cahcing if possible
+# disables caching
 outlines.disable_cache()
 
 #----------------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ outlines.disable_cache()
 
 class AnswerType(Enum):
     OUT_OF_SCOPE = auto()
-    QUESTION = auto()
+    TECHNICAL_QUESTION = auto()
     SMALL_TALK = auto()
 
 class Answer:
@@ -35,7 +35,7 @@ class Answer:
 
     @classmethod
     def question(cls, question:str, raw:str=None):
-        return cls(AnswerType.QUESTION, content=question, raw=raw)
+        return cls(AnswerType.TECHNICAL_QUESTION, content=question, raw=raw)
 
     @classmethod
     def smallTalk(cls, answer:str, raw:str=None):
@@ -45,7 +45,7 @@ class Answer:
         return self.answer_type == AnswerType.OUT_OF_SCOPE
 
     def is_question(self):
-        return self.answer_type == AnswerType.QUESTION
+        return self.answer_type == AnswerType.TECHNICAL_QUESTION
 
     def is_smallTalk(self):
         return self.answer_type == AnswerType.SMALL_TALK
@@ -54,14 +54,14 @@ class Answer:
         if self.is_out_of_scope():
             return "OUT_OF_SCOPE"
         elif self.is_question():
-            return f"QUESTION({self.content})"
+            return f"TECHNICAL_QUESTION({self.content})"
         elif self.is_smallTalk():
             return f"SMALL_TALK({self.content})"
         else:
             return "Invalid Answer Type"
 
 # Regular expression representing the triage format
-triage_regexp = r'(OUTOFSCOPE|QUESTION\(".*?"\)|SMALLTALK\(".*?"\))'
+triage_regexp = r'(OUT\_OF\_SCOPE|TECHNICAL\_QUESTION\(".*?"\)|SMALL\_TALK\(".*?"\))'
 
 #----------------------------------------------------------------------------------------
 # MODEL ABSTRACTION
