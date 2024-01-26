@@ -23,7 +23,7 @@ class Database(ABC):
         llm_max_tokens = llm.context_size / (min_chunks_per_query + 2)
         self.max_tokens_per_chunk = TokenCountPair(llm_max_tokens, embedder.max_input_tokens)
         # the token counting function
-        self.token_counter = TokenCountPair.build_pair_counter(llm.token_counter, embedder.token_counter)
+        self.count_tokens = TokenCountPair.build_pair_counter(llm.count_tokens, embedder.count_tokens)
         # dictionary of all files
         # file_path -> File
         self.files: Dict[Path, File] = dict()
@@ -85,7 +85,7 @@ class Database(ABC):
     def add_file(self, file_path):
         """Add a file's content to the database"""
         # slice file into chunks
-        chunks = chunk_file(file_path, self.documentation_folder, self.token_counter, self.max_tokens_per_chunk)
+        chunks = chunk_file(file_path, self.documentation_folder, self.count_tokens, self.max_tokens_per_chunk)
         # save chunks in the databse
         file_update_date = datetime.fromtimestamp(file_path.stat().st_mtime)
         file = File(creation_date=file_update_date)

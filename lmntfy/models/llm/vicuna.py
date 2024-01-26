@@ -113,7 +113,7 @@ class Vicuna(LanguageModel):
                  models_folder: Path,
                  model_name: str='vicuna-13b-v1.5',
                  device='cuda'):
-        super().__init__(models_folder / model_name, device)
+        super().__init__(models_folder / model_name, device=device)
         self.tokenizer.chat_template = VICUNA_CHAT_TEMPLATE
         self.upper_answer_size = 450
         self.upper_question_size = 200
@@ -154,7 +154,7 @@ class Vicuna(LanguageModel):
         # builds the prompt
         prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_question_size)
         # generates an answer
-        raw_answer = self.generate(prompt, verbose)
+        raw_answer = self.generate(prompt, verbose=verbose, generator=self.triage_generator)
         print(f"DEBUGGING (triage): {raw_answer}")
         # parse the raw answer
         if "OUTOFSCOPE" in raw_answer:

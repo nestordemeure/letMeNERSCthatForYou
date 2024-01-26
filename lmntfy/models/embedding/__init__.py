@@ -37,7 +37,7 @@ class Embedding(ABC):
         pass
 
     @abstractmethod
-    def token_counter(self, text:str) -> int:
+    def count_tokens(self, text:str) -> int:
         """
         Counts the number of tokens used to represent the given text
         """

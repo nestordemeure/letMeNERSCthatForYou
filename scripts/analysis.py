@@ -7,8 +7,8 @@ import numpy as np
 import json
 
 # Define your token_counter function here
-#token_counter = GPT35().token_counter
-token_counter = Vicuna(model_path="../models/vicuna-13b-v1.3").token_counter
+#token_counter = GPT35().count_tokens
+token_counter = Vicuna(model_path="../models/vicuna-13b-v1.3").count_tokens
 
 # Load JSON data
 with open('./data/various/questions.json', 'r') as f:

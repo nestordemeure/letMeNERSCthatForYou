@@ -65,7 +65,7 @@ class Llama2(LanguageModel):
                 raise RuntimeError(f"Model only accept 'system', 'user' and 'assistant' roles, not '{message['role']}'")
         return prompt
 
-    def token_counter(self, text):
+    def count_tokens(self, text):
         """
         Token counting implementation.
         """
@@ -78,7 +78,7 @@ class Llama2(LanguageModel):
         """
         # compute the maximum answer size possible
         # see implementation of generate_stream for formula details
-        if prompt_size is None: prompt_size = self.token_counter(prompt)
+        if prompt_size is None: prompt_size = self.count_tokens(prompt)
         max_new_tokens = self.context_size - prompt_size - 8
         # produces an answer
         inputs = self.tokenizer(prompt, return_tensors="pt").to("cuda")
@@ -98,7 +98,7 @@ class Llama2(LanguageModel):
         question_message = {"role": "user", "content": question}
         messages = [system_message] + context_messages + [question_message]
         prompt = self.messages_to_prompt(messages)
-        prompt_size = self.token_counter(prompt)
+        prompt_size = self.count_tokens(prompt)
         # keep as many context messages as we can
         while prompt_size + self.upper_answer_size > self.context_size:
             if len(context_messages) > 1:
@@ -108,7 +108,7 @@ class Llama2(LanguageModel):
                 context_messages.pop(-1)
                 messages = [system_message] + context_messages + [question_message]
                 prompt = self.messages_to_prompt(messages)
-                prompt_size = self.token_counter(prompt)
+                prompt_size = self.count_tokens(prompt)
             else:
                 # no more space to reduce context size
                 raise ValueError("You query is too long for the model's context size.")
@@ -152,7 +152,7 @@ class Llama2(LanguageModel):
         user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
         messages = [system_message] + context_messages + [user_message]
         prompt = self.messages_to_prompt(messages)
-        prompt_size = self.token_counter(prompt)
+        prompt_size = self.count_tokens(prompt)
         # keep as many context messages as we can
         while prompt_size + self.upper_question_size > self.context_size:
             if len(messages) > 4:
@@ -160,7 +160,7 @@ class Llama2(LanguageModel):
                 # ensuring there is at least one context message
                 messages.pop(2)
                 prompt = self.messages_to_prompt(messages)
-                prompt_size = self.token_counter(prompt)
+                prompt_size = self.count_tokens(prompt)
             else:
                 # no more space to reduce context size
                 raise ValueError("You query is too long for the model's context size.")
@@ -184,7 +184,7 @@ class Llama2(LanguageModel):
         user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
         messages = [system_message] + previous_messages + [user_message]
         prompt = self.messages_to_prompt(messages)
-        prompt_size = self.token_counter(prompt)
+        prompt_size = self.count_tokens(prompt)
         # keep as many context messages as we can
         while prompt_size + self.upper_question_size > self.context_size:
             if len(messages) > 3:
@@ -192,7 +192,7 @@ class Llama2(LanguageModel):
                 # ensuring there is at least one context message
                 messages.pop(1)
                 prompt = self.messages_to_prompt(messages)
-                prompt_size = self.token_counter(prompt)
+                prompt_size = self.count_tokens(prompt)
             else:
                 # no more space to reduce context size
                 raise ValueError("You query is too long for the model's context size.")

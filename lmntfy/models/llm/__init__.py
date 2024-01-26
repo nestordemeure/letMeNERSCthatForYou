@@ -1,13 +1,18 @@
-import torch
+import os
 from enum import Enum, auto
 from abc import ABC, abstractmethod
 from copy import copy
-from typing import Union, List, Dict
+from typing import List, Dict
 from ...database.document_loader import Chunk
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import PreTrainedTokenizer
 import outlines
 from outlines.models.transformers import Transformer
 from outlines.generate import SequenceGenerator
+
+# NOTE: this is needed as outlines's caching system will try to write to $HOME/.chache/outlines
+os.environ['OUTLINES_CACHE_DIR'] = os.environ.get('TMPDIR')
+# tries to disable cahcing if possible
+outlines.disable_cache()
 
 #----------------------------------------------------------------------------------------
 # TRIAGE ANSWER TYPE
@@ -55,6 +60,9 @@ class Answer:
         else:
             return "Invalid Answer Type"
 
+# Regular expression representing the triage format
+triage_regexp = r'(OUTOFSCOPE|QUESTION\(".*?"\)|SMALLTALK\(".*?"\))'
+
 #----------------------------------------------------------------------------------------
 # MODEL ABSTRACTION
 
@@ -68,17 +76,20 @@ class LanguageModel(ABC):
         all "system" messages will be concatenated and put at the beginning of the conversation
         if the conversation is too long to fit the answer, messages with a "relevancy" field will be dropped (starting with lowest relevancy) until it fits
     """
-    def __init__(self, pretrained_model_name_or_path:str):
+    def __init__(self, pretrained_model_name_or_path:str, device='cuda'):
         self.pretrained_model_name_or_path = str(pretrained_model_name_or_path)
-        self.model: Transformer = outlines.models.transformers(self.pretrained_model_name_or_path)
-        self.tokenizer: AutoTokenizer = self.model.tokenizer
+        self.model: Transformer = outlines.models.transformers(self.pretrained_model_name_or_path, device=device)
+        self.tokenizer: PreTrainedTokenizer = self.model.tokenizer.tokenizer # get the Transformer Tokenizer for chattemplating purposes
         self.context_size = self.model.model.config.max_position_embeddings
+        # generators
+        self.base_generator = outlines.generate.text(self.model)
+        self.triage_generator = outlines.generate.regex(self.model, triage_regexp)
 
-    def count_tokens(self, intput:str) -> int:
+    def count_tokens(self, text:str) -> int:
         """
         Counts the number of tokens in a given string.
         """
-        tokens = self.tokenizer.encode(input, return_tensors='pt')
+        tokens = self.tokenizer.encode(text, return_tensors='pt')
         token_number = tokens.size(-1)
         return token_number
 
@@ -145,7 +156,7 @@ class LanguageModel(ABC):
         merged_messages = self._merge_system_messages(messages)
         
         # turns the conversation into a single string
-        output_string = self.tokenizer.apply_chat_template(conversation=merged_messages, tokenize=False)
+        output_string = self.tokenizer.apply_chat_template(merged_messages, tokenize=False)
 
         # drop optional messages if needed
         if (nb_tokens_max is not None) and (self.count_tokens(output_string) > nb_tokens_max):
@@ -156,7 +167,7 @@ class LanguageModel(ABC):
             
         return output_string
 
-    def generate(self, input:str, verbose:bool=False, generator:SequenceGenerator=None) -> str:
+    def generate(self, text:str, verbose:bool=False, generator:SequenceGenerator=None) -> str:
         """
         Query the model and get a response.
 
@@ -168,16 +179,16 @@ class LanguageModel(ABC):
         Returns:
             str: The generated response from the model.
         """
-        # picks a generator, default to basic text completion
+        # picks a generator, defaults to basic text completion
         if generator is None:
-            generator = outlines.generate.text(self.model)
+            generator = self.base_generator
 
         # runs the generator
-        output = generator(input)
+        output = generator(text)
 
         # debugging information
         if verbose:
-            print(input)
+            print(text)
             print(output)
 
         return output

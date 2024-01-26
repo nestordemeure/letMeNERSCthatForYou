@@ -25,7 +25,7 @@ class SBERTEmbedding(Embedding):
         text = text.replace("\n", " ")
         return self.model.encode([text], convert_to_numpy=True, normalize_embeddings=self.normalized)[0]
 
-    def token_counter(self, text):
+    def count_tokens(self, text):
         """
         Counts the number of tokens used to represent the given text
         """
