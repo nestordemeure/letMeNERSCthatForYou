@@ -61,7 +61,13 @@ class Answer:
             return "Invalid Answer Type"
 
 # Regular expression representing the triage format
-triage_regexp = r'(OUT\_OF\_SCOPE|TECHNICAL\_QUESTION\(".*?"\)|SMALL\_TALK\(".*?"\))'
+triage_regex = r'(OUT\_OF\_SCOPE|TECHNICAL\_QUESTION\(".*?"\)|SMALL\_TALK\(".*?"\))'
+
+# Regular expression representing the technical question answering format
+# NOTE: 
+# * we force all markdown link to point to the NERSC doc
+# * this sadly tends to break the answering part of the model, reason unknown.
+technical_question_regex = r'([\s\S]*?)\n\nReferences:\n(\* \[\S*?\]\(https://docs\.nersc\.gov/.*?\)\n?)+'
 
 #----------------------------------------------------------------------------------------
 # MODEL ABSTRACTION
@@ -83,7 +89,8 @@ class LanguageModel(ABC):
         self.context_size = self.model.model.config.max_position_embeddings
         # generators
         self.base_generator = outlines.generate.text(self.model)
-        self.triage_generator = outlines.generate.regex(self.model, triage_regexp)
+        self.triage_generator = outlines.generate.regex(self.model, triage_regex)
+        self.technical_question_generator = outlines.generate.regex(self.model, technical_question_regex)
 
     def count_tokens(self, text:str) -> int:
         """
@@ -156,7 +163,7 @@ class LanguageModel(ABC):
         merged_messages = self._merge_system_messages(messages)
         
         # turns the conversation into a single string
-        output_string = self.tokenizer.apply_chat_template(merged_messages, tokenize=False)
+        output_string = self.tokenizer.apply_chat_template(merged_messages, add_generation_prompt=True, tokenize=False)
 
         # drop optional messages if needed
         if (nb_tokens_max is not None) and (self.count_tokens(output_string) > nb_tokens_max):
@@ -212,3 +219,8 @@ class LanguageModel(ABC):
 
 from .vicuna import Vicuna
 #from .llama2 import Llama2
+
+"""
+TODO:
+Am I missing the beginning of the assistant message?
+"""

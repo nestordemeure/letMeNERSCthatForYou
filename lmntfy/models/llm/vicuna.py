@@ -63,8 +63,7 @@ References:
 TRIAGE_PROMPT_SYSTEM = """
 You are a member of the NERSC supercomputing center's support staff.
 Your task is to act as a triage system for exchanges between NERSC supercomputing center users and support assistants. \
-You must categorize the user's final message in the conversation into one of three categories: Technical Question, Out of Scope, or Small Talk. \
-Do not attempt to answer the question or engage further. Your sole responsibility is to categorize and format the message appropriately.
+You must categorize the user's final message in the conversation into one of three categories: Technical Question, Out of Scope, or Small Talk.
 
 ### Categories and Formats:
 
@@ -72,16 +71,18 @@ Do not attempt to answer the question or engage further. Your sole responsibilit
    - **Action:** Identify technical inquiries needing documentation.
    - **Format:** Use `TECHNICAL_QUESTION(question:str)`.
    - **Example:** User asks about SSH connection → `TECHNICAL_QUESTION("How do I connect to NERSC using SSH?")`
+   The restructured question should stand independently, crafted in such a way that the support team can comprehend and respond to it without referring back to the full conversation.
 
 2. **Out of Scope**
    - **Action:** Recognize questions unrelated to NERSC's support scope.
    - **Format:** Use `OUT_OF_SCOPE`.
-   - **Example:** User asks about general world facts → `OUTOFSCOPE`
+   - **Example:** User asks about general world facts → `OUT_OF_SCOPE`
 
 3. **Small Talk**
    - **Action:** Identify casual, non-technical interactions.
    - **Format:** Use `SMALL_TALK(response:str)`.
    - **Example:** User says thanks → `SMALL_TALK("You're welcome!")`
+   Your response should be conversational and appropriate, forwarding the user's sentiment in a manner that can be directly relayed to them.
 
 ### Conversation to be analyzed:
 """
@@ -125,14 +126,20 @@ class Vicuna(LanguageModel):
         question_message = {"role": "user", "content": question}
         messages = [system_message] + context_messages + [question_message]
         # builds the prompt
-        prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_answer_size)
+        # NOTE: we prefix it with "Answer: " as the model has a tendancy to start with that anyway
+        prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_answer_size) + "Answer: "
         # generates an answer
-        answer = self.generate(prompt, verbose)
-        print(f"DEBUGGING (get_answer): {answer}")
-        # remove potential prefix
-        answer = answer.split("Answer: ", 1)[1] if ("Answer: " in answer) and answer.startswith(("Answer: ", "Question: ")) else answer
-        # remove potential suffix
-        answer = answer.split("URLs:")[0].strip() if ("URLs:" in answer) and ("References:" in answer) and (answer.index("URLs:") > answer.index("References:")) else answer
+        # NOTE: we generate the answer in two part to ensure it follows our prefered format
+        # 1. the text part
+        answer_text = self.base_generator(prompt, stop_at="References:")
+        print(f"DEBUGGING (answer_text):\n{answer_text}")
+        if not "References:" in answer_text: return answer_text
+        # 2. the references, priming them to follow our prefered format
+        prompt_extended = prompt + answer_text + "\n* <"
+        answer_references = self.base_generator(prompt_extended, stop_at="\n\n")
+        print(f"DEBUGGING (answer_references):\n* <{answer_references}")
+        # assemble the answer
+        answer = answer_text + "\n* <" + answer_references
         return answer
 
     def triage(self, previous_messages:List[Dict], verbose=False) -> Answer:
@@ -150,7 +157,7 @@ class Vicuna(LanguageModel):
         # builds the prompt
         prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_question_size)
         # generates an answer
-        raw_answer = self.generate(prompt, verbose=verbose, generator=self.triage_generator)
+        raw_answer = self.triage_generator(prompt)
         print(f"DEBUGGING (triage): {raw_answer}")
         # parse the raw answer
         if "OUT_OF_SCOPE" in raw_answer:
@@ -166,3 +173,8 @@ class Vicuna(LanguageModel):
         # default fallthought case (should be impossible with guided generation)
         question_content = previous_messages[-1]['content']
         return Answer.question(question_content, raw=raw_answer)
+
+"""
+TODO:
+* make it so that "References:" is more likely to be used
+"""
