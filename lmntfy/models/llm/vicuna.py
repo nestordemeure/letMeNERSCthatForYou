@@ -44,7 +44,7 @@ Use an unbiased and journalistic tone.
 Combine search results together into a coherent answer.
 Only cite the most relevant results that answer the question accurately.
 Try and be careful not to go off-topics.
-After providing the answer, list the URLs of the information sources you used, sorted from most to least relevant. Include ONLY the URLs that are directly relevant to the answer.
+After providing the answer, list the URLs of the information sources you used in a `References:` section, sorted from most to least relevant. Include ONLY the URLs that are directly relevant to the answer.
 
 ### Example Answer Format:
 
@@ -62,27 +62,35 @@ References:
 # system prompt used to pick an answer type
 TRIAGE_PROMPT_SYSTEM = """
 You are a member of the NERSC supercomputing center's support staff.
-Your task is to act as a triage system for exchanges between NERSC supercomputing center users and support assistants. \
-You must categorize the user's final message in the conversation into one of three categories: Technical Question, Out of Scope, or Small Talk.
+Your task is to act as a triage system for exchanges between NERSC supercomputing center users and support assistants.
+Your primary role is to accurately categorize the **last message** of the user in the conversation into one of three distinct categories: Technical Question, Out of Scope, or Small Talk. It's crucial to focus on the last message and its context to ensure accurate classification.
 
 ### Categories and Formats:
 
 1. **Technical Question**
-   - **Action:** Identify technical inquiries needing documentation.
+   - **Action:** Identify the last message that specifically requires technical guidance or documentation related to NERSC services or systems.
+   - **Criteria:** The message should be directly seeking information or assistance related to the technical aspects, functionalities, or procedures of NERSC services, and it must be the final message in the conversation.
    - **Format:** Use `TECHNICAL_QUESTION(question:str)`.
    - **Example:** User asks about SSH connection → `TECHNICAL_QUESTION("How do I connect to NERSC using SSH?")`
-   The restructured question should stand independently, crafted in such a way that the support team can comprehend and respond to it without referring back to the full conversation.
+   - **Note:** Ensure the restructured question is clear, self-contained, and accurately represents the last message, enabling the support team to understand and address it without needing additional context.
 
 2. **Out of Scope**
-   - **Action:** Recognize questions unrelated to NERSC's support scope.
+   - **Action:** Recognize and flag the last message that inquires about topics beyond the support and operational scope of NERSC.
+   - **Criteria:** The message discusses subjects not related to NERSC's services, technical support, or operational procedures, and it must be the final message in the conversation.
    - **Format:** Use `OUT_OF_SCOPE`.
-   - **Example:** User asks about general world facts → `OUT_OF_SCOPE`
+   - **Example:** User asks about general world facts or non-NERSC topics → `OUT_OF_SCOPE`
 
 3. **Small Talk**
-   - **Action:** Identify casual, non-technical interactions.
+   - **Action:** Identify the last message that is conversational and non-technical in nature, typically involving greetings, gratitude, or general well-being.
+   - **Criteria:** The message does not seek technical support or specific information but rather engages in a casual, polite, or social manner, and it must be the final message in the conversation.
    - **Format:** Use `SMALL_TALK(response:str)`.
    - **Example:** User says thanks → `SMALL_TALK("You're welcome!")`
-   Your response should be conversational and appropriate, forwarding the user's sentiment in a manner that can be directly relayed to them.
+   - **Note:** Your response should be warm and conversational, reflecting the sentiment expressed by the user, suitable for direct communication.
+
+### Guidelines for Classification:
+- **Focus on the Last Message:** Ensure that the categorization is based solely on the last message of the conversation. Avoid considering previous messages unless they provide essential context for understanding the last message.
+- **Context Matters:** Evaluate the last message not just by its content but also in the context of the entire conversation.
+- **Accuracy is Key:** Take the time to carefully read and understand the user's final message to ensure your classification aligns with the user's intent and the nature of their inquiry.
 
 ### Conversation to be analyzed:
 """
@@ -132,12 +140,16 @@ class Vicuna(LanguageModel):
         # NOTE: we generate the answer in two part to ensure it follows our prefered format
         # 1. the text part
         answer_text = self.base_generator(prompt, stop_at="References:")
-        print(f"DEBUGGING (answer_text):\n{answer_text}")
-        if not "References:" in answer_text: return answer_text
+        if not "References:" in answer_text: 
+            if ("\n * [" in answer_text) or ("\n * <" in answer_text):
+                # there is already a list of links
+                return answer_text
+            else:
+                # no references found, let's add some
+                answer_text += "\n\nReferences:"
         # 2. the references, priming them to follow our prefered format
         prompt_extended = prompt + answer_text + "\n* <"
         answer_references = self.base_generator(prompt_extended, stop_at="\n\n")
-        print(f"DEBUGGING (answer_references):\n* <{answer_references}")
         # assemble the answer
         answer = answer_text + "\n* <" + answer_references
         return answer
@@ -173,8 +185,3 @@ class Vicuna(LanguageModel):
         # default fallthought case (should be impossible with guided generation)
         question_content = previous_messages[-1]['content']
         return Answer.question(question_content, raw=raw_answer)
-
-"""
-TODO:
-* make it so that "References:" is more likely to be used
-"""
