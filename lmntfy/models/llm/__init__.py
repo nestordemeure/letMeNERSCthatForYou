@@ -168,5 +168,6 @@ class LanguageModel(ABC):
         """
         pass
 
+from .llama2 import Llama2
 from .vicuna import Vicuna
-#from .llama2 import Llama2
+from .mistral import Mistral

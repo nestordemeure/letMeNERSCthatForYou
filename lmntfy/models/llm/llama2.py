@@ -1,213 +1,140 @@
-import sys
-from . import LanguageModel, keep_references_only
-from transformers import LlamaForCausalLM, LlamaTokenizer, LlamaTokenizerFast #either Tokenizer version works, using fast for now
+from pathlib import Path
+from typing import List, Dict
+from . import LanguageModel
+
 #----------------------------------------------------------------------------------------
 # PROMPTS
 
+# Jinja chat template for Llama2
+# found [here](https://github.com/chujiezheng/chat_templates/blob/main/chat_templates/llama-2-chat.jinja)
+LLAMA2_CHAT_TEMPLATE = """
+{% if messages[0]['role'] == 'system' %}
+    {% set loop_messages = messages[1:] %}
+    {% set system_message = '<<SYS>>\n' + messages[0]['content'].strip() + '\n<</SYS>>\n\n' %}
+{% else %}
+    {% set loop_messages = messages %}
+    {% set system_message = '' %}
+{% endif %}
+{% for message in loop_messages %}
+    {% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}
+        {{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}
+    {% endif %}
+    {% if loop.index0 == 0 %}
+        {% set content = system_message + message['content'] %}
+    {% else %}
+        {% set content = message['content'] %}
+    {% endif %}
+    {% if message['role'] == 'user' %}
+        {{ bos_token + '[INST] ' + content.strip() + ' [/INST]' }}
+    {% elif message['role'] == 'assistant' %}
+        {{ ' '  + content.strip() + ' ' + eos_token }}
+    {% endif %}
+{% endfor %}
+"""
+
+# Basic chat prompt
+CHAT_PROMPT_SYSTEM = """
+You are a member of the NERSC supercomputing center's support staff answering a user's questions.
+Use an unbiased and journalistic tone. \
+Only cite the most relevant results that answer the user's questions accurately. \
+Try and be careful not to go off-topics.
+"""
+
 # prompt to answer a question
-# this prompt is meant to be followed by a list of chunks
-ANSWERING_PROMPT="You are a member of the NERSC supercomputing center's support staff. \
-Generate a comprehensive and informative answer for a given question solely based on the provided information (URL and Extract). \
+# NOTE: 
+# * we do a single shot prompt (with an example answer) to ensure proper formating of the answer at the price of a few tokens
+# * note that the end of the prompt is ready to accomodate some chunks of information
+ANSWERING_PROMPT="""
+You are a member of the NERSC supercomputing center's support staff.
+Generate a comprehensive and informative answer for a given question solely based on the provided information (URL and Extract).
 You must only use information from the provided search results. \
 Use an unbiased and journalistic tone. \
 Combine search results together into a coherent answer. \
 Only cite the most relevant results that answer the question accurately. \
-Try and be careful not to go off-topics."
+Try and be careful not to go off-topics. \
+After providing the answer, list the URLs of the information sources you used in a `References:` section, sorted from most to least relevant. Include ONLY the URLs that are directly relevant to the answer.
 
-# prompt to get references for an answer
-REFERENCE_PROMPT="Produce a bullet list of the urls you found useful to answer the question, \
-sorted from most relevant to least relevant. \
-Keep the bullet list short, keeping *only* the relevant urls (there are rarely more than three relevant urls)."
+### Example Answer Format:
 
-# prompt to summarize a conversation into its latest question
-QUESTION_EXTRACTION_PROMPT_SYSTEM="You are a question extraction system. \
-You will be provided the last messages of a conversation between a user of the NERSC supercomputing center and an assistant from its support, ending on a question by the user. \
-Your task is to summarize the user's last message."
-QUESTION_EXTRACTION_PROMPT_USER="Reframe my last question so that I can forward it to support without the rest of this conversation."
+To optimize your code for CPU usage at NERSC, it's crucial to focus on vectorization and parallelization. Vectorization allows your code to process multiple data points with a single instruction, effectively reducing the time your code takes to run through large datasets. Parallelization, on the other hand, involves dividing your code into multiple tasks that can be processed simultaneously, maximizing the use of available CPU resources. Combining these two strategies can lead to significant improvements in your code's performance on NERSC systems.
+
+References:
+* <https://docs.nersc.gov/cpu-optimization>
+* <https://docs.nersc.gov/parallel-computing>
+
+### Information Sources:
+"""
 
 #----------------------------------------------------------------------------------------
 # MODEL
 
 class Llama2(LanguageModel):
     def __init__(self, 
-                 models_folder,
-                 model_name='Llama-2-13b-chat-hf', 
-                 context_size=2034):
-        super().__init__(models_folder, model_name, context_size)
-        model_path = str(models_folder / model_name)
-        try:
-            # tries to load the model
-            self.model = LlamaForCausalLM.from_pretrained(model_path,device_map="auto")
-            self.tokenizer = LlamaTokenizerFast.from_pretrained(model_path)
-        except RuntimeError as e:
-            # display a user friendly message in case of failure
-            if 'CUDA out of memory' in str(e):
-                raise RuntimeError("The model could not be loaded due to a lack of available GPU memory. "
-                                   "This may be caused by other processes sharing the GPU. "
-                                   "Consider trying to run the code on a new node (login or compute) if your current node might "
-                                   "be shared with other GPU-consuming users or resources.")
-            raise
-        self.upper_answer_size = 450 #check
-        self.upper_question_size = 200 #check
+                 models_folder: Path,
+                 model_name: str='Llama-2-13b-chat-hf',
+                 device='cuda'):
+        super().__init__(models_folder / model_name, device=device)
+        self.tokenizer.chat_template = LLAMA2_CHAT_TEMPLATE
+        self.upper_answer_size = 450
+        self.upper_question_size = 200
 
-    def messages_to_prompt(self, messages) -> str:
-        """Takes an OpenAI-style list of messages and converts it into Llama2 compatible prompt"""
-        # builds the prompt string from the messages
-        prompt=''
-        for message in messages:
-            if message['role'] == 'system':
-                prompt+="system: "+message['content']+' '
-            elif message['role'] == 'user':
-                prompt+="user: "+message['content']+' '
-            elif message['role'] == 'assistant':
-                prompt+="assistant: "+message['content']
-            else:
-                raise RuntimeError(f"Model only accept 'system', 'user' and 'assistant' roles, not '{message['role']}'")
-        return prompt
+    def extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
+        """
+        Tries to extract the last question.
+        """
+        # builds the messages
+        system_message = {"role": "system", "content": CHAT_PROMPT_SYSTEM}
+        formatted_discussion = [{**message, 'relevancy': i} for (i,message) in enumerate(previous_messages)]
+        messages = [system_message] + formatted_discussion
+        # builds the base prompt
+        prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_question_size)
+        # prime the model to extract the question
+        prompt_question_extraction = prompt + 'If I understand you clearly, your question is: "'
+        question = self.base_generator(prompt_question_extraction, stop_at='"')[:-1]
+        print(f"DEBUGGING: question:'{question}'")
+        return question
 
-    def count_tokens(self, text):
+    def chat(self, discussion:List[Dict[str, str]], chunks:List, verbose=False) -> str:
         """
-        Token counting implementation.
+        Chat with the model given the previous messages
+        and relevant chunks of the documentation to enrich the chat.
         """
-        encoded_text = self.tokenizer.encode(text, truncation=False, max_length=sys.maxsize)
-        return len(encoded_text)
-
-    def query(self, prompt, prompt_size=None, verbose=False):
-        """
-        Llama 2 specific model query and response.
-        """
-        # compute the maximum answer size possible
-        # see implementation of generate_stream for formula details
-        if prompt_size is None: prompt_size = self.count_tokens(prompt)
-        max_new_tokens = self.context_size - prompt_size - 8
-        # produces an answer
-        inputs = self.tokenizer(prompt, return_tensors="pt").to("cuda")
-        generate_ids = self.model.generate(inputs.input_ids, max_new_tokens=max_new_tokens, do_sample=True,temperature=0.6,top_p=0.9)
-        reply = self.tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-        # gets to the last element of the stream
-        response = reply.replace(prompt,"").replace("system:","").replace("assistant:","").replace("Answer:","").replace("answer:","")
-        return response
-
-    def get_answer(self, question, chunks, verbose=False):
-        """
-        Method to get an answer given a question and some chunks passed for context.
-        """
-        # builds the prompt
+        # builds the messages
+        nb_messages_minimum = 3 # keep at least that many messages (when possible)
+        nb_relevant_messages = len(chunks) + max(0, len(discussion)-nb_messages_minimum)
         system_message = {"role": "system", "content": ANSWERING_PROMPT}
-        context_messages = [{"role": "system", "content": f"\n\n{str(chunk)}"} for chunk in chunks]
-        question_message = {"role": "user", "content": question}
-        messages = [system_message] + context_messages + [question_message]
-        prompt = self.messages_to_prompt(messages)
-        prompt_size = self.count_tokens(prompt)
-        # keep as many context messages as we can
-        while prompt_size + self.upper_answer_size > self.context_size:
-            if len(context_messages) > 1:
-                # reduce the context size by popping the latest context message
-                # (which is likely the least relevant)
-                chunks.pop(-1)
-                context_messages.pop(-1)
-                messages = [system_message] + context_messages + [question_message]
-                prompt = self.messages_to_prompt(messages)
-                prompt_size = self.count_tokens(prompt)
-            else:
-                # no more space to reduce context size
-                raise ValueError("You query is too long for the model's context size.")
-        # runs the query
-        answer = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
-        # adds sources at the end of the query
-        answer = self.add_references(question, answer, chunks, verbose=verbose)
-        # returns
-        return answer
-        
-    def add_references(self, question, answer, chunks, verbose=False):
-        """
-        Adds references to an answer.
-        """
-        # builds the prompt
-        system_message  = {"role": "system", "content": "URLs available:"}
-        context_messages = [{"role": "system", "content": f"\n\n{str(chunk)}"} for chunk in chunks]
-        question_message = {"role": "user", "content": question}
-        answer_message = {"role": "assistant", "content": answer}
-        reference_message = {"role": "user", "content": REFERENCE_PROMPT}
-        messages = [system_message] + context_messages + [question_message, answer_message, reference_message]
-        # runs the query
-        prompt = self.messages_to_prompt(messages)
-        references = self.query(prompt, verbose=verbose)
-        # remove any irrelevant lines
-        references = keep_references_only(references)
-        # updates the answer
-        answer = f"{answer}\n\nReferences:\n{references}"
-        return answer
-
-    def old_extract_question(self, previous_messages, verbose=False):
-        """
-        Extracts the latest question given a list of messages.
-        Message are expectted to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
-        the question returned will be a string.
-        """
-        # builds the prompt
-        system_message = {"role": "system", "content": QUESTION_EXTRACTION_PROMPT_SYSTEM}
-        system_message = {"role": "system", "content": "\n\nConversation:"}
-        context_messages = [{'role':'system', 'content': f"\n{m['role']}: {m['content']}"} for m in previous_messages]
-        user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
-        messages = [system_message] + context_messages + [user_message]
-        prompt = self.messages_to_prompt(messages)
-        prompt_size = self.count_tokens(prompt)
-        # keep as many context messages as we can
-        while prompt_size + self.upper_question_size > self.context_size:
-            if len(messages) > 4:
-                # reduce the context size by popping the oldest context message
-                # ensuring there is at least one context message
-                messages.pop(2)
-                prompt = self.messages_to_prompt(messages)
-                prompt_size = self.count_tokens(prompt)
-            else:
-                # no more space to reduce context size
-                raise ValueError("You query is too long for the model's context size.")
-        # shortcut if there is only one message
-        if len(messages) == 4:
-            return previous_messages[-1]['content']
+        # formats the chunks
+        chunks_messages = [{"role": "system", "content": f"\n{chunk.to_markdown()}", "relevancy": (nb_relevant_messages-i)} for (i,chunk) in enumerate(chunks)]
+        # formats the discussion
+        if len(discussion) <= nb_messages_minimum:
+            discussion_messages = discussion
         else:
-            question = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
-            # remove an eventual prefix
-            if question.startswith('user: '): question = question[6:]
-            return question
+            # extracts the last 3 messages, they will stay untouched
+            discussion_end = discussion[-3:]
+            # extract the first messages and add a relevancy to them
+            discussion_start = discussion[:-3]
+            discussion_start = [{**message, 'relevancy': i} for (i,message) in enumerate(discussion_start)]
+            # assemble the discussion
+            discussion_messages = discussion_start + discussion_end
+        # assemble the messages
+        messages = [system_message] + chunks_messages + discussion_messages
 
-    def extract_question(self, previous_messages, verbose=False):
-        """
-        Extracts the latest question given a list of messages.
-        Message are expectted to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
-        the question returned will be a string.
-        """
-        # builds the prompt
-        system_message = {"role": "system", "content": QUESTION_EXTRACTION_PROMPT_SYSTEM}
-        user_message = {"role": "user", "content": QUESTION_EXTRACTION_PROMPT_USER}
-        messages = [system_message] + previous_messages + [user_message]
-        prompt = self.messages_to_prompt(messages)
-        prompt_size = self.count_tokens(prompt)
-        # keep as many context messages as we can
-        while prompt_size + self.upper_question_size > self.context_size:
-            if len(messages) > 3:
-                # reduce the context size by popping the oldest context message
-                # ensuring there is at least one context message
-                messages.pop(1)
-                prompt = self.messages_to_prompt(messages)
-                prompt_size = self.count_tokens(prompt)
+        # turns the messages into a prompt
+        prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_answer_size)
+
+        # generates an answer in two part to ensure it follows our prefered format
+        # 1. body of the answer
+        answer_body = self.base_generator(prompt, stop_at="References:")
+        if not "References:" in answer_body: 
+            if any(substr in answer_body for substr in ["\n * [", "\n * <", "\n* [", "\n* <"]):
+                # there are already references in the answer, exit
+                return answer_body
             else:
-                # no more space to reduce context size
-                raise ValueError("You query is too long for the model's context size.")
-        # shortcut if there is only one message
-        last_message = previous_messages[-1]['content']
-        if len(messages) == 3:
-            return last_message
-        else:
-            question = self.query(prompt, prompt_size=prompt_size, verbose=verbose)
-            # remove an eventual prefix
-            if question.startswith('user: '): question = question[6:]
-            # combine it with the last nessage so that we cover all of our bases
-            question = f"{last_message} ({question})"
-            return question
-
-       
-    #llama2 -> https://github.com/facebookresearch/llama/blob/main/example_chat_completion.py
-    #hf version -> https://huggingface.co/docs/transformers/main/en/model_doc/llama2
+                # no references found, let's add some
+                answer_body += "\n\nReferences:"
+        # 2. references, priming the model to follow our prefered format
+        prompt_extended = prompt + answer_body + "\n * <https://docs.nersc.gov"
+        answer_references = self.base_generator(prompt_extended, stop_at="\n\n")
+        # assemble the answer
+        answer = answer_body + "\n * <https://docs.nersc.gov" + answer_references
+        return answer
