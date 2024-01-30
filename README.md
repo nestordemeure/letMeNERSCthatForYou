@@ -15,10 +15,8 @@ Our goals are to:
 ## Installation
 
 * clone the repo,
-* use the `environment.yml` file to install dependencies with `conda`[^openai]
+* use the `environment.yml` file to install dependencies with `conda`
 * clone the [NERSC doc repository](https://gitlab.com/NERSC/nersc.gitlab.io/-/tree/main/docs) into a folder.
-
-[^openai]: Note that, while we have an OpenAI dependency (for a backend used in our tests), it is not deployed to users nor required.
 
 ## Usage
 
