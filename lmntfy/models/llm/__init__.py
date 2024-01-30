@@ -91,6 +91,7 @@ class LanguageModel(ABC):
         self.base_generator = outlines.generate.text(self.model)
         self.triage_generator = outlines.generate.regex(self.model, triage_regex)
         self.technical_question_generator = outlines.generate.regex(self.model, technical_question_regex)
+        self.yesno_generator = outlines.generate.choice(self.model, ["Yes", "No"])
 
     def count_tokens(self, text:str) -> int:
         """

@@ -32,6 +32,14 @@ VICUNA_CHAT_TEMPLATE = """
 {% endif %}
 """
 
+# Basic chat prompt
+CHAT_PROMPT_SYSTEM = """
+You are a member of the NERSC supercomputing center's support staff answering a user's questions.
+Use an unbiased and journalistic tone. \
+Only cite the most relevant results that answer the user's questions accurately. \
+Try and be careful not to go off-topics.
+"""
+
 # prompt to answer a question
 # NOTE: 
 # * we do a single shot prompt (with an example answer) to ensure proper formating of the answer at the price of a few tokens
@@ -154,7 +162,7 @@ class Vicuna(LanguageModel):
         answer = answer_text + "\n* <" + answer_references
         return answer
 
-    def triage(self, previous_messages:List[Dict], verbose=False) -> Answer:
+    def old_triage(self, previous_messages:List[Dict], verbose=False) -> Answer:
         """
         Decides whether the message is:
         * out of scope,
@@ -185,3 +193,42 @@ class Vicuna(LanguageModel):
         # default fallthought case (should be impossible with guided generation)
         question_content = previous_messages[-1]['content']
         return Answer.question(question_content, raw=raw_answer)
+
+    def triage(self, previous_messages:List[Dict], verbose=False) -> Answer:
+        """
+        Decides whether the message is:
+        * out of scope,
+        * a normal discussion (ie: "thank you!") that does not require a documentation call,
+        * something that requires a documentation call
+        """
+        # builds the messages
+        system_message = {"role": "system", "content": CHAT_PROMPT_SYSTEM}
+        formatted_discussion = [{**message, 'relevancy': i} for (i,message) in enumerate(previous_messages)]
+        messages = [system_message] + formatted_discussion
+        # builds the base prompt
+        prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_answer_size)
+        # requires doc?
+        prompt_use_rag = prompt + '[Note to self: is this last message a technical question than can be answered by the NERSC doc? '
+        use_rag = self.yesno_generator(prompt_use_rag) == 'Yes'
+        print(f"DEBUGGING: use_rag:{use_rag}")
+        if use_rag:
+            # question extraction
+            prompt_question_extraction = prompt + 'If I understand you clearly, your question is: "'
+            question = self.base_generator(prompt_question_extraction, stop_at='"')[:-1]
+            print(f"DEBUGGING: question:'{question}'")
+            # concatenates it with the user's last message to reduce accidental question loss
+            users_last_message = previous_messages[-1]['content']
+            full_question = f"{users_last_message} ({question})"
+            return Answer.question(full_question, raw=question)
+        else:
+            # is it a (non-technical) question?
+            prompt_is_question = prompt + '[Note to self: is this last message a question? '
+            is_question = self.yesno_generator(prompt_is_question) == 'Yes'
+            print(f"DEBUGGING: out_of_scope:{is_question}")
+            if is_question:
+                # non-technical question
+                return Answer.out_of_scope()
+            else:
+                # answer directly
+                answer = self.base_generator(prompt)
+                return Answer.smallTalk(answer, raw=answer)
