@@ -27,11 +27,14 @@ class QuestionAnswerer:
         self.logs_folder = logs_folder
 
     def get_answer(self, question:str, max_context_size=8, verbose=False) -> str:
+        """gets the string answer to a single question"""
         try:
             # get a context to help us answer the question
             chunks = self.database.get_closest_chunks(question, max_context_size)
+            # build a single message discussion
+            messages = {'role': 'user', 'content': question}
             # gets an answer from the model
-            answer = self.llm.get_answer(question, chunks, verbose=verbose)
+            answer = self.llm.chat(messages, chunks, verbose=verbose)
         except Exception as e:
             # propagate the exeption as usual
             if self.logs_folder is None:
@@ -41,26 +44,19 @@ class QuestionAnswerer:
             answer = f"ERROR: {str(e)}"
         return answer
 
-    def continue_chat(self, messages:List[Dict], max_context_size=8, verbose=False) -> Dict:
+    def chat(self, messages:List[Dict], max_context_size=8, verbose=False) -> Dict:
         """
         Answers the latest question given a list of messages.
         Message are expectted to be dictionnaries with a 'role' ('user' or 'assistant') and 'content' field.
         the question returned will be a message with role 'assistant'.
         """
         try:
-            # decide on what to do
-            triage = self.llm.triage(messages, verbose=verbose)
-            if triage.is_out_of_scope():
-                # use prewritten out-of-scope answer
-                answer = out_of_scope_answer
-            elif triage.is_smallTalk():
-                # use model's answer
-                answer = triage.content
-            else:
-                # extract the latest question
-                question = triage.content
-                # gets an answer for the question using the documenation
-                answer = self.get_answer(question, max_context_size=max_context_size, verbose=verbose)
+            # etxracts the question
+            question = self.llm.extract_question(messages, verbose=verbose)
+            # get a context to help us answer the question
+            chunks = self.database.get_closest_chunks(question, max_context_size)
+            # gets an answer from the model
+            answer = self.llm.chat(messages, chunks, verbose=verbose)
         except Exception as e:
             # propagate the exeption as usual
             if self.logs_folder is None:

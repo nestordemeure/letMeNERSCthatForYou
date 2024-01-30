@@ -15,61 +15,6 @@ os.environ['OUTLINES_CACHE_DIR'] = os.environ.get('TMPDIR')
 outlines.disable_cache()
 
 #----------------------------------------------------------------------------------------
-# TRIAGE ANSWER TYPE
-
-class AnswerType(Enum):
-    OUT_OF_SCOPE = auto()
-    TECHNICAL_QUESTION = auto()
-    SMALL_TALK = auto()
-
-class Answer:
-    """output of the triage operation"""
-    def __init__(self, answer_type:AnswerType, content:str = None, raw:str = None):
-        self.answer_type = answer_type
-        self.content = content
-        self.raw = raw
-
-    @classmethod
-    def out_of_scope(cls, raw:str=None):
-        return cls(AnswerType.OUT_OF_SCOPE, raw=raw)
-
-    @classmethod
-    def question(cls, question:str, raw:str=None):
-        return cls(AnswerType.TECHNICAL_QUESTION, content=question, raw=raw)
-
-    @classmethod
-    def smallTalk(cls, answer:str, raw:str=None):
-        return cls(AnswerType.SMALL_TALK, content=answer, raw=raw)
-
-    def is_out_of_scope(self):
-        return self.answer_type == AnswerType.OUT_OF_SCOPE
-
-    def is_question(self):
-        return self.answer_type == AnswerType.TECHNICAL_QUESTION
-
-    def is_smallTalk(self):
-        return self.answer_type == AnswerType.SMALL_TALK
-
-    def __str__(self):
-        if self.is_out_of_scope():
-            return "OUT_OF_SCOPE"
-        elif self.is_question():
-            return f"TECHNICAL_QUESTION({self.content})"
-        elif self.is_smallTalk():
-            return f"SMALL_TALK({self.content})"
-        else:
-            return "Invalid Answer Type"
-
-# Regular expression representing the triage format
-triage_regex = r'(OUT\_OF\_SCOPE|TECHNICAL\_QUESTION\(".*?"\)|SMALL\_TALK\(".*?"\))'
-
-# Regular expression representing the technical question answering format
-# NOTE: 
-# * we force all markdown link to point to the NERSC doc
-# * this sadly tends to break the answering part of the model, reason unknown.
-technical_question_regex = r'([\s\S]*?)\n\nReferences:\n(\* \[\S*?\]\(https://docs\.nersc\.gov/.*?\)\n?)+'
-
-#----------------------------------------------------------------------------------------
 # MODEL ABSTRACTION
 
 class LanguageModel(ABC):
@@ -89,9 +34,6 @@ class LanguageModel(ABC):
         self.context_size = self.model.model.config.max_position_embeddings
         # generators
         self.base_generator = outlines.generate.text(self.model)
-        self.triage_generator = outlines.generate.regex(self.model, triage_regex)
-        self.technical_question_generator = outlines.generate.regex(self.model, technical_question_regex)
-        self.yesno_generator = outlines.generate.choice(self.model, ["Yes", "No"])
 
     def count_tokens(self, text:str) -> int:
         """
@@ -202,26 +144,20 @@ class LanguageModel(ABC):
         return output
 
     @abstractmethod
-    def triage(self, messages:List[Dict[str, str]], verbose=False) -> Answer:
+    def extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
         """
-        Decides whether the last message is:
-        * a technical question, requiring a documentation call
-        * small talk (ie: "thank you!") that does not require a documentation call,
-        * out of scope (ie: who is the current president of the US?) that can be politly ignored,
+        Extracts the user's last question.
+        NOTE: this will always return even if the user is just thanking us and done with questions.
         """
         pass
 
     @abstractmethod
-    def get_answer(self, question:str, chunks:List[Chunk], verbose=False) -> str:
+    def chat(self, messages:List[Dict[str, str]], chunks:List[Chunk], verbose=False) -> str:
         """
-        Abstract method to get an answer given a question and some chunks of documentation passed for context.
+        Chat with the model given the previous messages
+        and relevant chnuks of the documentation to enrich the chat.
         """
         pass
 
 from .vicuna import Vicuna
 #from .llama2 import Llama2
-
-"""
-TODO:
-Am I missing the beginning of the assistant message?
-"""

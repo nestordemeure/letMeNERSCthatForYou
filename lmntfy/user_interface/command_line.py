@@ -53,7 +53,7 @@ def chat(question_answerer:QuestionAnswerer, verbose=False) -> List[Dict]:
         question = input("> ")
         messages.append({'role':'user', 'content': question})
         # gets an answer and stores it
-        answer_message = question_answerer.continue_chat(messages, verbose=verbose)
+        answer_message = question_answerer.chat(messages, verbose=verbose)
         messages.append(answer_message)
         # pretty prints the answer
         markdown_answer = Markdown(answer_message['content'])

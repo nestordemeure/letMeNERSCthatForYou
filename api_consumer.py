@@ -49,7 +49,7 @@ def main():
         for id, messages in conversations.items():
             # gets an answer from the model
             try:
-                answer = question_answerer.continue_chat(messages, verbose=False)
+                answer = question_answerer.chat(messages, verbose=False)
             except Exception as e:
                 answer = {'role':'assistant', 'content': f"ERROR: {str(e)}"}
             # post the answer with the conversation key
