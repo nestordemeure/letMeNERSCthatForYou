@@ -43,9 +43,12 @@ class LanguageModel(ABC):
         token_number = tokens.size(-1)
         return token_number
 
-    def _merge_system_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _clean_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         """
-        Given a conversation, merge all system messages into the first message.
+        Given a conversation:
+        * merge all system messages into the first message
+        * ensure they alternate properly between user and assistant (can be caused by relevancy problems)
+          by dropping eroneous messages silently
         """
         # gets a system message
         if (len(messages) < 1) or (messages[0]['role'] != "system"):
@@ -64,8 +67,14 @@ class LanguageModel(ABC):
                 # add message to result
                 nonsystem_messages.append(message)
 
-        # builds result starting with a system message
-        result = [system_message] + nonsystem_messages
+        # ensure alternance of user-assistant messages in non-system messages
+        result = [system_message]
+        next_is_user = True
+        for message in nonsystem_messages:
+            is_user = (message['role'] == 'user')
+            if (next_is_user and is_user) or ((not next_is_user) and (not is_user)):
+                result.append(message)
+                next_is_user = not next_is_user
         return result
 
     def _drop_lowest_priority_message(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
@@ -103,7 +112,7 @@ class LanguageModel(ABC):
             raise RuntimeError(f"Your tokeniser ({type(self.tokenizer)}) of choice does not have a chat_template. See [this repository](https://github.com/chujiezheng/chat_templates/tree/main) for common options.")
         
         # merge system messages (in case there is more than one)
-        merged_messages = self._merge_system_messages(messages)
+        merged_messages = self._clean_messages(messages)
         
         # turns the conversation into a single string
         output_string = self.tokenizer.apply_chat_template(merged_messages, add_generation_prompt=True, tokenize=False)

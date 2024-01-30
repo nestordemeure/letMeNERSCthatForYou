@@ -88,37 +88,6 @@ class Vicuna(LanguageModel):
         self.upper_answer_size = 450
         self.upper_question_size = 200
 
-    def get_answer(self, question, chunks, verbose=False):
-        """
-        Method to get an answer given a question and some chunks passed for context.
-        """
-        # builds the messages
-        nb_chunks = len(chunks)
-        system_message = {"role": "system", "content": ANSWERING_PROMPT}
-        context_messages = [{"role": "system", "content": f"\n{chunk.to_markdown()}", "relevancy": (nb_chunks-i)} for (i,chunk) in enumerate(chunks)]
-        question_message = {"role": "user", "content": question}
-        messages = [system_message] + context_messages + [question_message]
-        # builds the prompt
-        # NOTE: we prefix it with "Answer: " as the model has a tendancy to start with that anyway
-        prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_answer_size) + "Answer: "
-        # generates an answer
-        # NOTE: we generate the answer in two part to ensure it follows our prefered format
-        # 1. the text part
-        answer_text = self.base_generator(prompt, stop_at="References:")
-        if not "References:" in answer_text: 
-            if ("\n * [" in answer_text) or ("\n * <" in answer_text):
-                # there is already a list of links
-                return answer_text
-            else:
-                # no references found, let's add some
-                answer_text += "\n\nReferences:"
-        # 2. the references, priming them to follow our prefered format
-        prompt_extended = prompt + answer_text + "\n* <"
-        answer_references = self.base_generator(prompt_extended, stop_at="\n\n")
-        # assemble the answer
-        answer = answer_text + "\n* <" + answer_references
-        return answer
-
     def extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
         """
         Tries to extract the last question.
@@ -138,7 +107,7 @@ class Vicuna(LanguageModel):
     def chat(self, discussion:List[Dict[str, str]], chunks:List, verbose=False) -> str:
         """
         Chat with the model given the previous messages
-        and relevant chnuks of the documentation to enrich the chat.
+        and relevant chunks of the documentation to enrich the chat.
         """
         # builds the messages
         nb_messages_minimum = 3 # keep at least that many messages (when possible)
@@ -160,22 +129,22 @@ class Vicuna(LanguageModel):
         # assemble the messages
         messages = [system_message] + chunks_messages + discussion_messages
 
-        # turns teh messages in to a prompt
+        # turns the messages into a prompt
         prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_answer_size)
 
         # generates an answer in two part to ensure it follows our prefered format
         # 1. body of the answer
-        answer_text = self.base_generator(prompt, stop_at="References:")
-        if not "References:" in answer_text: 
-            if ("\n * [" in answer_text) or ("\n * <" in answer_text):
+        answer_body = self.base_generator(prompt, stop_at="References:")
+        if not "References:" in answer_body: 
+            if any(substr in answer_body for substr in ["\n * [", "\n * <", "\n* [", "\n* <"]):
                 # there are already references in the answer, exit
-                return answer_text
+                return answer_body
             else:
                 # no references found, let's add some
-                answer_text += "\n\nReferences:"
+                answer_body += "\n\nReferences:"
         # 2. references, priming the model to follow our prefered format
-        prompt_extended = prompt + answer_text + "\n* <https://docs.nersc.gov"
+        prompt_extended = prompt + answer_body + "\n * <https://docs.nersc.gov"
         answer_references = self.base_generator(prompt_extended, stop_at="\n\n")
         # assemble the answer
-        answer = answer_text + "\n* <https://docs.nersc.gov" + answer_references
+        answer = answer_body + "\n * <https://docs.nersc.gov" + answer_references
         return answer
