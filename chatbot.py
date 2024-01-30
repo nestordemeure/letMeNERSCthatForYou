@@ -25,7 +25,7 @@ def main():
     question = args.question
 
     # initializes models
-    llm = lmntfy.models.llm.Mistral(models_folder)
+    llm = lmntfy.models.llm.Zephyr(models_folder)
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)

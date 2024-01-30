@@ -63,9 +63,9 @@ class LanguageModel(ABC):
         all "system" messages will be concatenated and put at the beginning of the conversation
         if the conversation is too long to fit the answer, messages with a "relevancy" field will be dropped (starting with lowest relevancy) until it fits
     """
-    def __init__(self, pretrained_model_name_or_path:str, device='cuda'):
+    def __init__(self, pretrained_model_name_or_path:str, model_kwargs:dict=dict(), device='cuda'):
         self.pretrained_model_name_or_path = str(pretrained_model_name_or_path)
-        self.model: Transformer = outlines.models.transformers(self.pretrained_model_name_or_path, device=device)
+        self.model: Transformer = outlines.models.transformers(self.pretrained_model_name_or_path, model_kwargs=model_kwargs, device=device)
         self.tokenizer: PreTrainedTokenizer = self.model.tokenizer.tokenizer # get the Transformer Tokenizer for chattemplating purposes
         self.context_size = self.model.model.config.max_position_embeddings
         self.upper_answer_size = None # needs to be filled per tokenizer
@@ -206,7 +206,6 @@ class LanguageModel(ABC):
         # prime the model to extract the question
         prompt_question_extraction = prompt + 'If I understand you clearly, your question is: "'
         question = self.base_generator(prompt_question_extraction, stop_at='"')[:-1]
-        print(f"DEBUGGING: question:'{question}'")
         return question
 
     def chat(self, discussion:List[Dict[str, str]], chunks:List[Chunk], verbose=False) -> str:
@@ -259,3 +258,4 @@ from .llama2 import Llama2
 from .vicuna import Vicuna
 from .mistral import Mistral
 from .zephyr import Zephyr
+from .mixtral import Mixtral

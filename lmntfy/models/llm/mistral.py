@@ -1,3 +1,4 @@
+import torch
 from pathlib import Path
 from . import LanguageModel
 
@@ -35,7 +36,8 @@ class Mistral(LanguageModel):
                  models_folder: Path,
                  model_name: str='Mistral-7B-Instruct-v0.2',
                  device='cuda'):
-        super().__init__(models_folder / model_name, device=device)
+        super().__init__(models_folder / model_name, device=device,
+                         model_kwargs={'torch_dtype':torch.bfloat16, 'attn_implementation':'flash_attention_2'})
         self.tokenizer.chat_template = MISTRAL_CHAT_TEMPLATE
         self.upper_answer_size = 450
         self.upper_question_size = 200

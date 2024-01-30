@@ -20,6 +20,7 @@ dependencies:
   - pip:
     - sfapi_client~=0.0.6 # Python client for NERSC SF API
     - outlines # LLM templating
+    - flash-attn # support for flash attention2
 # use the following to check that you have a GPU version of Pytorch:
 # conda list pytorch
 #
