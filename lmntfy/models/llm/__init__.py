@@ -51,7 +51,8 @@ References:
 """
 
 # regex that produces a bullet list of, at most, 10 urls
-# NOTE: we allow non-NERSC url, if the system produces garbage we want easily deleted random urls rather than previous valid NERSC ones
+# NOTE: we purposefully allow non-NERSC url
+#       if the system produces garbage we want easily deleted random urls rather than previous valid NERSC ones
 REFLIST_REGEX = r"( \* \<([^\>]*?)\>\n){1,10}\n"
 
 #----------------------------------------------------------------------------------------
@@ -66,9 +67,10 @@ def validate_references(references:str, chunks:List[Chunk], prompt:str) -> str:
 
     A reference is only valid if it:
     - is a chunk's url,
-    - appear inside a chunk,
-    - was referenced in a previous message
+    - or appears inside a chunk,
+    - or was referenced in a previous message,
     - AND be in a NERSC domain.
+
     Returns "https://docs.nersc.gov/" if no valid reference is found.
     """
     # all urls in prompts
