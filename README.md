@@ -50,9 +50,6 @@ In no particular order:
 
 * establish a canonical list of test questions / conversations,
 * have the model always running on Perlmuter,
-
-* process markdown links in the full file *before* chunking
-
 * move this code to the NERSC github,
 
 * try fine-tuning sentence embedder,

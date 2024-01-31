@@ -40,6 +40,8 @@ def chunk_file(file_path:Path, documentation_folder:Path, token_counter:Callable
     try:
         with open(file_path, 'r', encoding='utf8') as file:
             text = file.read()
+            # insures all links inside the file are urls
+            text = paths2urls(text, file_path, documentation_folder)
             # split the file into chunks
             if file_path.suffix == '.md': 
                 # splits the text along headings when possible
@@ -51,8 +53,6 @@ def chunk_file(file_path:Path, documentation_folder:Path, token_counter:Callable
             # saves the non-empty chunks
             for chunk in chunks:
                 if len(chunk.content) > 0:
-                    # insures all links inside the chunk's content are urls
-                    chunk.content = paths2urls(chunk.content, file_path, documentation_folder)
                     # saves the chunk
                     result.append(chunk)
             if verbose: print(f"Loaded file '{file_path}' ({len(result)} chunks)")
