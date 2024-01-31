@@ -51,7 +51,6 @@ In no particular order:
 * establish a canonical list of test questions / conversations,
 * have the model always running on Perlmuter,
 
-* remove [timeline](https://docs.nersc.gov/systems/perlmutter/timeline/) information from processed doc
 * process markdown links in the full file *before* chunking
 
 * move this code to the NERSC github,

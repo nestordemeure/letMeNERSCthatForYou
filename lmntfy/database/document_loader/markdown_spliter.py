@@ -59,7 +59,7 @@ class Markdown:
     def count_tokens(self, token_counter):
         """memoized token counting function"""
         if self.nb_tokens is None:
-            self.nb_tokens = count_tokens(self.header) + sum((heading.count_tokens(token_counter) for heading in self.headings), TokenCountPair(0,0))
+            self.nb_tokens = token_counter(self.header) + sum((heading.count_tokens(token_counter) for heading in self.headings), TokenCountPair(0,0))
         return self.nb_tokens
 
     def to_chunks(self, url, token_counter, max_tokens):

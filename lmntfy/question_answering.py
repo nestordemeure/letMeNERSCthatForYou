@@ -6,18 +6,6 @@ from datetime import datetime
 import traceback
 import json
 
-# answer returned if the model decides the question is out of scope
-out_of_scope_answer = """
-It seems your inquiry is outside the scope of this documentation chatbot. \
-We focus on providing assistance within the scope of NERSC's documentation. \
-For general or unrelated queries, we recommend consulting appropriate resources such as NERSC support or experts in that field. \
-If you have any NERSC-related questions, feel free to ask!
-
-References:
-* <https://www.nersc.gov/>
-* <https://docs.nersc.gov/>
-* <https://www.nersc.gov/users/getting-help/online-help-desk/>
-"""
 
 class QuestionAnswerer:
     def __init__(self, llm:LanguageModel, embeder:Embedding, database:Database, logs_folder:Path=None):

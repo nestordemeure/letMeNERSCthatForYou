@@ -91,8 +91,8 @@ def validate_references(references:str, chunks:List[Chunk], prompt:str) -> str:
             urls.add(url)
 
     if len(urls) == 0:
-        # default (useless) reference used if no reference is valid
-        return " * <https://docs.nersc.gov/>"
+        # default (useless) references used if no reference is valid
+        return " * <https://docs.nersc.gov/>\n * <https://www.nersc.gov/users/getting-help/online-help-desk/>"
     else:
         # builds list of references
         references = [f" * <{url}>" for url in urls]

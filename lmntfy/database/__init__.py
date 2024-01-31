@@ -1,13 +1,13 @@
-import json
 import os
+import json
 import numpy as np
 from tqdm import tqdm
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Set
 from abc import ABC, abstractmethod
 from ..models import LanguageModel, Embedding
-from .document_loader import Chunk, path2url, chunk_file
+from .document_loader import Chunk, chunk_file
 from .file import File
 from .document_loader.token_count_pair import TokenCountPair
 
@@ -30,6 +30,8 @@ class Database(ABC):
         # dictionary of all chunk
         # vector_database_index -> Chunk
         self.chunks: Dict[int, Chunk] = dict()
+        # set of file and folder names that will not be processed
+        self.ignored_files_and_folders: Set[str] = {'timeline'}
         # loads the database from file if possible
         self.documentation_folder = documentation_folder.absolute().resolve()
         self.database_folder = database_folder.absolute().resolve()
@@ -70,7 +72,12 @@ class Database(ABC):
 
     # ----- FILE OPERATIONS -----
 
-    def remove_file(self, file_path):
+    def _is_ignored_file(self, file_path: Path) -> bool:
+        """Returns true if the name of the file or of one of its parent folders is in self.ignored_files_and_folders"""
+        return file_path.name in self.ignored_files_and_folders or \
+               any(parent.name in self.ignored_files_and_folders for parent in file_path.parents)
+
+    def remove_file(self, file_path:Path):
         """Removes a file's content from the Database"""
         file = self.files[file_path]
         indices_to_remove = file.vector_database_indices
@@ -82,8 +89,10 @@ class Database(ABC):
         # remove file from files
         del self.files[file_path]
 
-    def add_file(self, file_path):
+    def add_file(self, file_path:Path):
         """Add a file's content to the database"""
+        # shortcut the function on ignored files
+        if self._is_ignored_file(file_path): return
         # slice file into chunks
         chunks = chunk_file(file_path, self.documentation_folder, self.count_tokens, self.max_tokens_per_chunk)
         # save chunks in the databse
