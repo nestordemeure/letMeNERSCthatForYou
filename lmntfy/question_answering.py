@@ -20,7 +20,7 @@ class QuestionAnswerer:
             # get a context to help us answer the question
             chunks = self.database.get_closest_chunks(question, max_context_size)
             # build a single message discussion
-            messages = {'role': 'user', 'content': question}
+            messages = [{'role': 'user', 'content': question}]
             # gets an answer from the model
             answer = self.llm.chat(messages, chunks, verbose=verbose)
         except Exception as e:
