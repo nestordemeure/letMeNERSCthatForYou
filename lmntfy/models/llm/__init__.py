@@ -1,5 +1,5 @@
 import os
-from enum import Enum, auto
+import re
 from abc import ABC, abstractmethod
 from copy import copy
 from typing import List, Dict
@@ -44,14 +44,58 @@ After providing the answer, list the URLs of the information sources you used in
 To optimize your code for CPU usage at NERSC, it's crucial to focus on vectorization and parallelization. Vectorization allows your code to process multiple data points with a single instruction, effectively reducing the time your code takes to run through large datasets. Parallelization, on the other hand, involves dividing your code into multiple tasks that can be processed simultaneously, maximizing the use of available CPU resources. Combining these two strategies can lead to significant improvements in your code's performance on NERSC systems.
 
 References:
-* <https://docs.nersc.gov/cpu-optimization>
-* <https://docs.nersc.gov/parallel-computing>
+* <https://docs.nersc.gov/performance/vectorization>
+* <https://docs.nersc.gov/performance/parallelism>
 
 ### Information Sources:
 """
 
+# regex that produces a bullet list of, at most, 10 urls
+# NOTE: we allow non-NERSC url, if the system produces garbage we want easily deleted random urls rather than previous valid NERSC ones
+REFLIST_REGEX = r"( \* \<([^\>]*?)\>\n){1,10}\n"
+
 #----------------------------------------------------------------------------------------
 # MODEL ABSTRACTION
+
+def validate_references(references:str, chunks:List[Chunk], prompt:str) -> str:
+    """
+    Takes:
+    - references: a string with references for the current answer
+    - chunks: a list of chnuks used to build the answer
+    - prompt: the prompt which contains the conversation so far
+
+    A reference is only valid if it:
+    - is a chunk's url,
+    - appear inside a chunk,
+    - was referenced in a previous message
+    - AND be in a NERSC domain.
+    Returns "https://docs.nersc.gov/" if no valid reference is found.
+    """
+    # all urls in prompts
+    chunk_urls = {chunk.url for chunk in chunks}
+    # all urls in the conversation so far
+    reference_pattern = r"\* \<([^\>]*?)\>"
+    prompt_urls = re.findall(reference_pattern, prompt)
+    # all urls that will be accepted in the output
+    valid_urls = chunk_urls | set(prompt_urls)
+
+    # all urls in the references
+    references_urls = re.findall(reference_pattern, references)
+
+    # keep only urls referenced or appearing inside a chunk
+    urls = set()
+    for url in references_urls:
+        if (url.startswith('https://docs.nersc.gov') or url.startswith('https://nersc.gov')) and ((url in valid_urls) or any((url in chunk.content) for chunk in chunks)):
+            urls.add(url)
+
+    if len(urls) == 0:
+        # default (useless) reference used if no reference is valid
+        return " * <https://docs.nersc.gov/>"
+    else:
+        # builds list of references
+        references = [f" * <{url}>" for url in urls]
+        # Joins the lines and returns
+        return '\n'.join(references)
 
 class LanguageModel(ABC):
     """
@@ -72,6 +116,7 @@ class LanguageModel(ABC):
         self.upper_question_size = None # needs to be filled per tokenizer
         # generators
         self.base_generator = outlines.generate.text(self.model)
+        self.reflist_generator = outlines.generate.regex(self.model, REFLIST_REGEX)
 
     def count_tokens(self, text:str) -> int:
         """
@@ -247,11 +292,14 @@ class LanguageModel(ABC):
             else:
                 # no references found, let's add some
                 answer_body += "\n\nReferences:"
+
         # 2. references, priming the model to follow our prefered format
-        prompt_extended = prompt + answer_body + "\n * <https://docs.nersc.gov"
-        answer_references = self.base_generator(prompt_extended, stop_at="\n\n")
+        prompt_extended = prompt + answer_body + '\n'
+        answer_references = self.reflist_generator(prompt_extended)
+        # validates the references
+        answer_references = validate_references(answer_references, chunks, prompt)
         # assemble the answer
-        answer = answer_body + "\n * <https://docs.nersc.gov" + answer_references
+        answer = answer_body + '\n' + answer_references
         return answer
 
 from .llama2 import Llama2
