@@ -1,16 +1,18 @@
+#!/global/cfs/cdirs/nstaff/chatbot/conda/bin/python3
 """
 This script can be used to determine an upper bound on the answer size for a given tokeniser.
 Using preexisting answers.
 """
-import lmntfy
-import numpy as np
 import json
+import numpy as np
+from pathlib import Path
+import lmntfy
 
 # Define your model here
-models_folder = "/global/cfs/cdirs/nstaff/chatbot/models"
-model = lmntfy.models.llm.Vicuna(models_folder=models_folder)
+models_folder = Path("/global/cfs/cdirs/nstaff/chatbot/models")
+model = lmntfy.models.llm.Zephyr(models_folder=models_folder)
 token_counter = model.count_tokens
-print(f"tokeniser type: {type(model.tokenizer)}")
+print(f"Tokeniser type: {type(model.tokenizer)}")
 
 # Load JSON data
 with open('./data/various/questions.json', 'r') as f:
@@ -64,7 +66,7 @@ Max size: 130
 95% quantile: 22.0
 99% quantile: 28.960000000000036
 
-Vicuna's tokeniser:
+LlamaTokenizerFast (Llama2, Vicuna, Mistral, Zephyr):
 *** answer:
 Mean size: 107.95915053091818
 Median size: 94.0

@@ -24,9 +24,10 @@ Our goals are to:
 
 Those scripts are meant to be run locally, mainly by developers of the project:
 
-* `update_database.py` update the vector database (for a given llm, sentence embeder, and vector database)[^when]
 * `chatbot.py` this is a basic local question answering loop
 * `chatbot_dev.py` is a more feature rich version of local loop, making it easy to run test questions and switch models around.
+* `update_database.py` update the vector database (for a given llm, sentence embeder, and vector database)[^when]
+* `token_counter.py` measure the size of questions and answers for a given tokenizer
 
 On NERSC supercomputers, you might want to run `module load python cudatoolkit cudnn pytorch` before using those commands.
 
@@ -52,7 +53,6 @@ In no particular order:
 
 * remove [timeline](https://docs.nersc.gov/systems/perlmutter/timeline/) information from processed doc
 * process markdown links in the full file *before* chunking
-* check / update answer sizes with various tokenizers
 
 * move this code to the NERSC github,
 

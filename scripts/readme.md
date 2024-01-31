@@ -19,4 +19,3 @@ The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file look
 
 * `local_chatbot.sh` starts a chatbot running on the current node,
 * `api_chatbot.sh` starts a chatbot calling the API,
-* `analysis.py` gets the approximate size of questions and answers (in tokens) for a given model.
