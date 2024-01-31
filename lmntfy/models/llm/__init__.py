@@ -292,11 +292,10 @@ class LanguageModel(ABC):
             else:
                 # no references found, let's add some
                 answer_body += "\n\nReferences:"
-
-        # 2. references, priming the model to follow our prefered format
+        # 2. references, generating following our prefered format
         prompt_extended = prompt + answer_body + '\n'
         answer_references = self.reflist_generator(prompt_extended)
-        # validates the references
+        # keep only valid references
         answer_references = validate_references(answer_references, chunks, prompt)
         # assemble the answer
         answer = answer_body + '\n' + answer_references
