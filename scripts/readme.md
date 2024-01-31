@@ -8,11 +8,19 @@
 The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file looks like this:
 
 ```shell
+# update database for 10min everyday at 1am PST (9am UTC)
 #SCRON --account=nstaff
 #SCRON --time=00:10:00
-#SCRON -o /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/data/logs/update_database/output-%j.out                                                                >
+#SCRON -o /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/data/logs/update_database/output-%j.out
 #SCRON --open-mode=append
-0 3 * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/update_database.sh
+0 9 * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/update_database.sh
+
+# start worker for 24h at 1:15am PST (9am UTC)
+#SCRON --account=nstaff
+#SCRON --time=24:00:00
+#SCRON -o /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/data/logs/api_worker/output-%j.out
+#SCRON --open-mode=append
+15 9 * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/start_api_worker.sh
 ```
 
 ## Various Scripts
