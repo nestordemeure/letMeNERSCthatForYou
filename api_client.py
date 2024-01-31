@@ -10,7 +10,7 @@ import json
 import time
 import lmntfy
 
-def get_answer(client:Client, convo_id, messages):
+def get_answer(client:Client, convo_id, messages, refresh_time:int=1):
     # url to the ai API
     url=f'ai/docs?convo_id={convo_id}'
 
@@ -27,7 +27,7 @@ def get_answer(client:Client, convo_id, messages):
         if answer['role'] == 'assistant':
             return answer
         else:
-            time.sleep(1)
+            time.sleep(refresh_time)
 
 # NOTE: using the dev version of the API
 with Client(api_base_url='https://api-dev.nersc.gov/api/v1.2') as client:
