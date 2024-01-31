@@ -34,7 +34,7 @@ On NERSC supercomputers, you might want to run `module load python cudatoolkit c
 
 #### Superfacility API use
 
-Those scripts are meant to be user with the suprfacility API:
+Those scripts are meant to be user with the superfacility API:
 
 * `api_client.py` this is a deonstration client, calling the chatbot via the superfacility API,
 * `api_consumer.py` this is a worker, answering questions asked to the superfacility API on a loop
@@ -44,15 +44,17 @@ Those scripts are meant to be user with the suprfacility API:
 In no particular order:
 
 * add a dedicated code formater? (yapf?)
-
 * clean-up code and improve comments / documentation,
+* document the inner-workings,
+
 * establish a canonical list of test questions / conversations,
+* have the model always running on Perlmuter,
+
+* remove [timeline](https://docs.nersc.gov/systems/perlmutter/timeline/) information from processed doc
 * process markdown links in the full file *before* chunking
-* deal with answers that end abruptly due to the end of the context length (extremly rare with long enough context)
+* check / update answer sizes with various tokenizers
 
 * move this code to the NERSC github,
-* have the model always running on Perlmuter,
-* document the inner-workings,
 
 * try fine-tuning sentence embedder,
 * try a home-trained model,

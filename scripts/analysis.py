@@ -2,13 +2,15 @@
 This script can be used to determine an upper bound on the answer size for a given tokeniser.
 Using preexisting answers.
 """
-from lmntfy.models.llm import GPT35, Vicuna
+import lmntfy
 import numpy as np
 import json
 
-# Define your token_counter function here
-#token_counter = GPT35().count_tokens
-token_counter = Vicuna(model_path="../models/vicuna-13b-v1.3").count_tokens
+# Define your model here
+models_folder = "/global/cfs/cdirs/nstaff/chatbot/models"
+model = lmntfy.models.llm.Vicuna(models_folder=models_folder)
+token_counter = model.count_tokens
+print(f"tokeniser type: {type(model.tokenizer)}")
 
 # Load JSON data
 with open('./data/various/questions.json', 'r') as f:

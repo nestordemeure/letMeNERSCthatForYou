@@ -1,6 +1,6 @@
 import os
 import re
-from abc import ABC, abstractmethod
+from abc import ABC
 from copy import copy
 from typing import List, Dict
 from ...database.document_loader import Chunk
@@ -44,8 +44,8 @@ After providing the answer, list the URLs of the information sources you used in
 To optimize your code for CPU usage at NERSC, it's crucial to focus on vectorization and parallelization. Vectorization allows your code to process multiple data points with a single instruction, effectively reducing the time your code takes to run through large datasets. Parallelization, on the other hand, involves dividing your code into multiple tasks that can be processed simultaneously, maximizing the use of available CPU resources. Combining these two strategies can lead to significant improvements in your code's performance on NERSC systems.
 
 References:
-* <https://docs.nersc.gov/performance/vectorization>
-* <https://docs.nersc.gov/performance/parallelism>
+ * <https://docs.nersc.gov/performance/vectorization>
+ * <https://docs.nersc.gov/performance/parallelism>
 
 ### Information Sources:
 """
