@@ -244,6 +244,9 @@ class LanguageModel(ABC):
         """
         Tries to extract the last question.
         """
+        # shortcut for single message conversations
+        if len(previous_messages) == 1:
+            return previous_messages[-1]['content']
         # builds the messages
         system_message = {"role": "system", "content": CHAT_PROMPT_SYSTEM}
         formatted_discussion = [{**message, 'relevancy': i} for (i,message) in enumerate(previous_messages)]

@@ -13,6 +13,9 @@ class QuestionAnswerer:
         self.embeder = embeder
         self.database = database
         self.logs_folder = logs_folder
+        # stored for debugging purposes
+        self.latest_question = None
+        self.latest_chunks = None
 
     def get_answer(self, question:str, max_context_size=8, verbose=False) -> str:
         """gets the string answer to a single question"""
@@ -23,6 +26,9 @@ class QuestionAnswerer:
             messages = [{'role': 'user', 'content': question}]
             # gets an answer from the model
             answer = self.llm.chat(messages, chunks, verbose=verbose)
+            # stores information for later debugging
+            self.latest_question = question
+            self.latest_chunks = chunks
         except Exception as e:
             # propagate the exeption as usual
             if self.logs_folder is None:
@@ -45,6 +51,9 @@ class QuestionAnswerer:
             chunks = self.database.get_closest_chunks(question, max_context_size)
             # gets an answer from the model
             answer = self.llm.chat(messages, chunks, verbose=verbose)
+            # stores information for later debugging
+            self.latest_question = question
+            self.latest_chunks = chunks
         except Exception as e:
             # propagate the exeption as usual
             if self.logs_folder is None:

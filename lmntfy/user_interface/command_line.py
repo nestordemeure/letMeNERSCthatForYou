@@ -49,12 +49,20 @@ def chat(question_answerer:QuestionAnswerer, verbose=False) -> List[Dict]:
     console = Console()
     print()
     while True:
-        # gets question
-        question = input("> ")
-        messages.append({'role':'user', 'content': question})
-        # gets an answer and stores it
-        answer_message = question_answerer.chat(messages, verbose=verbose)
-        messages.append(answer_message)
+        # gets user input
+        user_input = input("> ")
+        if (user_input == 'DEBUG'):
+            # cheatcode, displays information used to generate the answer
+            answer = f"Question: '{question_answerer.latest_question}'\n"
+            for chunk in question_answerer.latest_chunks:
+                answer += '\n' + chunk.to_markdown()
+            answer_message = {'content': answer}
+        else:
+            question = user_input
+            messages.append({'role':'user', 'content': question})
+            # gets an answer and stores it
+            answer_message = question_answerer.chat(messages, verbose=verbose)
+            messages.append(answer_message)
         # pretty prints the answer
         markdown_answer = Markdown(answer_message['content'])
         print()
