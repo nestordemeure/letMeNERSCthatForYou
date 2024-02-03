@@ -44,10 +44,6 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* have the model query the API more ofen (every 1s) when a user messaged was received recently (last 5min)
-* introduced batch processing (via a `BatchedModel` abstraction that stores batch size, async loops on request and actually process them only when the batch is full?)
-* optimize API queue query as a function of batch size
-
 * add a dedicated code formater? (yapf?)
 * clean-up code and improve comments / documentation,
 * document the inner-workings,

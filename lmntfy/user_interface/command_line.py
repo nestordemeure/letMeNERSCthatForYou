@@ -53,7 +53,7 @@ def chat(question_answerer:QuestionAnswerer, verbose=False) -> List[Dict]:
         user_input = input("> ")
         if (user_input == 'DEBUG'):
             # cheatcode, displays information used to generate the answer
-            answer = f"Question: '{question_answerer.latest_question}'\n"
+            answer = f"Question: '{question_answerer.latest_question}'\n\n---\n"
             for chunk in question_answerer.latest_chunks:
                 answer += '\n' + chunk.to_markdown()
             answer_message = {'content': answer}
