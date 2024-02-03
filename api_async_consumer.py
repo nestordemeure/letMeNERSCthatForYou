@@ -56,7 +56,7 @@ async def process_conversation(semaphore, session, output_endpoint, question_ans
         if verbose:
             print(f"POST (status code:{status}):\n{json.dumps(output, indent=4)}")
 
-async def wait_for_next_iteration(last_active_time, get_time, min_refresh_time, max_refresh_time, cooldown_time):
+async def wait_for_next_iteration(last_active_time, start_time, min_refresh_time, max_refresh_time, cooldown_time):
     """
     Determine the appropriate wait time before the next iteration based on user activity.
     
@@ -65,7 +65,7 @@ async def wait_for_next_iteration(last_active_time, get_time, min_refresh_time, 
     
     Args:
     - last_active_time: The timestamp of the last received user message.
-    - get_time: The timestamp when the current iteration started.
+    - start_time: The timestamp when the current iteration started.
     - min_refresh_time: The minimum time to wait before the next API call if recently active.
     - max_refresh_time: The maximum time to wait before the next API call if not recently active.
     - cooldown_time: The time window to consider for recent activity.
@@ -78,7 +78,7 @@ async def wait_for_next_iteration(last_active_time, get_time, min_refresh_time, 
         refresh_time = max_refresh_time
 
     # Calculate how long the answering took
-    elapsed_time = current_time - get_time
+    elapsed_time = current_time - start_time
 
     # Sleep for the remaining time if the processing was faster than refresh_time
     if elapsed_time < refresh_time:
@@ -105,8 +105,12 @@ async def main():
         running_tasks = []
         last_active_time = time.time()  # Track the last time a message was received
         while True:
+            start_time = time.time()
+
+            # Filter out the completed tasks
+            running_tasks = [task for task in running_tasks if not task.done()]
+
             # Get conversations as JSON
-            get_time = time.time()
             async with session.get(input_endpoint) as response:
                 conversations = await response.json()
             if args.verbose: 
@@ -123,11 +127,8 @@ async def main():
                 task.add_done_callback(lambda t: semaphore.release())  # Release semaphore when task is done
                 running_tasks.append(task)
 
-            # Filter out the completed tasks
-            running_tasks = [task for task in running_tasks if not task.done()]
-
             # Wait until the next api call
-            await wait_for_next_iteration(last_active_time, get_time, args.min_refresh_time, args.max_refresh_time, args.cooldown_time)
+            await wait_for_next_iteration(last_active_time, start_time, args.min_refresh_time, args.max_refresh_time, args.cooldown_time)
 
 if __name__ == "__main__":
     asyncio.run(main())

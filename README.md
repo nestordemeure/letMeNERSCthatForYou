@@ -44,6 +44,8 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
+* stress test async work (200 simultaneous messages?)
+
 * add a dedicated code formater? (yapf?)
 * clean-up code and improve comments / documentation,
 * document the inner-workings,

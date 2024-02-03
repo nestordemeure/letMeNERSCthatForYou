@@ -17,4 +17,4 @@ python_instance="$chatbot_root/conda/bin/python3"
 
 # runs the worker
 # Using python_instance to run the api_consumer script in code_folder
-$python_instance $code_folder/api_consumer.py --docs_folder $documentation_folder --database_folder $database_folder --models_folder $models_folder
+$python_instance $code_folder/api_async_consumer.py --docs_folder $documentation_folder --database_folder $database_folder --models_folder $models_folder
