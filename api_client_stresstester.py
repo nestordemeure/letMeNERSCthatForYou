@@ -37,15 +37,15 @@ async def get_answer(session, convo_id, messages, api_base_url, refresh_time: in
                 else:
                     await asyncio.sleep(refresh_time)
 
-async def client_task(client_id, api_base_url, convo_id, nb_messages=10):
+async def client_task(client_id, api_base_url, nb_messages=10):
     """
     Simulate a client sending a fixed question multiple times and receiving answers.
 
     :param client_id: An identifier for the client.
     :param api_base_url: The base URL of the API.
-    :param convo_id: A unique conversation identifier.
     :param nb_messages: The number of messages to send.
     """
+    convo_id = f"CONVID_{client_id}"
     fixed_question = "How can I connect to NERSC?"
     async with aiohttp.ClientSession() as session:
         messages = []
@@ -66,7 +66,7 @@ async def main(nb_clients=200, api_base_url='https://api-dev.nersc.gov/api/v1.2'
     :param nb_messages: The number of messages each client will send.
     """
     # Create and start tasks for all clients
-    tasks = [client_task(i, api_base_url, f"CONVID_{i}", nb_messages) for i in range(nb_clients)]
+    tasks = [client_task(i, api_base_url, nb_messages) for i in range(nb_clients)]
     await asyncio.gather(*tasks)
 
 # Entry point of the script

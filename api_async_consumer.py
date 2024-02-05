@@ -119,14 +119,16 @@ async def main():
                     # Parsing failed
                     # Get the raw response text
                     response_text = await response.text()
-                    # Construct an error message with response details
-                    error_message = (
+                    # Displays (for logs) an error message with response details
+                    print(
                         f"ContentTypeError when trying to parse JSON from the response.\n"
                         f"Status: {response.status}, Content-Type: {response.headers.get('Content-Type')}\n"
                         f"Response body:\n{response_text}"
                     )
-                    # Re-raise the original exception with additional context
-                    raise RuntimeError(f"Failed to parse JSON response. Additional info: {error_message}") from e
+                    # Wait for max_refresh_time before skipping to the next iteration
+                    await asyncio.sleep(args.max_refresh_time)
+                    continue
+
             if args.verbose: 
                 print(f"\nGET:\n{json.dumps(conversations, indent=4)}")
 
