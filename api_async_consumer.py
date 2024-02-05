@@ -5,6 +5,7 @@ import aiohttp
 import lmntfy
 import argparse
 from pathlib import Path
+from lmntfy.user_interface.web import SFAPIOAuthClient
 
 def parse_args():
     """Parse command line arguments."""
@@ -20,7 +21,7 @@ def parse_args():
     parser.add_argument("--verbose", default=True, action='store_true', help="enable verbose output for debugging purposes")
     return parser.parse_args()
 
-async def process_conversation(semaphore, session, output_endpoint, question_answerer, id, messages, verbose):
+async def process_conversation(semaphore, session, oauth_client, output_endpoint, question_answerer, id, messages, verbose):
     """
     Process an individual conversation by generating a response and posting it to the output endpoint.
 
@@ -31,6 +32,7 @@ async def process_conversation(semaphore, session, output_endpoint, question_ans
     Args:
     - semaphore (asyncio.Semaphore): A semaphore to limit the number of concurrent executions.
     - session (aiohttp.ClientSession): The session used for making HTTP requests.
+    - oauth_client (SFAPIOAuthClient): The SFAPIOAuthClient to connect to the API
     - output_endpoint (str): The URL to which the generated answer should be posted.
     - question_answerer (QuestionAnswerer): The model used for generating answers to the incoming messages.
     - id (str or int): The identifier of the conversation to which the messages belong.
@@ -49,7 +51,8 @@ async def process_conversation(semaphore, session, output_endpoint, question_ans
         output = {id: [answer]}
 
         # Sends the generated answer or error message to the output endpoint.
-        async with session.post(output_endpoint, json=output, headers={'accept': 'application/json', 'Content-Type': 'application/json'}) as response:
+        headers = {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': oauth_client.get_authorization_header()['Authorization']}
+        async with session.post(output_endpoint, json=output, headers=headers) as response:
             status = response.status  # Retrieves the status code of the POST request.
 
         # Optionally prints details of the POST request if verbose mode is enabled.
@@ -94,9 +97,10 @@ async def main():
     semaphore = asyncio.Semaphore(args.max_concurrent_tasks)
 
     # API details
-    input_endpoint = "https://api-dev.nersc.gov/api/v1.2/ai/docs/work"
-    output_endpoint = "https://api-dev.nersc.gov/api/v1.2/ai/docs/work_results"
-    # TODO use the api key for security reasons
+    api_base_url = "https://api-dev.nersc.gov/api/v1.2"
+    input_endpoint = f"{api_base_url}/ai/docs/work"
+    output_endpoint = f"{api_base_url}/ai/docs/work_results"
+    oauth_client = SFAPIOAuthClient(api_base_url=api_base_url)
 
     async with aiohttp.ClientSession() as session:
         if args.verbose: 
@@ -111,7 +115,7 @@ async def main():
             running_tasks = [task for task in running_tasks if not task.done()]
 
             # Get conversations as JSON
-            async with session.get(input_endpoint) as response:
+            async with session.get(input_endpoint, headers=oauth_client.get_authorization_header()) as response:
                 try:
                     # Parses the answer as a json
                     conversations = await response.json()
@@ -123,8 +127,7 @@ async def main():
                     print(
                         f"ContentTypeError when trying to parse JSON from the response.\n"
                         f"Status: {response.status}, Content-Type: {response.headers.get('Content-Type')}\n"
-                        f"Response body:\n{response_text}"
-                    )
+                        f"Response body:\n{response_text}")
                     # Wait for max_refresh_time before skipping to the next iteration
                     await asyncio.sleep(args.max_refresh_time)
                     continue
@@ -139,7 +142,7 @@ async def main():
             # Process the messages
             for id, messages in conversations.items():
                 await semaphore.acquire() # Wait for an available slot in the semaphore before creating a new task
-                task = asyncio.create_task(process_conversation(semaphore, session, output_endpoint, question_answerer, id, messages, args.verbose))
+                task = asyncio.create_task(process_conversation(semaphore, session, oauth_client, output_endpoint, question_answerer, id, messages, args.verbose))
                 task.add_done_callback(lambda t: semaphore.release())  # Release semaphore when task is done
                 running_tasks.append(task)
 

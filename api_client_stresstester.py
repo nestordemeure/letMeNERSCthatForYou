@@ -23,7 +23,20 @@ async def get_answer(session, oauth_client, convo_id, messages, refresh_time: in
         # Poll the API for an answer and return it when received
         while True:
             async with session.get(url, headers=oauth_client.get_authorization_header()) as response_get:
-                answer = (await response_get.json())[-1]
+                try:
+                    # Parses the answer as a json
+                    conversations = await response_get.json()
+                except aiohttp.client_exceptions.ContentTypeError as e:
+                    # Parsing failed
+                    # Get the raw response text
+                    response_text = await response_get.text()
+                    # Displays (for logs) an error message with response details
+                    raise RuntimeError(
+                        f"ContentTypeError when trying to parse JSON from the response.\n"
+                        f"Status: {response_get.status}, Content-Type: {response_get.headers.get('Content-Type')}\n"
+                        f"Response body:\n{response_text}")
+
+                answer = conversations[-1]
                 if answer['role'] == 'assistant':
                     return answer
                 else:
@@ -40,6 +53,7 @@ async def client_task(client_id, oauth_client, nb_messages=10):
     convo_id = f"CONVID_{client_id}"
     fixed_question = "How can I connect to NERSC?"
     async with aiohttp.ClientSession() as session:
+        print(f"Started client {client_id}")
         messages = []
         for message_id in range(nb_messages):
             messages.append({'role': 'user', 'content': fixed_question})
@@ -47,7 +61,7 @@ async def client_task(client_id, oauth_client, nb_messages=10):
             messages.append(answer_message)
             # Display progress with truncated answers for brevity
             display_answer = answer_message['content'] if (len(answer_message['content']) < 10) else (answer_message['content'][:10] + "...")
-            print(f"Client {client_id} received answer {message_id}/{nb_messages}: '{display_answer}'")
+            print(f"Client {client_id} received answer {message_id+1}/{nb_messages}: '{display_answer}'")
 
 async def main(nb_clients=200, api_base_url='https://api-dev.nersc.gov/api/v1.2', nb_messages=10):
     """
