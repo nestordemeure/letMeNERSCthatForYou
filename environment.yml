@@ -17,7 +17,7 @@ dependencies:
   - transformers
   - accelerate
   - protobuf
-  - aiohttp
+  - aiohttp # async http requests
   - pip:
     - sfapi_client~=0.0.6 # Python client for NERSC SF API
     - outlines # LLM templating
