@@ -112,7 +112,21 @@ async def main():
 
             # Get conversations as JSON
             async with session.get(input_endpoint) as response:
-                conversations = await response.json()
+                try:
+                    # Parses the answer as a json
+                    conversations = await response.json()
+                except aiohttp.client_exceptions.ContentTypeError as e:
+                    # Parsing failed
+                    # Get the raw response text
+                    response_text = await response.text()
+                    # Construct an error message with response details
+                    error_message = (
+                        f"ContentTypeError when trying to parse JSON from the response.\n"
+                        f"Status: {response.status}, Content-Type: {response.headers.get('Content-Type')}\n"
+                        f"Response body:\n{response_text}"
+                    )
+                    # Re-raise the original exception with additional context
+                    raise RuntimeError(f"Failed to parse JSON response. Additional info: {error_message}") from e
             if args.verbose: 
                 print(f"\nGET:\n{json.dumps(conversations, indent=4)}")
 
