@@ -31,8 +31,10 @@ class SFAPIOAuthClient:
             keys = Path().home() / ".superfacility"
             key_paths = list(keys.glob(f"{nickname}*"))
             key_path = None
-            if len(key_paths) == 1:
+            if len(key_paths) >= 1:
                 key_path = Path(key_paths[0])
+                if len(key_paths) > 1:
+                    print(f"WARNING: {keys} folder contains more than one key, picked {key_path}")
 
         # We have no credentials
         if key_path is None or key_path.is_dir():
