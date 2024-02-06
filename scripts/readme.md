@@ -3,7 +3,8 @@
 ## Scrontab Scripts
 
 * `update_database.sh` causes the updating of the database (git pull of the repo then refreshing of the vector database),
-* `start_api_worker.sh` starts an API worker.
+* `api_worker.sh` starts an API worker,
+* `api_worker_restarter.sh` restart the worker if it is not running.
 
 The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file looks like this:
 
@@ -25,7 +26,7 @@ The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file look
 #SCRON --open-mode=append
 15 9 * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh
 
-# Checks every 20 minutes if our worker is alive, if not restart it.
+# Checks every 5 minutes if our worker is alive, if not restart it.
 #SCRON --job-name=chatbot_worker_starter
 #SCRON --account=nstaff
 #SCRON --qos=cron

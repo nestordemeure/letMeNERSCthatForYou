@@ -4,6 +4,7 @@ import requests
 import lmntfy
 import argparse
 from pathlib import Path
+from lmntfy.user_interface.web import SFAPIOAuthClient
 
 def parse_args():
     # Read the arguments
@@ -28,9 +29,10 @@ def main():
     verbose = args.verbose
 
     # API details
-    input_endpoint = "https://api-dev.nersc.gov/api/v1.2/ai/docs/work"
-    output_endpoint = "https://api-dev.nersc.gov/api/v1.2/ai/docs/work_results"
-    # TODO use the api key for security reasons
+    api_base_url = "https://api-dev.nersc.gov/api/internal/v1.2"
+    input_endpoint = f"{api_base_url}/ai/docs/work"
+    output_endpoint = f"{api_base_url}/ai/docs/work_results"
+    oauth_client = SFAPIOAuthClient(api_base_url=api_base_url)
 
     # initializes models
     llm = lmntfy.models.llm.Zephyr(models_folder)
@@ -43,7 +45,7 @@ def main():
     while True:
         # gets conversations as a json
         get_time = time.time()
-        conversations = requests.get(input_endpoint).json()
+        conversations = requests.get(input_endpoint, headers=oauth_client.get_authorization_header()).json()
         if verbose: print(f"\nGET:\n{json.dumps(conversations, indent=4)}")
         # loop on all conversation
         for id, messages in conversations.items():
@@ -54,7 +56,8 @@ def main():
                 answer = {'role':'assistant', 'content': f"ERROR: {str(e)}"}
             # post the answer with the conversation key
             output={id: [answer]}
-            response = requests.post(output_endpoint, json=output, headers={'accept': 'application/json', 'Content-Type': 'application/json'})
+            headers = {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': oauth_client.get_authorization_header()['Authorization']}
+            response = requests.post(output_endpoint, json=output, headers=headers)
             if verbose: print(f"POST (status code:{response.status_code}):\n{json.dumps(output, indent=4)}")
         # calculate how long the answering took
         # if it took less than min_refresh_time seconds, sleep for the remaining time

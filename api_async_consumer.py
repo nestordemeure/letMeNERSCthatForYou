@@ -136,7 +136,7 @@ async def main():
     semaphore = asyncio.Semaphore(args.max_concurrent_tasks)
 
     # API details
-    api_base_url = "https://api-dev.nersc.gov/api/v1.2"
+    api_base_url = "https://api-dev.nersc.gov/api/internal/v1.2"
     input_endpoint = f"{api_base_url}/ai/docs/work"
     output_endpoint = f"{api_base_url}/ai/docs/work_results"
     oauth_client = SFAPIOAuthClient(api_base_url=api_base_url)

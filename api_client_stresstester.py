@@ -63,7 +63,7 @@ async def client_task(client_id, oauth_client, nb_messages=10):
             display_answer = answer_message['content'] if (len(answer_message['content']) < 10) else (answer_message['content'][:10] + "...")
             print(f"Client {client_id} received answer {message_id+1}/{nb_messages}: '{display_answer}'")
 
-async def main(nb_clients=10, api_base_url='https://api-dev.nersc.gov/api/v1.2', nb_messages=1):
+async def main(nb_clients=10, api_base_url='https://api-dev.nersc.gov/api/internal/v1.2', nb_messages=1):
     """
     Set up and run the chat sessions concurrently.
 

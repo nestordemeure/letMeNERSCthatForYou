@@ -30,7 +30,7 @@ def get_answer(client:Client, convo_id, messages, refresh_time:int=1):
             time.sleep(refresh_time)
 
 # NOTE: using the dev version of the API
-with Client(api_base_url='https://api-dev.nersc.gov/api/v1.2') as client:
+with Client(api_base_url='https://api-dev.nersc.gov/api/internal/v1.2') as client:
     convo_id = f"CONVID" # TODO use a random number there
     url=f'ai/docs?convo_id={convo_id}'
     lmntfy.user_interface.command_line.display_logo()
