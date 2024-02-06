@@ -8,7 +8,7 @@
 The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file looks like this:
 
 ```shell
-# update database for 10min everyday at 1am PST (9am UTC)
+# Updates database for 10min everyday at 1am PST (9am UTC)
 #SCRON --job-name=chatbot_database_update
 #SCRON --account=nstaff
 #SCRON --time=00:10:00
@@ -16,23 +16,24 @@ The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file look
 #SCRON --open-mode=append
 0 9 * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/update_database.sh
 
-# start worker for 24h at 1:15am PST (9:15am UTC)
+# Starts worker for 24h at 1:15am PST (9:15am UTC)
 #SCRON --job-name=singleton_chatbot_worker
 #SCRON --account=nstaff
 #SCRON --time=24:00:00
 #SCRON --dependency=singleton
-#SCRON -o /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/data/logs/api_worker/output-%j.out
+#SCRON -o /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/data/logs/api_worker/worker_output-%j.out
 #SCRON --open-mode=append
-15 9 * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/start_api_worker.sh
+15 9 * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh
 
+# Checks every 20 minutes if our worker is alive, if not restart it.
 #SCRON --job-name=chatbot_worker_starter
 #SCRON --account=nstaff
 #SCRON --qos=cron
-#SCRON --time=00:20:00
+#SCRON --time=00:10:00
 #SCRON --dependency=singleton
-#SCRON --output=/path/to/starter/starter-%j.out
+#SCRON -o /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/data/logs/api_worker/restarter_output-%j.out
 #SCRON --open-mode=append
-*/5 * * * * /path/to/starter//starter.sh
+*/5 * * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker_restarter.sh
 ```
 
 ## Various Scripts

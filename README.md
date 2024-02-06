@@ -44,9 +44,6 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* improve name of api worker scrip
-* improve scron job so that there is always one job running (singleton respanned at regular intervals?)
-
 * add a dedicated code formater? (yapf?)
 * clean-up code and improve comments / documentation,
 * document the inner-workings,
