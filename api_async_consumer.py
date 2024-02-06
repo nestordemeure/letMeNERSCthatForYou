@@ -21,7 +21,45 @@ def parse_args():
     parser.add_argument("--verbose", default=True, action='store_true', help="enable verbose output for debugging purposes")
     return parser.parse_args()
 
-async def process_conversation(semaphore, session, oauth_client, output_endpoint, question_answerer, id, messages, verbose):
+async def fetch_conversations(session, input_endpoint, oauth_client, max_refresh_time, verbose):
+    """
+    Fetch conversations as JSON from the input endpoint.
+
+    Args:
+    - session (aiohttp.ClientSession): The session used for making HTTP requests.
+    - input_endpoint (str): The endpoint URL from which to fetch conversations.
+    - oauth_client (SFAPIOAuthClient): Client used for authorization in API requests.
+    - max_refresh_time (float): Maximum time to wait before the next API call if an error occurs.
+    - verbose (bool): If True, additional details will be printed to the console.
+
+    Returns:
+    - conversations (dict): The fetched conversations or an empty dict if an error occurs.
+    """
+    async with session.get(input_endpoint, headers=oauth_client.get_authorization_header()) as response:
+        try:
+            # Parses the answer as JSON
+            conversations = await response.json()
+        except aiohttp.client_exceptions.ContentTypeError as e:
+            # Parsing failed
+            # Get the raw response text
+            response_text = await response.text()
+            # Displays (for logs) an error message with response details
+            print(
+                f"ContentTypeError when trying to parse JSON from the response.\n"
+                f"Status: {response.status}, Content-Type: {response.headers.get('Content-Type')}\n"
+                f"Response body:\n{response_text}")
+            # Wait for max_refresh_time before returning an empty conversation
+            await asyncio.sleep(max_refresh_time)
+            return {}
+
+    if verbose:
+        print(f"\nGET:\n{json.dumps(conversations, indent=4)}")
+    return conversations
+
+# ensures only one thread can run the chat answering
+chat_lock = asyncio.Lock()
+
+async def process_conversation(session, oauth_client, output_endpoint, question_answerer, id, messages, verbose):
     """
     Process an individual conversation by generating a response and posting it to the output endpoint.
 
@@ -30,7 +68,6 @@ async def process_conversation(semaphore, session, oauth_client, output_endpoint
     If an exception occurs during answer generation, an error message is constructed and sent instead.
 
     Args:
-    - semaphore (asyncio.Semaphore): A semaphore to limit the number of concurrent executions.
     - session (aiohttp.ClientSession): The session used for making HTTP requests.
     - oauth_client (SFAPIOAuthClient): The SFAPIOAuthClient to connect to the API
     - output_endpoint (str): The URL to which the generated answer should be posted.
@@ -41,23 +78,25 @@ async def process_conversation(semaphore, session, oauth_client, output_endpoint
 
     This function ensures that the number of concurrent executions does not exceed the limit set by the semaphore.
     """
-    async with semaphore:
-        # Generates an answer using the question_answerer model.
+    # Ensures only one coroutine at a time can call question_answerer.chat
+    async with chat_lock:
         try:
-            answer = question_answerer.chat(messages, verbose=False)
+            # Generates an answer using the question_answerer model.
+            # Run the blocking function in a separate thread to let other threads do their processing
+            answer = await asyncio.to_thread(question_answerer.chat, messages)
         except Exception as e:
             # Constructs an error message in case of an exception during answer generation.
             answer = {'role': 'assistant', 'content': f"ERROR: {str(e)}"}
-        output = {id: [answer]}
+    output = {id: [answer]}
 
-        # Sends the generated answer or error message to the output endpoint.
-        headers = {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': oauth_client.get_authorization_header()['Authorization']}
-        async with session.post(output_endpoint, json=output, headers=headers) as response:
-            status = response.status  # Retrieves the status code of the POST request.
+    # Sends the generated answer or error message to the output endpoint.
+    headers = {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': oauth_client.get_authorization_header()['Authorization']}
+    async with session.post(output_endpoint, json=output, headers=headers) as response:
+        status = response.status  # Retrieves the status code of the POST request.
 
-        # Optionally prints details of the POST request if verbose mode is enabled.
-        if verbose:
-            print(f"POST (status code:{status}):\n{json.dumps(output, indent=4)}")
+    # Optionally prints details of the POST request if verbose mode is enabled.
+    if verbose:
+        print(f"POST (status code:{status}):\n{json.dumps(output, indent=4)}")
 
 async def wait_for_next_iteration(last_active_time, start_time, min_refresh_time, max_refresh_time, cooldown_time):
     """
@@ -115,25 +154,7 @@ async def main():
             running_tasks = [task for task in running_tasks if not task.done()]
 
             # Get conversations as JSON
-            async with session.get(input_endpoint, headers=oauth_client.get_authorization_header()) as response:
-                try:
-                    # Parses the answer as a json
-                    conversations = await response.json()
-                except aiohttp.client_exceptions.ContentTypeError as e:
-                    # Parsing failed
-                    # Get the raw response text
-                    response_text = await response.text()
-                    # Displays (for logs) an error message with response details
-                    print(
-                        f"ContentTypeError when trying to parse JSON from the response.\n"
-                        f"Status: {response.status}, Content-Type: {response.headers.get('Content-Type')}\n"
-                        f"Response body:\n{response_text}")
-                    # Wait for max_refresh_time before skipping to the next iteration
-                    await asyncio.sleep(args.max_refresh_time)
-                    continue
-
-            if args.verbose: 
-                print(f"\nGET:\n{json.dumps(conversations, indent=4)}")
+            conversations = await fetch_conversations(session, input_endpoint, oauth_client, args.max_refresh_time, args.verbose)
 
             # Update last_active_time when a message is received
             if len(conversations) > 0:
@@ -142,7 +163,7 @@ async def main():
             # Process the messages
             for id, messages in conversations.items():
                 await semaphore.acquire() # Wait for an available slot in the semaphore before creating a new task
-                task = asyncio.create_task(process_conversation(semaphore, session, oauth_client, output_endpoint, question_answerer, id, messages, args.verbose))
+                task = asyncio.create_task(process_conversation(session, oauth_client, output_endpoint, question_answerer, id, messages, args.verbose))
                 task.add_done_callback(lambda t: semaphore.release())  # Release semaphore when task is done
                 running_tasks.append(task)
 
