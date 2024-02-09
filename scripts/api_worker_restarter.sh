@@ -1,34 +1,42 @@
 #!/bin/bash
-# If our worker (`singleton_chatbot_worker`) is not running, then restart the script:
-# /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh
+# Purpose: Restart a specific worker script if it's not currently running,
+# taking into account system maintenance schedules and ensuring output is logged appropriately.
 
-BUFFER_MIN=30 # Number of minutes to buffer before maintenance
-SCRONTAB_NAME=singleton_chatbot_worker # Name of the scrontab job to check
-END_TIME=$(date -d "tomorrow 01:15 AM PST" "+%s") # When should the script stop running
+# Configuration variables
+BUFFER_BEFORE_MAINTENANCE_MIN=30 # Buffer time in minutes before system maintenance begins
+JOB_NAME=singleton_chatbot_worker # Name of the job to check in the SLURM queue
+END_TIME=$(date -d "tomorrow 01:15 AM PST" "+%s") # Target end time for the script
+OUTPUT_PATH="/global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/data/logs/api_worker/restarted_worker_output-%j.out" # Path for SLURM job output files
 
-# NOTE: we don't use --state=running,pending as pending would detect tomorow's run in the queue
-MY_JOB=$(squeue --noheader -n $SCRONTAB_NAME --state=running -u $USER -o "%12i %2t %9u %25j %6D %10M %12q %8f %18R")
-IS_MY_JOB_RUNNING=$(echo "${MY_JOB}" | wc -c)
+# Check if the specified job is already running
+# Note: --state=running,pending is avoided to avoid false positives from tomorrow's scrontab job
+JOB_CHECK=$(squeue --noheader -n $JOB_NAME --state=running -u $USER -o "%12i %2t %9u %25j %6D %10M %12q %8f %18R")
+IS_JOB_RUNNING=$(echo "${JOB_CHECK}" | wc -c)
 
-if [[ "$IS_MY_JOB_RUNNING" -ge 2 ]]; then
-    printf "[%s] Job %s already in the queue \n" $(date "+%m-%d-%Y-%H:%M:%S") "$SCRONTAB_NAME"
-    printf "===============================\n%s\n===============================\n" "$MY_JOB"
+# If the job is running, log this and exit
+if [[ "$IS_JOB_RUNNING" -ge 2 ]]; then
+    printf "[%s] Job %s already in the queue \n" $(date "+%m-%d-%Y-%H:%M:%S") "$JOB_NAME"
+    printf "===============================\n%s\n===============================\n" "$JOB_CHECK"
     exit 0;
 fi
 
-STR_TIME=$(scontrol show res -o | egrep 'login|workflow' | awk -F'[= ]' '{print $4}'| head -n 1)
+# Check for scheduled system maintenance
+MAINTENANCE_TIME=$(scontrol show res -o | egrep 'login|workflow' | awk -F'[= ]' '{print $4}' | head -n 1)
 
-if [[ "$STR_TIME" == "" ]]; then
+# If no maintenance is scheduled, proceed without adjusting for maintenance
+if [[ "$MAINTENANCE_TIME" == "" ]]; then
     printf '[%s] No maintenance found\n' $(date "+%m-%d-%Y-%H:%M:%S")
     TIME_MIN_STR=""
 else
-    BAD_TIME=$(date "+%s" -d $STR_TIME)
-    CUR_TIME=$(date "+%s")
-    TIME_LEFT_MIN=$(((BAD_TIME-CUR_TIME)/60))
+    # Calculate time until maintenance starts
+    MAINTENANCE_START=$(date "+%s" -d $MAINTENANCE_TIME)
+    CURRENT_TIME=$(date "+%s")
+    TIME_UNTIL_MAINTENANCE_MIN=$(((MAINTENANCE_START-CURRENT_TIME)/60))
 
-    printf '[%s] Minutes before next maintenance: %s\n' $(date "+%m-%d-%Y-%H:%M:%S") "$TIME_LEFT_MIN"
+    printf '[%s] Minutes before next maintenance: %s\n' $(date "+%m-%d-%Y-%H:%M:%S") "$TIME_UNTIL_MAINTENANCE_MIN"
 
-    TIME_MIN=$((TIME_LEFT_MIN-BUFFER_MIN))
+    # Adjust for buffer before maintenance
+    TIME_MIN=$((TIME_UNTIL_MAINTENANCE_MIN-BUFFER_BEFORE_MAINTENANCE_MIN))
     if [[ "$TIME_MIN" -le 0 ]]; then
         TIME_MIN_STR=""
     else
@@ -36,13 +44,19 @@ else
     fi
 fi
 
-# Calculate Duration until target end time
-current_time=$(date "+%s")
-duration=$((END_TIME - current_time))
-duration_hms=$(printf '%02d:%02d:%02d' $(($duration / 3600)) $(($duration % 3600 / 60)) $(($duration % 60)))
+# Calculate the duration until the target end time
+CURRENT_TIME=$(date "+%s")
+DURATION=$((END_TIME - CURRENT_TIME))
+DURATION_HMS=$(printf '%02d:%02d:%02d' $(($DURATION / 3600)) $(($DURATION % 3600 / 60)) $(($DURATION % 60)))
 
-# Run instead of printing for real script
-printf '[%s] sbatch --dependency=singleton %s --time=%s -q cron /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh \n' $(date "+%m-%d-%Y-%H:%M:%S") "$TIME_MIN_STR" "$duration_hms"
+# Prepare the sbatch command with calculated constraints and output path
+SBATCH_COMMAND="sbatch --dependency=singleton ${TIME_MIN_STR} --time=$DURATION_HMS -q cron --output=$OUTPUT_PATH /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh"
 
+# Echo the sbatch command for logging
+printf '[%s] %s \n' $(date "+%m-%d-%Y-%H:%M:%S") "$SBATCH_COMMAND"
+
+# Clear SLURM-related environment variables to prevent interference
 unset ${!SLURM_@};
-sbatch --dependency=singleton ${TIME_MIN_STR} --time=$duration_hms -q cron /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh
+
+# Submit the job with sbatch
+eval $SBATCH_COMMAND
