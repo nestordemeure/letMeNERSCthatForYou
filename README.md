@@ -49,7 +49,6 @@ In no particular order:
 * document the inner-workings,
 
 * establish a canonical list of test questions / conversations,
-* have the model always running on Perlmuter,
 * move this code to the NERSC github,
 
 * try fine-tuning sentence embedder,

@@ -4,8 +4,10 @@
 
 BUFFER_MIN=30 # Number of minutes to buffer before maintenance
 SCRONTAB_NAME=singleton_chatbot_worker # Name of the scrontab job to check
+END_TIME=$(date -d "tomorrow 01:15 AM PST" "+%s") # When should the script stop running
 
-MY_JOB=$(squeue --noheader -n $SCRONTAB_NAME --state=running,pending -u $USER -o "%12i %2t %9u %25j %6D %10M %12q %8f %18R")
+# NOTE: we don't use --state=running,pending as pending would detect tomorow's run in the queue
+MY_JOB=$(squeue --noheader -n $SCRONTAB_NAME --state=running -u $USER -o "%12i %2t %9u %25j %6D %10M %12q %8f %18R")
 IS_MY_JOB_RUNNING=$(echo "${MY_JOB}" | wc -c)
 
 if [[ "$IS_MY_JOB_RUNNING" -ge 2 ]]; then
@@ -34,8 +36,13 @@ else
     fi
 fi
 
+# Calculate Duration until target end time
+current_time=$(date "+%s")
+duration=$((END_TIME - current_time))
+duration_hms=$(printf '%02d:%02d:%02d' $(($duration / 3600)) $(($duration % 3600 / 60)) $(($duration % 60)))
+
 # Run instead of printing for real script
-printf '[%s] sbatch --dependency=singleton %s -q cron /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh \n' $(date "+%m-%d-%Y-%H:%M:%S") "$TIME_MIN_STR"
+printf '[%s] sbatch --dependency=singleton %s --time=%s -q cron /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh \n' $(date "+%m-%d-%Y-%H:%M:%S") "$TIME_MIN_STR" "$duration_hms"
 
 unset ${!SLURM_@};
-sbatch --dependency=singleton ${TIME_MIN_STR} -q cron /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh
+sbatch --dependency=singleton ${TIME_MIN_STR} --time=$duration_hms -q cron /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh
