@@ -16,8 +16,14 @@ class SFAPIOAuthClient:
         else:
             self.client_id = client_id
             self.secret = secret
+        is_dev_base_url = ('dev' in api_base_url)
+        is_dev_token_url = ('dev' in token_url)
+        if is_dev_base_url and not is_dev_token_url:
+            print(f"WARNING: you might be using a dev base API url and a normal token url! (api_base_url:{api_base_url} token_url:{token_url})")
+        elif is_dev_token_url and not is_dev_base_url:
+            print(f"WARNING: you might be using a dev token url and a normal API url! (api_base_url:{api_base_url} token_url:{token_url})")
         self.token_url = token_url
-        self.api_base_url = api_base_url
+        self.api_base_url = api_base_url            
         self.key = key if key else None
         self.oauth2_session = None
 
