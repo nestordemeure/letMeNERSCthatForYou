@@ -9,6 +9,10 @@ from lmntfy.user_interface.web import SFAPIOAuthClient
 import aiohttp
 import asyncio
 
+# use the dev side of the API
+API_BASE_URL='https://api-dev.nersc.gov/api/internal/v1.2'
+TOKEN_URL='https://oidc-dev.nersc.gov/c2id/token'
+
 async def get_answer(session, oauth_client, convo_id, messages, refresh_time: int=1):
     url = f'{oauth_client.api_base_url}/ai/docs?convo_id={convo_id}'
     headers = {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': oauth_client.get_authorization_header()['Authorization']}
@@ -63,7 +67,7 @@ async def client_task(client_id, oauth_client, nb_messages=10):
             display_answer = answer_message['content'] if (len(answer_message['content']) < 10) else (answer_message['content'][:10] + "...")
             print(f"Client {client_id} received answer {message_id+1}/{nb_messages}: '{display_answer}'")
 
-async def main(nb_clients=10, api_base_url='https://api-dev.nersc.gov/api/internal/v1.2', nb_messages=1):
+async def main(nb_clients=10, nb_messages=1):
     """
     Set up and run the chat sessions concurrently.
 
@@ -72,7 +76,7 @@ async def main(nb_clients=10, api_base_url='https://api-dev.nersc.gov/api/intern
     :param nb_messages: The number of messages each client will send.
     """
     # Create and start tasks for all clients
-    oauth_client = SFAPIOAuthClient(api_base_url=api_base_url)
+    oauth_client = SFAPIOAuthClient(api_base_url=API_BASE_URL, token_url=TOKEN_URL)
     tasks = [client_task(i, oauth_client, nb_messages) for i in range(nb_clients)]
     await asyncio.gather(*tasks)
 

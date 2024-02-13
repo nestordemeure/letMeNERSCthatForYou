@@ -10,6 +10,10 @@ import json
 import time
 import lmntfy
 
+# use the dev side of the API
+API_BASE_URL='https://api-dev.nersc.gov/api/internal/v1.2'
+TOKEN_URL='https://oidc-dev.nersc.gov/c2id/token'
+
 def get_answer(client:Client, convo_id, messages, refresh_time:int=1):
     # url to the ai API
     url=f'ai/docs?convo_id={convo_id}'
@@ -30,9 +34,8 @@ def get_answer(client:Client, convo_id, messages, refresh_time:int=1):
             time.sleep(refresh_time)
 
 # NOTE: using the dev version of the API
-with Client(api_base_url='https://api-dev.nersc.gov/api/internal/v1.2') as client:
+with Client(api_base_url=API_BASE_URL, token_url=TOKEN_URL) as client:
     convo_id = f"CONVID" # TODO use a random number there
-    url=f'ai/docs?convo_id={convo_id}'
     lmntfy.user_interface.command_line.display_logo()
 
     messages = []

@@ -7,6 +7,10 @@ import argparse
 from pathlib import Path
 from lmntfy.user_interface.web import SFAPIOAuthClient
 
+# use the dev side of the API
+API_BASE_URL='https://api-dev.nersc.gov/api/internal/v1.2'
+TOKEN_URL='https://oidc-dev.nersc.gov/c2id/token'
+
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser()
@@ -136,10 +140,9 @@ async def main():
     semaphore = asyncio.Semaphore(args.max_concurrent_tasks)
 
     # API details
-    api_base_url = "https://api-dev.nersc.gov/api/internal/v1.2"
-    input_endpoint = f"{api_base_url}/ai/docs/work"
-    output_endpoint = f"{api_base_url}/ai/docs/work_results"
-    oauth_client = SFAPIOAuthClient(api_base_url=api_base_url)
+    input_endpoint = f"{API_BASE_URL}/ai/docs/work"
+    output_endpoint = f"{API_BASE_URL}/ai/docs/work_results"
+    oauth_client = SFAPIOAuthClient(api_base_url=API_BASE_URL, token_url=TOKEN_URL)
 
     async with aiohttp.ClientSession() as session:
         if args.verbose: 
