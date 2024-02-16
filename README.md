@@ -44,7 +44,7 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* get chatbot to give smaller answers
+* reevaluate the best LLM now that we have significantly longer pieces of context
 * explore using a dedicaed search library instead of raw embeddings-based search
 
 * add a dedicated code formater? (yapf?)

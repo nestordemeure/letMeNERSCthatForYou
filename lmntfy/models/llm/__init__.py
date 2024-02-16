@@ -29,9 +29,10 @@ Try and be careful not to go off-topics.
 # NOTE: 
 # * we do a single shot prompt (with an example answer) to ensure proper formating of the answer at the price of a few tokens
 # * note that the end of the prompt is ready to accomodate some chunks of information
+# NOTE: we use "concise and informative" instead of "comprehensive and informative" in our previous iteration of the prompt
 ANSWERING_PROMPT="""
 You are a member of the NERSC supercomputing center's support staff.
-Generate a comprehensive and informative answer for a given question solely based on the provided information (URL and Extract).
+Generate a concise and informative answer for a given question solely based on the provided information (URL and Extract).
 You must only use information from the provided search results. \
 Use an unbiased and journalistic tone. \
 Combine search results together into a coherent answer. \
