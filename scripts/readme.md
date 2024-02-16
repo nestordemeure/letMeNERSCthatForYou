@@ -40,5 +40,6 @@ The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file look
 ## Various Scripts
 
 * `local_chatbot.sh` starts a chatbot running on the current node,
-* `local_chatbot_dev.sh` starts the dev chatbot script running on the current node,
-* `api_chatbot.sh` starts a chatbot calling the API for answers.
+* `api_chatbot.sh` starts a chatbot client calling the API for answers,
+* `dev_local_chatbot.sh` starts the dev chatbot script running on the current node,
+* `dev_check_retrieval.sh` runs a few closest-chunks queries and display the result, to test our retrieval pipeline.

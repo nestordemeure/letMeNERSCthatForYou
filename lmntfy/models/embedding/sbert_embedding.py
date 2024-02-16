@@ -11,12 +11,13 @@ class SBERTEmbedding(Embedding):
                  name='all-mpnet-base-v2', 
                  embedding_length=768,
                  max_input_tokens=384,
-                 normalized=True):
+                 normalized=True,
+                 device=None):
         super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized)
         # ensures that the model caching folder is set properly
         os.environ['SENTENCE_TRANSFORMERS_HOME'] = str(models_folder)
         # loads the model
-        self.model = SentenceTransformer(name)
+        self.model = SentenceTransformer(name, device=device)
 
     def _embed(self, text):
         """

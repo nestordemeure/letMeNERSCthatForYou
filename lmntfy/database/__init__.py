@@ -11,6 +11,16 @@ from .document_loader import Chunk, chunk_file
 from .document_loader.markdown_spliter import markdown_splitter
 from .file import File
 
+def remove_duplicates(chunks:List[Chunk]) -> Chunk:
+    """remove duplicates from a list while preserving element order"""
+    seen = set()
+    result = []
+    for item in chunks:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
+
 class Database(ABC):
     def __init__(self, llm:LanguageModel, embedder:Embedding,
                        documentation_folder:Path, database_folder:Path, 
@@ -71,18 +81,17 @@ class Database(ABC):
         input_embedding = self.embedder.embed(input_text)
         # Loop until we get enough distinct chunks
         # NOTE: identical chunks is *only* a risk when several indices might be pointing to (diferent parts of) the same chunk
-        chunks = set()
+        chunks = list()
         k_growing_factor = 1
         while len(chunks) < k:
             # Query the vector database
             indices = self._index_get_closest(input_embedding, k*k_growing_factor)
             # Gets the correspondings chunks ensuring uniqueness
-            # NOTE: we build on Python sets preserving ordering past Python3.7
-            chunks = {self.chunks[i] for i in indices}
-            # If we fail, th next call will request twice as many items
+            chunks = remove_duplicates([self.chunks[i] for i in indices])
+            # If we fail, the next call will request twice as many items
             k_growing_factor *= 2
         # converts chunks into a properly sized list
-        chunks = list(chunks)[:k]
+        chunks = chunks[:k]
         # Return the corresponding chunks
         return chunks
 
@@ -126,6 +135,8 @@ class Database(ABC):
                 file.add_index(sub_text_index)
                 # register chunk at the sub chunk's index
                 self.chunks[sub_text_index] = chunk
+            # NOTE: we have embeddings pointing at parts of the full chunk
+            # averaging them to get a chunk's embedding also somewhat works
         # add file to files
         self.files[file_path] = file
 
