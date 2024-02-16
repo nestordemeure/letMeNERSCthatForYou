@@ -44,6 +44,9 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
+* ensure no duplicate in vector database output (yet proper number of outputs?)
+* split chunk according to LLM tokenizer size, then resplit according to sentence embedder in order to get a *list* of embeddings per chunk (lets us get bigger chunks as context sizes increase)
+
 * add a dedicated code formater? (yapf?)
 * clean-up code and improve comments / documentation,
 * document the inner-workings,

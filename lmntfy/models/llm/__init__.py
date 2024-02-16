@@ -288,8 +288,12 @@ class LanguageModel(ABC):
 
         # generates an answer in two part to ensure it follows our prefered format
         # 1. body of the answer
-        answer_body = self.base_generator(prompt, stop_at=["References:", "Sources:"])
-        answer_body = answer_body.replace("Sources:", "References:") # normalize reference format
+        reference_section_titles = ["References:", "Sources:", "Ressources:"]
+        answer_body = self.base_generator(prompt, stop_at=reference_section_titles)
+        # Normalize reference section title
+        for title in reference_section_titles:
+            answer_body = answer_body.replace(title, "References:")
+        # check for the presence of a reference section
         if not "References:" in answer_body: 
             if any(substr in answer_body for substr in ["\n * [", "\n * <", "\n* [", "\n* <"]):
                 # there are already references in the answer, exit
