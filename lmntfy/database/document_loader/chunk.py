@@ -42,7 +42,7 @@ def header2url(url:str, header:str):
     return url + heading
 
 class Chunk:
-    def __init__(self, url, content):
+    def __init__(self, url:str, content:str):
         self.url = url
         self.content = content.strip()
 
@@ -60,6 +60,14 @@ class Chunk:
             'url': self.url,
             'content': self.content
         }
+
+    def __eq__(self, other):
+        if not isinstance(other, Chunk):
+            return False
+        return (self.url == other.url) and (self.content == other.content)
+
+    def __hash__(self):
+        return hash((self.url, self.content))
 
     @staticmethod
     def from_dict(data):

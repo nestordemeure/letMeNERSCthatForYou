@@ -1,6 +1,5 @@
 import re
 from .text_spliter import text_splitter
-from .token_count_pair import TokenCountPair
 from .chunk import Chunk, header2url
 from typing import Callable, List
 
@@ -59,7 +58,7 @@ class Markdown:
     def count_tokens(self, token_counter):
         """memoized token counting function"""
         if self.nb_tokens is None:
-            self.nb_tokens = token_counter(self.header) + sum((heading.count_tokens(token_counter) for heading in self.headings), TokenCountPair(0,0))
+            self.nb_tokens = token_counter(self.header) + sum((heading.count_tokens(token_counter) for heading in self.headings), 0)
         return self.nb_tokens
 
     def to_chunks(self, url, token_counter, max_tokens):
@@ -83,7 +82,7 @@ class Markdown:
                 result.extend(heading.to_chunks(url, token_counter, max_tokens))
             return result
 
-def markdown_splitter(url:str, markdown: str, token_counter:Callable[[str],TokenCountPair], max_tokens:TokenCountPair) -> List[str]:
+def markdown_splitter(url:str, markdown:str, token_counter:Callable[[str],int], max_tokens:int) -> List[str]:
     """
     takes a markdown file as a string
     a function that can count the number of tokens in a string

@@ -3,7 +3,6 @@ from pathlib import Path
 from .text_spliter import text_splitter
 from .markdown_spliter import markdown_splitter
 from .chunk import Chunk, path2url
-from .token_count_pair import TokenCountPair
 from typing import Callable, List
 
 def paths2urls(markdown, file_path, folder_path):
@@ -31,7 +30,7 @@ def paths2urls(markdown, file_path, folder_path):
     # (hinting at the fact that it is a relative path)
     return re.sub(r'\[([^]]+)\]\(((?!http)[^)]+)\)', replacer, markdown)
 
-def chunk_file(file_path:Path, documentation_folder:Path, token_counter:Callable[[str],TokenCountPair], max_tokens_per_chunk: TokenCountPair, verbose=False) -> List[Chunk]:
+def chunk_file(file_path:Path, documentation_folder:Path, token_counter:Callable[[str],int], max_tokens_per_chunk: int, verbose=False) -> List[Chunk]:
     """Adds a markdown document to the Splitter, splitting it until it fits."""
     # generates the url to the file
     url = path2url(file_path, documentation_folder)

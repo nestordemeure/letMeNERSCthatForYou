@@ -8,8 +8,8 @@ from typing import List, Dict, Set
 from abc import ABC, abstractmethod
 from ..models import LanguageModel, Embedding
 from .document_loader import Chunk, chunk_file
+from .document_loader.markdown_spliter import markdown_splitter
 from .file import File
-from .document_loader.token_count_pair import TokenCountPair
 
 class Database(ABC):
     def __init__(self, llm:LanguageModel, embedder:Embedding,
@@ -20,15 +20,15 @@ class Database(ABC):
         self.embedding_length = embedder.embedding_length
         # maximum size of each chunk
         # we leave space for two additional chunks, representing the prompt and the model's answer
-        llm_max_tokens = llm.context_size / (min_chunks_per_query + 2)
-        self.max_tokens_per_chunk = TokenCountPair(llm_max_tokens, embedder.max_input_tokens)
-        # the token counting function
-        self.count_tokens = TokenCountPair.build_pair_counter(llm.count_tokens, embedder.count_tokens)
+        self.max_tokens_per_chunk = llm.context_size / (min_chunks_per_query + 2)
+        # the token counting function of the llm
+        self.count_tokens_llm = llm.count_tokens
         # dictionary of all files
         # file_path -> File
         self.files: Dict[Path, File] = dict()
         # dictionary of all chunk
         # vector_database_index -> Chunk
+        # NOTE: it might contain identical chunks pointed at by different indices
         self.chunks: Dict[int, Chunk] = dict()
         # set of file and folder names that will not be processed
         self.ignored_files_and_folders: Set[str] = {'timeline'}
@@ -62,8 +62,12 @@ class Database(ABC):
         pass
 
     def get_closest_chunks(self, input_text: str, k: int = 3) -> List[Chunk]:
+        """
+        returns the (at most) k chunks that contains pieces of text closest to the input_text according to its embedding
+        """
         if len(self.chunks) <= k: return list(self.chunks.values())
         # Generate input text embedding
+        # WARNING: we assume that the input is small enough to be embedded
         input_embedding = self.embedder.embed(input_text)
         # Loop until we get enough distinct chunks
         # NOTE: identical chunks is *only* a risk when several indices might be pointing to (diferent parts of) the same chunk
@@ -105,20 +109,23 @@ class Database(ABC):
         """Add a file's content to the database"""
         # shortcut the function on ignored files
         if self._is_ignored_file(file_path): return
-        # slice file into chunks
-        chunks = chunk_file(file_path, self.documentation_folder, self.count_tokens, self.max_tokens_per_chunk)
+        # slice file into chunks small enough to fit several in the model's context size
+        chunks = chunk_file(file_path, self.documentation_folder, self.count_tokens_llm, self.max_tokens_per_chunk)
         # save chunks in the databse
         file_update_date = datetime.fromtimestamp(file_path.stat().st_mtime)
         file = File(creation_date=file_update_date)
         for chunk in chunks:
-            # compute the embedding of the chunk
-            embedding = self.embedder.embed(chunk.content)
-            # add embedding to the vector database
-            chunk_index = self._index_add(embedding)
-            # add chunk to file
-            file.add_index(chunk_index)
-            # add chunk to chunks
-            self.chunks[chunk_index] = chunk
+            # slice chunk into sub chunks small enough to be embedded
+            sub_texts = markdown_splitter(chunk.url, chunk.content, self.embedder.count_tokens, self.embedder.max_input_tokens)
+            # compute the embeddings of the chunk
+            embeddings = [self.embedder.embed(sub_text) for sub_text in sub_texts]
+            for embedding in embeddings:
+                # add embedding to the vector database
+                sub_text_index = self._index_add(embedding)
+                # add index to file
+                file.add_index(sub_text_index)
+                # add chunk to chunks
+                self.chunks[sub_text_index] = chunk
         # add file to files
         self.files[file_path] = file
 
