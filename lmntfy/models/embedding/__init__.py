@@ -3,7 +3,15 @@ from pathlib import Path
 import numpy as np
 
 class Embedding(ABC):
-    def __init__(self, models_folder:Path, name, embedding_length, max_input_tokens, normalized):
+    def __init__(self, models_folder:Path, name:str, embedding_length:int, max_input_tokens:int, normalized:bool):
+        """
+        Parameters:
+            models_folder (Path): The path to the directory containing the model files.
+            name (str): The name of the embedding model.
+            embedding_length (int): The size of the embedding vectors produced by the model.
+            max_input_tokens (int): The maximum number of tokens that can be processed in one input sequence.
+            normalized (bool): A flag indicating whether the model's output embeddings are normalized.
+        """
         self.models_folder = models_folder
         self.name = name
         self.embedding_length = embedding_length

@@ -109,22 +109,22 @@ class Database(ABC):
         """Add a file's content to the database"""
         # shortcut the function on ignored files
         if self._is_ignored_file(file_path): return
-        # slice file into chunks small enough to fit several in the model's context size
-        chunks = chunk_file(file_path, self.documentation_folder, self.count_tokens_llm, self.max_tokens_per_chunk)
-        # save chunks in the databse
+        # open file in the database
         file_update_date = datetime.fromtimestamp(file_path.stat().st_mtime)
         file = File(creation_date=file_update_date)
+        # slice file into chunks small enough to fit several in the model's context size
+        chunks = chunk_file(file_path, self.documentation_folder, self.count_tokens_llm, self.max_tokens_per_chunk)
         for chunk in chunks:
             # slice chunk into sub chunks small enough to be embedded
-            sub_texts = markdown_splitter(chunk.url, chunk.content, self.embedder.count_tokens, self.embedder.max_input_tokens)
-            # compute the embeddings of the chunk
-            embeddings = [self.embedder.embed(sub_text) for sub_text in sub_texts]
-            for embedding in embeddings:
+            sub_chunks = markdown_splitter(chunk.url, chunk.content, self.embedder.count_tokens, self.embedder.max_input_tokens)
+            for sub_chunk in sub_chunks:
+                # compute the embedding of the sub-chunk
+                embedding = self.embedder.embed(sub_chunk.content)
                 # add embedding to the vector database
                 sub_text_index = self._index_add(embedding)
                 # add index to file
                 file.add_index(sub_text_index)
-                # add chunk to chunks
+                # register chunk at the sub chunk's index
                 self.chunks[sub_text_index] = chunk
         # add file to files
         self.files[file_path] = file
