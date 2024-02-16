@@ -21,7 +21,7 @@ def main():
     models_folder = args.models_folder
 
     # load the database and updates it if needed
-    llm = lmntfy.models.llm.Zephyr(models_folder, device='cpu')
+    llm = lmntfy.models.llm.Default(models_folder, device='cpu')
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=True)
     print("Done!")

@@ -11,7 +11,6 @@ def parse_args():
     parser.add_argument("--update_database", default=False, action='store_true', help="whether to update database to the current documentation")
     parser.add_argument("--use_test_questions", default=True, action='store_true', help="whether to run on the test questions (for debugging purposes)")
     parser.add_argument("--debug",default=False,action="store_true",help="Print useful debug information (e.g., prompts)",)
-    parser.add_argument("--llm_model", type=str, default='vicuna')
     args = parser.parse_args()
     return args
 
@@ -27,7 +26,7 @@ def main():
 
     # initializes models
     print("Loading the database and models...")
-    llm = lmntfy.models.llm.Zephyr(models_folder)
+    llm = lmntfy.models.llm.Default(models_folder)
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=update_database)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)
@@ -36,13 +35,14 @@ def main():
     lmntfy.user_interface.command_line.display_logo()
     if use_test_questions:
         # run on a handful of test question for quick evaluation purposes
-        test_questions = ["What is NERSC?", 
-                          "What is the meaning of life?",
+        test_questions = ["What is JAX?",
                           "Where do I find gcc?", 
                           "How do I use sshproxy?", 
                           "How can I connect to Perlmutter?", 
                           "How do I kill all of my jobs?", 
                           "How can I run a job on GPU?"]
+                          #"What is the meaning of life?",
+                          #"What is NERSC?"]
         lmntfy.user_interface.command_line.answer_questions(question_answerer, test_questions)
     else:
         # chat with the model

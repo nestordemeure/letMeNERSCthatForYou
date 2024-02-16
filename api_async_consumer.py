@@ -133,7 +133,7 @@ async def wait_for_next_iteration(last_active_time, start_time, min_refresh_time
 async def main():
     # Initialize models and API details
     args = parse_args()
-    llm = lmntfy.models.llm.Zephyr(args.models_folder)
+    llm = lmntfy.models.llm.Default(args.models_folder)
     embedder = lmntfy.models.embedding.SBERTEmbedding(args.models_folder)
     database = lmntfy.database.FaissDatabase(llm, embedder, args.docs_folder, args.database_folder, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)

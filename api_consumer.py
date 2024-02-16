@@ -38,7 +38,7 @@ def main():
     oauth_client = SFAPIOAuthClient(api_base_url=API_BASE_URL, token_url=TOKEN_URL)
 
     # initializes models
-    llm = lmntfy.models.llm.Zephyr(models_folder)
+    llm = lmntfy.models.llm.Default(models_folder)
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
     database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)

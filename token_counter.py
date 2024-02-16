@@ -10,7 +10,7 @@ import lmntfy
 
 # Define your model here
 models_folder = Path("/global/cfs/cdirs/nstaff/chatbot/models")
-model = lmntfy.models.llm.Zephyr(models_folder=models_folder)
+model = lmntfy.models.llm.Default(models_folder=models_folder)
 token_counter = model.count_tokens
 print(f"Tokeniser type: {type(model.tokenizer)}")
 

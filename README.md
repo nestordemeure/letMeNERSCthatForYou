@@ -44,8 +44,7 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* reevaluate the best LLM now that we have significantly longer pieces of context
-* explore using a dedicaed search library instead of raw embeddings-based search
+* explore using a dedicated search library (like [whoosh](https://whoosh.readthedocs.io/en/latest/searching.html) coupled with generating keywords for the user query) instead of embeddings-based search
 
 * add a dedicated code formater? (yapf?)
 * clean-up code and improve comments / documentation,

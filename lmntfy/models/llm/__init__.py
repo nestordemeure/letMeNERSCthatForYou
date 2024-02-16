@@ -312,8 +312,11 @@ class LanguageModel(ABC):
         answer = answer_body + '\n' + answer_references
         return answer
 
-from .llama2 import Llama2
-from .vicuna import Vicuna
-from .mistral import Mistral
-from .zephyr import Zephyr
-from .mixtral import Mixtral
+from .llama2 import Llama2 #hallucinate often
+from .vicuna import Vicuna #good but I have had some cut-offs problems
+from .mistral import Mistral #good at answering, not at picking references
+from .zephyr import Zephyr #good but can miss some information from the doc provided
+from .codellama import CodeLlama #good answers but does not care much for the provided doc
+from .mixtral import Mixtral #too heavy for local serving
+# the default model
+Default = Mistral
