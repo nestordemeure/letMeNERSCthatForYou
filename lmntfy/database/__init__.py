@@ -14,7 +14,7 @@ from .file import File
 class Database(ABC):
     def __init__(self, llm:LanguageModel, embedder:Embedding,
                        documentation_folder:Path, database_folder:Path, 
-                       min_chunks_per_query=3, update_database=True, name=None):
+                       min_chunks_per_query=8, update_database=True, name=None):
         self.name = name
         self.embedder = embedder
         self.embedding_length = embedder.embedding_length

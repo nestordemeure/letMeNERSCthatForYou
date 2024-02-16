@@ -285,6 +285,7 @@ class LanguageModel(ABC):
 
         # turns the messages into a prompt
         prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_answer_size)
+        if verbose: print(f"PROMPT: {prompt}")
 
         # generates an answer in two part to ensure it follows our prefered format
         # 1. body of the answer

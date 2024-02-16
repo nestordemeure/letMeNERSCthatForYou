@@ -9,7 +9,7 @@ from ..models import LanguageModel, Embedding
 class FaissDatabase(Database):
     def __init__(self, llm: LanguageModel, embedder: Embedding,
                  documentation_folder: Path, database_folder: Path,
-                 min_chunks_per_query=3, update_database=True, name='faiss'):
+                 min_chunks_per_query=8, update_database=True, name='faiss'):
         # vector database that will be used to store the vectors
         raw_index = faiss.IndexFlatIP(embedder.embedding_length)
         # index on top of the database to support addition and deletion by id
