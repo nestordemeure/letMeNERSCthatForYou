@@ -65,10 +65,22 @@ class Database(ABC):
         if len(self.chunks) <= k: return list(self.chunks.values())
         # Generate input text embedding
         input_embedding = self.embedder.embed(input_text)
-        # Query the vector databse
-        indices = self._index_get_closest(input_embedding, k)
+        # Loop until we get enough distinct chunks
+        # NOTE: identical chunks is *only* a risk when several indices might be pointing to (diferent parts of) the same chunk
+        chunks = set()
+        k_growing_factor = 1
+        while len(chunks) < k:
+            # Query the vector database
+            indices = self._index_get_closest(input_embedding, k*k_growing_factor)
+            # Gets the correspondings chunks ensuring uniqueness
+            # NOTE: we build on Python sets preserving ordering past Python3.7
+            chunks = {self.chunks[i] for i in indices}
+            # If we fail, th next call will request twice as many items
+            k_growing_factor *= 2
+        # converts chunks into a properly sized list
+        chunks = list(chunks)[:k]
         # Return the corresponding chunks
-        return [self.chunks[i] for i in indices]
+        return chunks
 
     # ----- FILE OPERATIONS -----
 
