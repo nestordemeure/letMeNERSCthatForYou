@@ -76,7 +76,7 @@ def stem_url(url: str) -> str:
     # If '#' is not found, return the original URL
     return url
 
-def validate_references(references:str, chunks:List[Chunk], prompt:str) -> str:
+def validate_references(references:str, chunks:List[Chunk], prompt:str, stem_before_validation=True) -> str:
     """
     Takes:
     - references: a string with references for the current answer
@@ -91,11 +91,13 @@ def validate_references(references:str, chunks:List[Chunk], prompt:str) -> str:
 
     Returns "https://docs.nersc.gov/" if no valid reference is found.
     """
+    # the stemmer function
+    stemmer = stem_url if stem_before_validation else (lambda url: url)
     # all urls in prompts
-    chunk_urls = {stem_url(chunk.url) for chunk in chunks}
+    chunk_urls = {stemmer(chunk.url) for chunk in chunks}
     # all urls in the conversation so far
     reference_pattern = r"\* \<([^\>]*?)\>"
-    prompt_urls = {stem_url(url) for url in re.findall(reference_pattern, prompt)}
+    prompt_urls = {stemmer(url) for url in re.findall(reference_pattern, prompt)}
     # all urls that will be accepted in the output
     valid_urls = chunk_urls | prompt_urls
 
@@ -105,8 +107,8 @@ def validate_references(references:str, chunks:List[Chunk], prompt:str) -> str:
     # keep only urls referenced or appearing inside a chunk
     urls = set()
     for url in references_urls:
-        url_root = stem_url(url)
-        if (url.startswith('https://docs.nersc.gov') or url.startswith('https://nersc.gov')) and ((url_root in valid_urls) or any((url_root in chunk.content) for chunk in chunks)):
+        stemmed_url = stemmer(url)
+        if (url.startswith('https://docs.nersc.gov') or url.startswith('https://nersc.gov')) and ((stemmed_url in valid_urls) or any((stemmed_url in chunk.content) for chunk in chunks)):
                 urls.add(url)
 
     if len(urls) == 0:
