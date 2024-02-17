@@ -59,6 +59,23 @@ REFLIST_REGEX = r"( \* \<([^\>]*?)\>\n){1,10}\n"
 #----------------------------------------------------------------------------------------
 # MODEL ABSTRACTION
 
+def stem_url(url: str) -> str:
+    """Takes a URL and cuts it at the latest '#' if possible.
+    
+    Args:
+        url (str): The URL to be processed.
+        
+    Returns:
+        str: The stemmed URL without the fragment part after the latest '#'.
+    """
+    # Find the position of the last occurrence of '#'
+    hash_position = url.rfind('#')
+    # If '#' is found, return the URL up to (but not including) the '#'
+    if hash_position != -1:
+        return url[:hash_position]
+    # If '#' is not found, return the original URL
+    return url
+
 def validate_references(references:str, chunks:List[Chunk], prompt:str) -> str:
     """
     Takes:
@@ -66,7 +83,7 @@ def validate_references(references:str, chunks:List[Chunk], prompt:str) -> str:
     - chunks: a list of chnuks used to build the answer
     - prompt: the prompt which contains the conversation so far
 
-    A reference is only valid if it:
+    A reference is only valid if its root (minus any last minute '#' paragraph):
     - is a chunk's url,
     - or appears inside a chunk,
     - or was referenced in a previous message,
@@ -75,12 +92,12 @@ def validate_references(references:str, chunks:List[Chunk], prompt:str) -> str:
     Returns "https://docs.nersc.gov/" if no valid reference is found.
     """
     # all urls in prompts
-    chunk_urls = {chunk.url for chunk in chunks}
+    chunk_urls = {stem_url(chunk.url) for chunk in chunks}
     # all urls in the conversation so far
     reference_pattern = r"\* \<([^\>]*?)\>"
-    prompt_urls = re.findall(reference_pattern, prompt)
+    prompt_urls = {stem_url(url) for url in re.findall(reference_pattern, prompt)}
     # all urls that will be accepted in the output
-    valid_urls = chunk_urls | set(prompt_urls)
+    valid_urls = chunk_urls | prompt_urls
 
     # all urls in the references
     references_urls = re.findall(reference_pattern, references)
@@ -88,8 +105,9 @@ def validate_references(references:str, chunks:List[Chunk], prompt:str) -> str:
     # keep only urls referenced or appearing inside a chunk
     urls = set()
     for url in references_urls:
-        if (url.startswith('https://docs.nersc.gov') or url.startswith('https://nersc.gov')) and ((url in valid_urls) or any((url in chunk.content) for chunk in chunks)):
-            urls.add(url)
+        url_root = stem_url(url)
+        if (url.startswith('https://docs.nersc.gov') or url.startswith('https://nersc.gov')) and ((url_root in valid_urls) or any((url_root in chunk.content) for chunk in chunks)):
+                urls.add(url)
 
     if len(urls) == 0:
         # default (useless) references used if no reference is valid
