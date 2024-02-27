@@ -158,7 +158,8 @@ class LanguageModel(ABC):
         """
         # gets a system message
         if (len(messages) < 1) or (messages[0]['role'] != "system"):
-            raise RuntimeError("Your messages do not start with a system prompt!")
+            # NOTE: no starting system message, we assume that this moel does not use system messages
+            return messages
         else:
             system_message = copy(messages[0])
             messages = messages[1:]
@@ -338,6 +339,6 @@ from .mistral import Mistral #good at answering, not at picking references
 from .zephyr import Zephyr #good but can miss some information from the doc provided
 from .codellama import CodeLlama #good answers but does not care much for the provided doc
 from .mixtral import Mixtral #too heavy for local serving
-from .gemma import Gemma # TODO test it
+from .gemma import Gemma # ignores system prompt and appears incoherent when fixing this
 # the default model
 Default = Mistral

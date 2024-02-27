@@ -43,3 +43,22 @@ class Gemma(LanguageModel):
         self.tokenizer.chat_template = GEMMA_CHAT_TEMPLATE
         self.upper_answer_size = 450 # TODO update
         self.upper_question_size = 200 # TODO update
+
+    def apply_chat_template(self, messages, nb_tokens_max:int=None) -> str:
+        """
+        Converts the system message into a user message as the model does not accept system messages.
+        """
+        # merge system messages (in case there is more than one)
+        merged_messages = self._clean_messages(messages)
+        # shorcut if we built a prompt with no systen message
+        if merged_messages[0]['role'] != 'system': return messages
+        system_message = merged_messages[0]
+        chat_messages = merged_messages[1:]
+
+        # turn the system message into a user message followed by ok as system messages are not allowed by the model
+        system_prompt_message = {'role':'user', 'content':system_message['content']}
+        okay_message = {'role':'assistant', 'content':"Okay! From now on I will talk as a member of the NERSC supercomputing center's support staff discussing with a user."}
+        no_system_messages = [system_prompt_message, okay_message] + chat_messages
+
+        # run the main class's apply_chat function
+        return super().apply_chat_template(messages=no_system_messages, nb_tokens_max=nb_tokens_max)
