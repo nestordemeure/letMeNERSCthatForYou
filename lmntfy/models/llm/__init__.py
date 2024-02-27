@@ -18,7 +18,7 @@ outlines.disable_cache()
 # PROMPTS
 
 # Basic chat prompt
-CHAT_PROMPT_SYSTEM = """
+CHAT_PROMPT_SYSTEM = """\
 You are a member of the NERSC supercomputing center's support staff answering a user's questions.
 Use an unbiased and journalistic tone. \
 Only cite the most relevant results that answer the user's questions accurately. \
@@ -30,7 +30,7 @@ Try and be careful not to go off-topics.
 # * we do a single shot prompt (with an example answer) to ensure proper formating of the answer at the price of a few tokens
 # * note that the end of the prompt is ready to accomodate some chunks of information
 # NOTE: we use "concise and informative" instead of "comprehensive and informative" in our previous iteration of the prompt
-ANSWERING_PROMPT="""
+ANSWERING_PROMPT="""\
 You are a member of the NERSC supercomputing center's support staff.
 Generate a concise and informative answer for a given question solely based on the provided information (URL and Extract).
 You must only use information from the provided search results. \
@@ -129,14 +129,17 @@ class LanguageModel(ABC):
         we expect messages to have a "role" ("system", "user", or "assistant") as well as a "content" field
         all "system" messages will be concatenated and put at the beginning of the conversation
         if the conversation is too long to fit the answer, messages with a "relevancy" field will be dropped (starting with lowest relevancy) until it fits
+
+        if `use_system_prompt` is False, then the system prompt will be converted into a starting message
     """
-    def __init__(self, pretrained_model_name_or_path:str, model_kwargs:dict=dict(), device='cuda'):
+    def __init__(self, pretrained_model_name_or_path:str, model_kwargs:dict=dict(), use_system_prompt=True, device='cuda'):
         self.pretrained_model_name_or_path = str(pretrained_model_name_or_path)
         self.model: Transformer = outlines.models.transformers(self.pretrained_model_name_or_path, model_kwargs=model_kwargs, device=device)
         self.tokenizer: PreTrainedTokenizer = self.model.tokenizer.tokenizer # get the Transformer Tokenizer for chattemplating purposes
         self.context_size = self.model.model.config.max_position_embeddings
         self.upper_answer_size = None # needs to be filled per tokenizer
         self.upper_question_size = None # needs to be filled per tokenizer
+        self.use_system_prompt = use_system_prompt
         # generators
         self.base_generator = outlines.generate.text(self.model)
         self.reflist_generator = outlines.generate.regex(self.model, REFLIST_REGEX)
@@ -221,6 +224,16 @@ class LanguageModel(ABC):
         # merge system messages (in case there is more than one)
         merged_messages = self._clean_messages(messages)
         
+        # in the absence of a system prompt, converts the system prompt
+        if not self.use_system_prompt:
+            # extracts the system message
+            system_message = merged_messages[0]
+            chat_messages = merged_messages[1:]
+            # turn the system message into a user message followed by ok as system messages are not allowed by the model
+            prompt_message = {'role':'user', 'content':system_message['content']}
+            okay_message = {'role':'assistant', 'content':"Understood! From now on I am a member of the NERSC supercomputing center's support staff discussing with a user (you)."}
+            merged_messages = [prompt_message, okay_message] + chat_messages
+
         # turns the conversation into a single string
         try:
             output_string = self.tokenizer.apply_chat_template(merged_messages, add_generation_prompt=True, tokenize=False)
@@ -331,6 +344,7 @@ class LanguageModel(ABC):
         answer_references = validate_references(answer_references, chunks, prompt)
         # assemble the answer
         answer = answer_body + '\n' + answer_references
+
         return answer
 
 from .llama2 import Llama2 #hallucinate often
@@ -339,6 +353,6 @@ from .mistral import Mistral #good at answering, not at picking references
 from .zephyr import Zephyr #good but can miss some information from the doc provided
 from .codellama import CodeLlama #good answers but does not care much for the provided doc
 from .mixtral import Mixtral #too heavy for local serving
-from .gemma import Gemma # ignores system prompt and appears incoherent when fixing this
+from .gemma import Gemma # tends to answer not quite the question asked
 # the default model
 Default = Mistral
