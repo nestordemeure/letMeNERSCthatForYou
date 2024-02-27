@@ -338,5 +338,6 @@ from .mistral import Mistral #good at answering, not at picking references
 from .zephyr import Zephyr #good but can miss some information from the doc provided
 from .codellama import CodeLlama #good answers but does not care much for the provided doc
 from .mixtral import Mixtral #too heavy for local serving
+from .gemma import Gemma # TODO test it
 # the default model
 Default = Mistral
