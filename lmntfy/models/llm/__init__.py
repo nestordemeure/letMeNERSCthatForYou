@@ -324,7 +324,7 @@ class LanguageModel(ABC):
 
         # generates an answer in two part to ensure it follows our prefered format
         # 1. body of the answer
-        reference_section_titles = ["References:", "Sources:", "Ressources:"]
+        reference_section_titles = ["References:", "Sources:", "Ressources:", "Source URL:"]
         answer_body = self.base_generator(prompt, stop_at=reference_section_titles)
         # Normalize reference section title
         for title in reference_section_titles:
