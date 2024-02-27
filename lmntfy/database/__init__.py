@@ -192,3 +192,4 @@ class Database(ABC):
             json.dump(chunks_dict, f)
 
 from .faiss import FaissDatabase
+from .whoosh import WhooshDatabase

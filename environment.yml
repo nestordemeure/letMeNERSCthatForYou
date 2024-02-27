@@ -18,6 +18,7 @@ dependencies:
   - accelerate
   - protobuf
   - aiohttp # async http requests
+  - whoosh # search engine
   - pip:
     - sfapi_client~=0.0.6 # Python client for NERSC SF API
     - outlines # LLM templating
