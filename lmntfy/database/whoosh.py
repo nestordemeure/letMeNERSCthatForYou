@@ -18,7 +18,7 @@ from whoosh import scoring
 CHUNK_SCHEMA = Schema(
     filepath=ID(stored=True), # will be used to delete old chunks
     url=STORED(), # useful to rebuild chunks, not used for search
-    headlines=KEYWORD(analyzer=StemmingAnalyzer(), field_boost=50.0), # markdown titles, more important
+    headlines=KEYWORD(analyzer=StemmingAnalyzer(), field_boost=5.0), # markdown titles, more important
     content=TEXT(stored=True, phrase=False, analyzer=StemmingAnalyzer(), field_boost=1.0) # actual text
 )
 

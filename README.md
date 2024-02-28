@@ -44,7 +44,7 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* improve the database test queries
+* try rescoring: 2k vector search then re-sorted with bmf2 and keeping only top k
 
 * add a dedicated code formater? (yapf?)
 * clean-up code and improve comments / documentation,

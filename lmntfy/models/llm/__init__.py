@@ -1,5 +1,6 @@
 import os
 import re
+import string
 from abc import ABC
 from copy import copy
 from typing import List, Dict
@@ -275,7 +276,7 @@ class LanguageModel(ABC):
 
         return output
 
-    def OLD_extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
+    def extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
         """
         Tries to extract the last question.
         """
@@ -293,9 +294,9 @@ class LanguageModel(ABC):
         question = self.base_generator(prompt_question_extraction, stop_at='"')[:-1]
         return question
 
-    def extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
+    def extract_keywords(self, previous_messages:List[Dict], verbose=False) -> str:
         """
-        Tries to extract the last question.
+        Tries to extract relevant search keywords
         """
         # builds the messages
         system_message = {"role": "system", "content": CHAT_PROMPT_SYSTEM}
@@ -303,10 +304,21 @@ class LanguageModel(ABC):
         messages = [system_message] + formatted_discussion
         # builds the base prompt
         prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_question_size)
-        # prime the model to extract the question
-        prompt_question_extraction = prompt + 'Search for the following in the NERSC documentation\'s search bar, it will give you the relevant pages: "'
-        question = self.base_generator(prompt_question_extraction, stop_at='"')[:-1]
-        return question
+        # prime the model to extract the keywords
+        prompt_keyword_extraction = prompt + 'Search for the following in the NERSC documentation\'s search bar; it will give you the relevant pages: "'
+        keywords = self.base_generator(prompt_keyword_extraction, stop_at='"')[:-1]
+        # redo it to get some synonyms
+        prompt_keyword_extraction2 = prompt_keyword_extraction + keywords + '"\nDo not hesitate to use synonyms or more general terms in case the keywords you used are not present on the page with your answer. For example: "'
+        keywords2 = self.base_generator(prompt_keyword_extraction2, stop_at='"')[:-1]
+        # even more
+        prompt_keyword_extraction3 = prompt_keyword_extraction2 + keywords2 + '\" or: "'
+        keywords3 = self.base_generator(prompt_keyword_extraction3, stop_at='"')[:-1]
+        # merge keywords
+        keywords = f"{keywords} {keywords2} {keywords3}"
+        # remove punctuation
+        no_punctuation_translator = str.maketrans('', '', string.punctuation)
+        keywords = keywords.translate(no_punctuation_translator)
+        return keywords
 
     def chat(self, discussion:List[Dict[str, str]], chunks:List[Chunk], verbose=False) -> str:
         """
