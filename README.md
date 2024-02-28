@@ -44,7 +44,7 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* explore using a dedicated search library (like [whoosh](https://whoosh.readthedocs.io/en/latest/searching.html) coupled with generating keywords for the user query) instead of embeddings-based search
+* improve the database test queries
 
 * add a dedicated code formater? (yapf?)
 * clean-up code and improve comments / documentation,

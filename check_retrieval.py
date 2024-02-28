@@ -11,7 +11,8 @@ TEST_QUESTIONS = [
     "How do I use JAX at NERSC?",
     "How can I kill all my jobs?",
     "How can I run a cron job on Perlmutter?",
-    "Where is gcc?"
+    "Where is gcc?",
+    "How do I use sshproxy?"
 ]
 
 def parse_args():

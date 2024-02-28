@@ -1,23 +1,42 @@
 import json
 from pathlib import Path
-from typing import List, Dict, Set
+from typing import List
 from .document_loader import Chunk, chunk_file
 from . import Database
 from ..models import LanguageModel, Embedding
 from .file import File
 from datetime import datetime
+
 from whoosh.index import exists_in, create_in, open_dir
-from whoosh.fields import Schema, ID, TEXT
-from whoosh.query import Term, Phrase
-from whoosh.qparser import QueryParser
-from whoosh import qparser
+from whoosh.fields import Schema, ID, STORED, TEXT, KEYWORD
+from whoosh.qparser import MultifieldParser, OrGroup
+from whoosh.analysis import StemmingAnalyzer
+from whoosh import scoring
 
 # Define the schema for our Chunk index
+# somewhat inspired by this: https://git.charlesreid1.com/charlesreid1/markdown-search
 CHUNK_SCHEMA = Schema(
-    filepath=TEXT(stored=True),
-    url=TEXT(stored=True),
-    content=TEXT(stored=True)
+    filepath=ID(stored=True), # will be used to delete old chunks
+    url=STORED(), # useful to rebuild chunks, not used for search
+    headlines=KEYWORD(analyzer=StemmingAnalyzer(), field_boost=50.0), # markdown titles, more important
+    content=TEXT(stored=True, phrase=False, analyzer=StemmingAnalyzer(), field_boost=1.0) # actual text
 )
+
+def extract_markdown_headlines(content: str) -> str:
+    """
+    Produces a string that only contains the headlines of a markdown file.
+    
+    Parameters:
+    - content: A string representing the content of a markdown file.
+    
+    Returns:
+    - A string containing only the headlines from the input markdown content,
+      each followed by a newline character.
+    """
+    # keep only the headline lines
+    headlines = [line.strip() for line in content.split('\n') if line.startswith('#')]
+    # Join the headlines with newline characters and return
+    return '\n'.join(headlines)
 
 class WhooshDatabase(Database):
     """
@@ -52,19 +71,19 @@ class WhooshDatabase(Database):
         """
         raise RuntimeError("This method should never be called.")
 
-    def get_closest_chunks(self, input_text: str, k: int = 3) -> List[Chunk]:
+    def get_closest_chunks(self, keywords: str, k: int = 3) -> List[Chunk]:
         """
         returns the (at most) k chunks that contains pieces of text closest to the input_text
         """
         if len(self.chunks) <= k: return list(self.chunks.values())
         # does a search in the index
         chunks = []
-        with self.index.searcher() as searcher:
+        # NOTE: B=0 means no penality to document length
+        with self.index.searcher(weighting=scoring.BM25F(B=0.0)) as searcher:
             # match all documents that contains at least one of the terms
-            # TODO add some fuzzyness?
-            query = QueryParser("content", schema=self.index.schema, group=qparser.OrGroup).parse(input_text)
+            query = MultifieldParser(['content','headlines'], schema=self.index.schema, group=OrGroup).parse(keywords)
             results = searcher.search(query, limit=k)
-            print(f"DEBUGGING: keywords:{input_text}")
+            print(f"DEBUGGING: keywords:{keywords}")
             for hit in results:
                 print(f"DEBUGGING: url:{hit['url']} score:{hit.score}")
                 # relevancy = hit.score
@@ -79,15 +98,9 @@ class WhooshDatabase(Database):
         # remove file chunks from chunks
         for index in indices_to_remove:
             del self.chunks[index]
-        # remove file's chunks from index
-        # TODO delete_by_term(fieldname, termtext)
+        # remove all chunks associated with the given filepath
         writer = self.index.writer()
-        with self.index.searcher() as searcher:
-            # Use Term to search for the document by filepath
-            query = Term("filepath", str(file_path))
-            results = searcher.search(query, limit=None)
-            for hit in results:
-                writer.delete_document(hit.docnum)
+        writer.delete_by_term('filepath', str(file_path))
         writer.commit()
         # remove file from files
         del self.files[file_path]
@@ -105,10 +118,13 @@ class WhooshDatabase(Database):
         for chunk in chunks:
             # get current chunk index
             chunk_index = self.current_id
+            # gets the headlines from the file
+            headlines = extract_markdown_headlines(chunk.content)
             # add chunk to the database
             writer.add_document(
                 filepath=str(file_path),
                 url=chunk.url,
+                headlines=headlines,
                 content=chunk.content)
             self.current_id += 1
             # add index to file
@@ -144,6 +160,8 @@ class WhooshDatabase(Database):
                 database_data = json.load(f)
                 self.current_id = int(database_data['current_id'])
         else:
+            # insures that the saving folder exists
+            self.database_folder.mkdir(parents=True, exist_ok=True)
             # creates a new index
             self.index = create_in(self.database_folder, CHUNK_SCHEMA)
             self.current_id = 0
