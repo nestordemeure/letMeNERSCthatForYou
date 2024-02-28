@@ -1,5 +1,5 @@
 """
-This script runs the retireval pipeline for various questions in order to see how well it does.
+This script runs the retriveal pipeline for various questions in order to see how well it does.
 """
 import lmntfy
 import argparse
@@ -10,7 +10,8 @@ TEST_QUESTIONS = [
     "How can I connect to NERSC?",
     "How do I use JAX at NERSC?",
     "How can I kill all my jobs?",
-    "How can I run a cron job on Perlmutter?"
+    "How can I run a cron job on Perlmutter?",
+    "Where is gcc?"
 ]
 
 def parse_args():
@@ -29,14 +30,17 @@ def main():
     models_folder = args.models_folder
 
     # load the database
-    llm = lmntfy.models.llm.Default(models_folder, device='cpu')
+    llm = lmntfy.models.llm.Default(models_folder, device='cuda')
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder, device=None)
-    database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
+    #database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
+    database = lmntfy.database.WhooshDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
 
     # runs the retrieval and displays the urls
     for question in TEST_QUESTIONS:
         print(f"\nQ: {question}")
-        chunks = database.get_closest_chunks(question, k=8)
+        extracted = llm.extract_question([{'role':'user', 'content':question}])
+        print(f"\nE: {extracted}")
+        chunks = database.get_closest_chunks(extracted, k=8)
         for chunk in chunks:
             print(f" * {chunk.url}")
 

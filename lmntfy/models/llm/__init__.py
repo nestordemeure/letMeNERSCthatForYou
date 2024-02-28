@@ -275,7 +275,7 @@ class LanguageModel(ABC):
 
         return output
 
-    def extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
+    def OLD_extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
         """
         Tries to extract the last question.
         """
@@ -290,6 +290,21 @@ class LanguageModel(ABC):
         prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_question_size)
         # prime the model to extract the question
         prompt_question_extraction = prompt + 'If I understand you clearly, your question is: "'
+        question = self.base_generator(prompt_question_extraction, stop_at='"')[:-1]
+        return question
+
+    def extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
+        """
+        Tries to extract the last question.
+        """
+        # builds the messages
+        system_message = {"role": "system", "content": CHAT_PROMPT_SYSTEM}
+        formatted_discussion = [{**message, 'relevancy': i} for (i,message) in enumerate(previous_messages)]
+        messages = [system_message] + formatted_discussion
+        # builds the base prompt
+        prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_question_size)
+        # prime the model to extract the question
+        prompt_question_extraction = prompt + 'Search for the following in the NERSC documentation\'s search bar, it will give you the relevant pages: "'
         question = self.base_generator(prompt_question_extraction, stop_at='"')[:-1]
         return question
 

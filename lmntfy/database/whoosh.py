@@ -8,18 +8,22 @@ from .file import File
 from datetime import datetime
 from whoosh.index import exists_in, create_in, open_dir
 from whoosh.fields import Schema, ID, TEXT
-from whoosh.query import Term
+from whoosh.query import Term, Phrase
 from whoosh.qparser import QueryParser
+from whoosh import qparser
 
 # Define the schema for our Chunk index
 CHUNK_SCHEMA = Schema(
-    filepath=ID(unique=True, stored=True),
+    filepath=TEXT(stored=True),
     url=TEXT(stored=True),
     content=TEXT(stored=True)
 )
 
 class WhooshDatabase(Database):
-    """Traditional search algorithm instead of a vector database."""
+    """
+    Traditional search algorithm instead of a vector database.
+    WARNING: as the index update requires modifications on file, it cannot be updated from a compute node.
+    """
     def __init__(self, llm:LanguageModel, embedder:Embedding,
                        documentation_folder:Path, database_folder:Path, 
                        min_chunks_per_query=8, update_database=True, name='whoosh'):
@@ -29,6 +33,25 @@ class WhooshDatabase(Database):
         # conclude the initialisation
         super().__init__(llm, embedder, documentation_folder, database_folder, min_chunks_per_query, update_database, name)
 
+    def _index_add(self, embedding) -> int:
+        """
+        Abstract method for adding a new vector to the vector database
+        returns its index
+        """
+        raise RuntimeError("This method should never be called.")
+
+    def _index_remove_several(self, indices: List[int]):
+        """
+        Abstract method for removing vectors from the vector database
+        """
+        raise RuntimeError("This method should never be called.")
+
+    def _index_get_closest(self, input_embedding, k=3) -> List[int]:
+        """
+        Abstract method, returns the indices of the k closest embeddings in the vector database
+        """
+        raise RuntimeError("This method should never be called.")
+
     def get_closest_chunks(self, input_text: str, k: int = 3) -> List[Chunk]:
         """
         returns the (at most) k chunks that contains pieces of text closest to the input_text
@@ -37,9 +60,13 @@ class WhooshDatabase(Database):
         # does a search in the index
         chunks = []
         with self.index.searcher() as searcher:
-            query = QueryParser("content", self.index.schema).parse(input_text)
+            # match all documents that contains at least one of the terms
+            # TODO add some fuzzyness?
+            query = QueryParser("content", schema=self.index.schema, group=qparser.OrGroup).parse(input_text)
             results = searcher.search(query, limit=k)
+            print(f"DEBUGGING: keywords:{input_text}")
             for hit in results:
+                print(f"DEBUGGING: url:{hit['url']} score:{hit.score}")
                 # relevancy = hit.score
                 chunk = Chunk(url=hit['url'], content=hit['content'])
                 chunks.append(chunk)
@@ -53,6 +80,7 @@ class WhooshDatabase(Database):
         for index in indices_to_remove:
             del self.chunks[index]
         # remove file's chunks from index
+        # TODO delete_by_term(fieldname, termtext)
         writer = self.index.writer()
         with self.index.searcher() as searcher:
             # Use Term to search for the document by filepath
@@ -93,7 +121,8 @@ class WhooshDatabase(Database):
 
     def exists(self):
         """returns True if the database already exists on disk"""
-        return self.database_folder.exists() and exists_in(self.database_folder)
+        database_data_file = self.database_folder / 'whoosh_database.json'
+        return self.database_folder.exists() and database_data_file.exists() and exists_in(self.database_folder)
 
     def save(self):
         """ensures the database is saved"""

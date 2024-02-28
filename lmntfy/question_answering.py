@@ -20,10 +20,12 @@ class QuestionAnswerer:
     def get_answer(self, question:str, max_context_size=8, verbose=False) -> str:
         """gets the string answer to a single question"""
         try:
-            # get a context to help us answer the question
-            chunks = self.database.get_closest_chunks(question, max_context_size)
             # build a single message discussion
             messages = [{'role': 'user', 'content': question}]
+            # extracts the keywords
+            keywords = self.llm.extract_question(messages, verbose=verbose)
+            # get a context to help us answer the question
+            chunks = self.database.get_closest_chunks(keywords, max_context_size)
             # gets an answer from the model
             answer = self.llm.chat(messages, chunks, verbose=verbose)
             # stores information for later debugging
@@ -45,14 +47,14 @@ class QuestionAnswerer:
         the question returned will be a message with role 'assistant'.
         """
         try:
-            # etxracts the question
-            question = self.llm.extract_question(messages, verbose=verbose)
+            # extracts the keywords
+            keywords = self.llm.extract_question(messages, verbose=verbose)
             # get a context to help us answer the question
-            chunks = self.database.get_closest_chunks(question, max_context_size)
+            chunks = self.database.get_closest_chunks(keywords, max_context_size)
             # gets an answer from the model
             answer = self.llm.chat(messages, chunks, verbose=verbose)
             # stores information for later debugging
-            self.latest_question = question
+            self.latest_question = keywords
             self.latest_chunks = chunks
         except Exception as e:
             # propagate the exeption as usual
