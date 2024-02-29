@@ -31,16 +31,14 @@ def main():
     models_folder = args.models_folder
 
     # load the database
-    llm = lmntfy.models.llm.Default(models_folder, device='cuda')
+    llm = lmntfy.models.llm.Default(models_folder, device='cpu')
     embedder = lmntfy.models.embedding.Default(models_folder, device=None)
     database = lmntfy.database.Default(llm, embedder, docs_folder, database_folder, update_database=False)
 
     # runs the retrieval and displays the urls
     for question in TEST_QUESTIONS:
         print(f"\nQ: {question}")
-        extracted = llm.extract_question([{'role':'user', 'content':question}])
-        print(f"\nE: {extracted}")
-        chunks = database.get_closest_chunks(extracted, k=8)
+        chunks = database.get_closest_chunks(question, k=8)
         for chunk in chunks:
             print(f" * {chunk.url}")
 

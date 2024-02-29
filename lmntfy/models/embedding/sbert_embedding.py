@@ -6,6 +6,10 @@ from . import Embedding
 os.environ["TOKENIZERS_PARALLELISM"]="False"
 
 class SBERTEmbedding(Embedding):
+    """
+    Class for SBert models
+    See this page for a good list: https://www.sbert.net/docs/pretrained_models.html
+    """
     def __init__(self, 
                  models_folder,
                  name='all-mpnet-base-v2', 
@@ -32,3 +36,25 @@ class SBERTEmbedding(Embedding):
         """
         encoded_text = self.model.tokenize([text])['input_ids']
         return encoded_text.numel()
+
+class MPNetEmbedding(SBERTEmbedding):
+    """Default (generalist) SBert embeddings"""
+    def __init__(self, 
+                 models_folder,
+                 name='all-mpnet-base-v2', 
+                 embedding_length=768,
+                 max_input_tokens=384,
+                 normalized=True,
+                 device=None):
+        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, device)
+
+class QAMPNetEmbedding(SBERTEmbedding):
+    """Default SBert embeddings"""
+    def __init__(self, 
+                 models_folder,
+                 name='multi-qa-mpnet-base-cos-v1', 
+                 embedding_length=768,
+                 max_input_tokens=384,
+                 normalized=True,
+                 device=None):
+        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, device)

@@ -3,6 +3,9 @@ from pathlib import Path
 import numpy as np
 
 class Embedding(ABC):
+    """
+    See this page for a comparison of various embeddings: https://huggingface.co/spaces/mteb/leaderboard
+    """
     def __init__(self, models_folder:Path, name:str, embedding_length:int, max_input_tokens:int, normalized:bool):
         """
         Parameters:
@@ -51,6 +54,7 @@ class Embedding(ABC):
         """
         pass
 
-from .sbert_embedding import SBERTEmbedding
+from .sbert_embedding import MPNetEmbedding # good overall default
+from .sbert_embedding import QAMPNetEmbedding # finetuned for Q&A, weaker than default
 # embeddings used by default everywhere
-Default = SBERTEmbedding
+Default = MPNetEmbedding

@@ -44,8 +44,13 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* try to find a more recent sentence embedder
-* add rescoring to references
+* try to find a more recent sentence embedder ([leaderboard](https://huggingface.co/spaces/mteb/leaderboard))
+* make rescoring into rerankerdatabse and make it more flexible (taking a database and a reranker class as inputs)
+* try a reranker model:
+   * [reranker model](https://github.com/FlagOpen/FlagEmbedding/tree/master/FlagEmbedding/reranker)
+   * [cross encoder](https://www.sbert.net/examples/applications/cross-encoder/README.html)
+   * [this article](https://www.llamaindex.ai/blog/boosting-rag-picking-the-best-embedding-reranker-models-42d079022e83)
+* try using the reranker to pick the best references
 
 * add a dedicated code formater? (yapf?)
 * clean-up code and improve comments / documentation,
