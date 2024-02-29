@@ -135,7 +135,7 @@ async def main():
     args = parse_args()
     llm = lmntfy.models.llm.Default(args.models_folder)
     embedder = lmntfy.models.embedding.SBERTEmbedding(args.models_folder)
-    database = lmntfy.database.FaissDatabase(llm, embedder, args.docs_folder, args.database_folder, update_database=False)
+    database = lmntfy.database.Default(llm, embedder, args.docs_folder, args.database_folder, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
     semaphore = asyncio.Semaphore(args.max_concurrent_tasks)
 

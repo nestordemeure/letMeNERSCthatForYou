@@ -33,8 +33,7 @@ def main():
     # load the database
     llm = lmntfy.models.llm.Default(models_folder, device='cuda')
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder, device=None)
-    #database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
-    database = lmntfy.database.WhooshDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
+    database = lmntfy.database.Default(llm, embedder, docs_folder, database_folder, update_database=False)
 
     # runs the retrieval and displays the urls
     for question in TEST_QUESTIONS:

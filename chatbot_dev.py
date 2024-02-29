@@ -28,8 +28,7 @@ def main():
     print("Loading the database and models...")
     llm = lmntfy.models.llm.Default(models_folder)
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
-    #database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=update_database)
-    database = lmntfy.database.WhooshDatabase(llm, embedder, docs_folder, database_folder, update_database=update_database)
+    database = lmntfy.database.Default(llm, embedder, docs_folder, database_folder, update_database=update_database)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)
 
     # answers questions

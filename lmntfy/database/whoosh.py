@@ -83,9 +83,7 @@ class WhooshDatabase(Database):
             # match all documents that contains at least one of the terms
             query = MultifieldParser(['content','headlines'], schema=self.index.schema, group=OrGroup).parse(keywords)
             results = searcher.search(query, limit=k)
-            print(f"DEBUGGING: keywords:{keywords}")
             for hit in results:
-                print(f"DEBUGGING: url:{hit['url']} score:{hit.score}")
                 # relevancy = hit.score
                 chunk = Chunk(url=hit['url'], content=hit['content'])
                 chunks.append(chunk)

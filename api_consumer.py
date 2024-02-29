@@ -40,7 +40,7 @@ def main():
     # initializes models
     llm = lmntfy.models.llm.Default(models_folder)
     embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
-    database = lmntfy.database.FaissDatabase(llm, embedder, docs_folder, database_folder, update_database=False)
+    database = lmntfy.database.Default(llm, embedder, docs_folder, database_folder, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
 
     # run a loop to check on files

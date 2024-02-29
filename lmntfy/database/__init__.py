@@ -193,3 +193,6 @@ class Database(ABC):
 
 from .faiss import FaissDatabase
 from .whoosh import WhooshDatabase
+from .rescoring import RescoringDatabase
+# the database used by default everywhere
+Default = FaissDatabase
