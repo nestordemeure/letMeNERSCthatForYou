@@ -44,6 +44,9 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
+* try to find a more recent sentence embedder
+* add rescoring to references
+
 * add a dedicated code formater? (yapf?)
 * clean-up code and improve comments / documentation,
 * document the inner-workings,

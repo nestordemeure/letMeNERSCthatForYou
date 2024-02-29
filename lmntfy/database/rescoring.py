@@ -28,6 +28,27 @@ word_preprocesses = [
     #stem_text,  # apply stemming
 ]
 
+def score_texts(target:str, texts:List[str]) -> List[float]:
+    """
+    Given a target and a list of texts
+    returns one similarity score per text in the list
+    """
+    # prepare the texts
+    contents = [preprocess_string(t, word_preprocesses) for t in texts]
+    dictionary = Dictionary(contents) # id -> word
+    corpus = [dictionary.doc2bow(doc) for doc in contents] # document -> word occurence
+    tfidf_model = TfidfModel(corpus) # TFIDF computer
+    corpus_tfidf = tfidf_model[corpus] # corpus -> tfidf
+    similarity_index = MatrixSimilarity(corpus_tfidf, num_features=len(dictionary))
+    # prepare the query
+    query_doc = preprocess_string(target, word_preprocesses)
+    #print(f"DEBUGGING: query:{query_doc}")
+    query_bow = dictionary.doc2bow(query_doc)
+    query_tfidf = tfidf_model[query_bow]
+    # Pair each chunk with its similarity score and sort
+    similarity_scores = list(similarity_index[query_tfidf])
+    return similarity_scores
+
 class RescoringDatabase(CORE_VECTORDATABASE_CLASS):
     """Takes a vector database class and produce a rescored version of it"""
     def __init__(self, llm:LanguageModel, embedder:Embedding,
@@ -44,24 +65,10 @@ class RescoringDatabase(CORE_VECTORDATABASE_CLASS):
         # get original chunks, to be rescored
         chunks = super().get_closest_chunks(input_text, k*2)
         if len(chunks) <= k: return chunks
-        # Preprocess the contents
-        contents = [preprocess_string(chunk.content, word_preprocesses) for chunk in chunks]
-        dictionary = Dictionary(contents) # id -> word
-        corpus = [dictionary.doc2bow(doc) for doc in contents] # document -> word occurence
-        tfidf_model = TfidfModel(corpus) # TFIDF computer
-        corpus_tfidf = tfidf_model[corpus] # corpus -> tfidf
-        similarity_index = MatrixSimilarity(corpus_tfidf, num_features=len(dictionary))
-        # prepare the query
-        query_doc = preprocess_string(input_text, word_preprocesses)
-        #print(f"DEBUGGING: query:{query_doc}")
-        query_bow = dictionary.doc2bow(query_doc)
-        query_tfidf = tfidf_model[query_bow]
-        # Pair each chunk with its similarity score and sort
-        similarity_scores = list(similarity_index[query_tfidf])
+        # Computes teh similarity scores for all chunks
+        similarity_scores = score_texts(input_text, [chunk.content for chunk in chunks])
         chunk_scores = [(chunk, score) for chunk, score in zip(chunks, similarity_scores)]
         sorted_chunks = sorted(chunk_scores, key=lambda x: x[1], reverse=True)
-        #for chunk, score in sorted_chunks:
-        #    print(f"DEBUGGING: score:{score} url:{chunk.url}")
         # Extract and return the best k chunks
         best_k_chunks = [chunk for chunk, _ in sorted_chunks[:k]]
         return best_k_chunks

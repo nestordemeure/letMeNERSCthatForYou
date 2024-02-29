@@ -32,7 +32,7 @@ def main():
 
     # load the database
     llm = lmntfy.models.llm.Default(models_folder, device='cuda')
-    embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder, device=None)
+    embedder = lmntfy.models.embedding.Default(models_folder, device=None)
     database = lmntfy.database.Default(llm, embedder, docs_folder, database_folder, update_database=False)
 
     # runs the retrieval and displays the urls

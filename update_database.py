@@ -22,7 +22,7 @@ def main():
 
     # load the database and updates it if needed
     llm = lmntfy.models.llm.Default(models_folder, device='cpu')
-    embedder = lmntfy.models.embedding.SBERTEmbedding(models_folder)
+    embedder = lmntfy.models.embedding.Default(models_folder)
     database = lmntfy.database.Default(llm, embedder, docs_folder, database_folder, update_database=True)
     print("Done!")
 

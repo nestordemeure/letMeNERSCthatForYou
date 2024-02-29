@@ -52,3 +52,5 @@ class Embedding(ABC):
         pass
 
 from .sbert_embedding import SBERTEmbedding
+# embeddings used by default everywhere
+Default = SBERTEmbedding
