@@ -18,28 +18,38 @@ class STReranker(Reranker):
         self.model = CrossEncoder(self.pretrained_model_name_or_path, device=device)
         self.context_length = context_length
 
-    def _count_tokens(self, text:str) -> int:
+    def _count_tokens(self, query:str="", passage:str="") -> int:
         """
         Counts the number of tokens used to represent the given text
         """
-        encoded_text = self.model.tokenize([text])['input_ids']
-        return encoded_text.numel()
+        encoded_text = self.model.tokenizer.tokenize([query,passage])
+        return len(encoded_text)
 
     def _generate_all_pairs(self, query:str, passage:str) -> List[List[str]]:
         """
         takes a query and a passage
         split them if they are too long for our context length
         returns all possible pairs of query / passage
+        TODO: I feel like the logic here could be improved.
         """
+        half_context = self.context_length / 2
         # turns query into pairs if needed
         query_list = [query]
-        if self._count_tokens(query) > self.context_length:
-            sub_chunks = markdown_splitter('', query, self._count_tokens, self.context_length)
+        if self._count_tokens(query=query) > half_context:
+            sub_chunks = markdown_splitter('', query, self._count_tokens, half_context)
             query_list = [chunk.content for chunk in sub_chunks]
+        # find out the actual largest query
+        max_query_size = 0
+        longest_query = query
+        for query in query_list:
+            query_size = self._count_tokens(query=query)
+            if query_size > max_query_size:
+                max_query_size = query_size
+                longest_query = query
         # turn passage into pairs if needed
         passage_list = [passage]
-        if self._count_tokens(passage) > self.context_length:
-            sub_chunks = markdown_splitter('', passage, self._count_tokens, self.context_length)
+        if self._count_tokens(query=longest_query, passage=passage) > self.context_length:
+            sub_chunks = markdown_splitter('', passage, lambda p: self._count_tokens(query=longest_query,passage=p), self.context_length)
             passage_list = [chunk.content for chunk in sub_chunks]
         # build all pairs of query*passage
         result = []
@@ -63,7 +73,7 @@ class STReranker(Reranker):
 #------------------------------------------------------------------------------
 # MODELS
 
-class MXbaiLargeReranker(STReranker):
-    """https://huggingface.co/mixedbread-ai/mxbai-rerank-large-v1"""
-    def __init__(self, models_folder:Path, name:str='mxbai-rerank-large-v1', device:str='cuda', context_length=512):
-        super().__init__(models_folder, name, device, context_length)
+#class MXbaiLargeReranker(STReranker):
+#    """https://huggingface.co/mixedbread-ai/mxbai-rerank-large-v1"""
+#    def __init__(self, models_folder:Path, name:str='mxbai-rerank-large-v1', device:str='cuda', context_length=512):
+#        super().__init__(models_folder, name, device, context_length)

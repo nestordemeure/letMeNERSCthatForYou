@@ -80,3 +80,23 @@ class BCEBaseReranker(HFReranker):
     """https://huggingface.co/maidalun1020/bce-reranker-base_v1"""
     def __init__(self, models_folder:Path, name:str='bce-reranker-base_v1', device:str='cuda', context_length=512):
         super().__init__(models_folder, name, device, context_length)
+
+class MXbaiLargeReranker(HFReranker):
+    """https://huggingface.co/mixedbread-ai/mxbai-rerank-large-v1"""
+    def __init__(self, models_folder:Path, name:str='mxbai-rerank-large-v1', device:str='cuda', context_length=512):
+        super().__init__(models_folder, name, device, context_length)
+
+class PRMBReranker(HFReranker):
+    """https://huggingface.co/amberoad/bert-multilingual-passage-reranking-msmarco"""
+    def __init__(self, models_folder:Path, name:str='bert-multilingual-passage-reranking-msmarco', device:str='cuda', context_length=512):
+        super().__init__(models_folder, name, device, context_length)
+
+class SimLMReranker(HFReranker):
+    """https://huggingface.co/intfloat/simlm-msmarco-reranker"""
+    def __init__(self, models_folder:Path, name:str='simlm-msmarco-reranker', device:str='cuda', context_length=192):
+        super().__init__(models_folder, name, device, context_length)
+
+    def _generate_all_pairs(self, query:str, passage:str, title='-') -> List[List[str]]:
+        pairs = super()._generate_all_pairs(query, passage)
+        pairs_formatted = [[query, f"{title}: {passage}"] for [query,passage] in pairs]
+        return pairs

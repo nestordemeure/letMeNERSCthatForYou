@@ -145,7 +145,6 @@ class BGELargeEmbedding(SentenceTransformerEmbedding):
         super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, 
                          query_prefix, passage_prefix, device)
 
-
 class NomicEmbedding(SentenceTransformerEmbedding):
     """
     https://huggingface.co/nomic-ai/nomic-embed-text-v1.5
@@ -163,3 +162,19 @@ class NomicEmbedding(SentenceTransformerEmbedding):
                            query_prefix, passage_prefix, device)
         # loads the model
         self.model = SentenceTransformer(self.pretrained_model_name_or_path, trust_remote_code=True, device=device)
+
+class GTELargeEmbedding(SentenceTransformerEmbedding):
+    """
+    https://huggingface.co/thenlper/gte-large
+    """
+    def __init__(self, 
+                 models_folder,
+                 name='gte-large', 
+                 embedding_length=1024,
+                 max_input_tokens=512,
+                 normalized=True,
+                 query_prefix='',
+                 passage_prefix='',
+                 device='cuda'):
+        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, 
+                         query_prefix, passage_prefix, device)

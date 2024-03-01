@@ -45,10 +45,6 @@ Those scripts are meant to be user with the superfacility API:
 In no particular order:
 
 * check the init function of the various databases
-* try a reranker model:
-   * [reranker model](https://github.com/FlagOpen/FlagEmbedding/tree/master/FlagEmbedding/reranker)
-   * [cross encoder](https://www.sbert.net/examples/applications/cross-encoder/README.html)
-   * [this article](https://www.llamaindex.ai/blog/boosting-rag-picking-the-best-embedding-reranker-models-42d079022e83)
 * try using the reranker to pick the best references
 
 * document the inner-workings,

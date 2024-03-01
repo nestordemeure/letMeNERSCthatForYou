@@ -77,5 +77,6 @@ from .sentenceTransformer import E5LargeEmbedding # somewhat better than MPNet?
 from .sentenceTransformer import GISTEmbedding # somewhat weaker than MPNet
 from .sentenceTransformer import BGELargeEmbedding # somewhat better than E5Large
 from .sentenceTransformer import NomicEmbedding # does fine, massive (useless) context size
+from .sentenceTransformer import GTELargeEmbedding # a bit inferior to BGE large
 # embeddings used by default everywhere
 Default = BGELargeEmbedding
