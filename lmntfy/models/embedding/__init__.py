@@ -58,7 +58,7 @@ class Embedding(ABC):
         pass
 
 from .sbert import MPNetEmbedding # good overall default
-from .sbert import QAMPNetEmbedding # finetuned for Q&A, weaker than default
+from .sbert import QAMPNetEmbedding # finetuned for Q&A, weaker than MPNet
 from .uae import UAEEmbedding # weaker than MPNet on our tests
 # embeddings used by default everywhere
 Default = MPNetEmbedding

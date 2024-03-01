@@ -30,7 +30,6 @@ class SentenceTransformerEmbedding(Embedding):
         """
         SBERT specific embedding computation.
         """
-        text = text.replace("\n", " ")
         return self.model.encode([text], convert_to_numpy=True, normalize_embeddings=self.normalized)[0]
 
     def count_tokens(self, text):
