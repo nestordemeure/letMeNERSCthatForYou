@@ -19,7 +19,7 @@ class FaissDatabase(Database):
         super().__init__(llm, embedder, documentation_folder, database_folder, min_chunks_per_query, update_database, name)
 
     def _index_add(self, embedding: np.ndarray) -> int:
-        assert (embedding.size == self.embedding_length), "Invalid shape for embedding"
+        assert (embedding.size == self.embedding_length), f"Invalid shape for embedding ({embedding.size} instead of {self.embedding_length})"
         # create a single element batch with the embeddings and indices
         embedding_batch = embedding.reshape((1,-1))
         id_batch = np.array([self.current_id], dtype=np.int64)

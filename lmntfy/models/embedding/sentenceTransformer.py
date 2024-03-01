@@ -24,8 +24,6 @@ class SentenceTransformerEmbedding(Embedding):
                  device='cuda'):
         super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized,
                          query_prefix, passage_prefix, device)
-        # ensures that the model caching folder is set properly
-        os.environ['SENTENCE_TRANSFORMERS_HOME'] = str(models_folder)
         # loads the model
         self.model = SentenceTransformer(self.pretrained_model_name_or_path, device=device)
 
@@ -56,6 +54,7 @@ class MPNetEmbedding(SentenceTransformerEmbedding):
                  device=None):
         super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, device=device)
 
+# TODO cut
 class QAMPNetEmbedding(SentenceTransformerEmbedding):
     """Q&A-tuned SBert embeddings"""
     def __init__(self, 
@@ -67,6 +66,7 @@ class QAMPNetEmbedding(SentenceTransformerEmbedding):
                  device=None):
         super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, device=device)
 
+# TODO cut
 class SOMPNetEmbedding(SentenceTransformerEmbedding):
     """
     Stackoverflow tuned SBert embeddings
@@ -112,3 +112,54 @@ class E5BaseEmbedding(SentenceTransformerEmbedding):
                  device='cuda'):
         super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, 
                          query_prefix, passage_prefix, device)
+
+class GISTEmbedding(SentenceTransformerEmbedding):
+    """
+    https://huggingface.co/avsolatorio/GIST-large-Embedding-v0
+    """
+    def __init__(self, 
+                 models_folder,
+                 name='GIST-large-Embedding-v0', 
+                 embedding_length=1024,
+                 max_input_tokens=512,
+                 normalized=True,
+                 query_prefix='',
+                 passage_prefix='',
+                 device='cuda'):
+        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, 
+                         query_prefix, passage_prefix, device)
+
+class BGELargeEmbedding(SentenceTransformerEmbedding):
+    """
+    https://huggingface.co/BAAI/bge-large-en-v1.5
+    """
+    def __init__(self, 
+                 models_folder,
+                 name='bge-large-en-v1.5', 
+                 embedding_length=1024,
+                 max_input_tokens=512,
+                 normalized=True,
+                 query_prefix='Represent this sentence for searching relevant passages: ',
+                 passage_prefix='',
+                 device='cuda'):
+        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, 
+                         query_prefix, passage_prefix, device)
+
+
+class NomicEmbedding(SentenceTransformerEmbedding):
+    """
+    https://huggingface.co/nomic-ai/nomic-embed-text-v1.5
+    """
+    def __init__(self, 
+                 models_folder,
+                 name='nomic-embed-text-v1.5', 
+                 embedding_length=768,
+                 max_input_tokens=8192,
+                 normalized=True,
+                 query_prefix='search_query: ',
+                 passage_prefix='search_document: ',
+                 device='cuda'):
+        Embedding.__init__(self, models_folder, name, embedding_length, max_input_tokens, normalized,
+                           query_prefix, passage_prefix, device)
+        # loads the model
+        self.model = SentenceTransformer(self.pretrained_model_name_or_path, trust_remote_code=True, device=device)

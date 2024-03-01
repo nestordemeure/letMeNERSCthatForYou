@@ -44,7 +44,7 @@ class Database(ABC):
         self.ignored_files_and_folders: Set[str] = {'timeline'}
         # loads the database from file if possible
         self.documentation_folder = documentation_folder.absolute().resolve()
-        self.database_folder = database_folder.absolute().resolve() / self.name
+        self.database_folder = database_folder.absolute().resolve() / (self.name + '_' + embedder.name)
         self.load(update_database=update_database, verbose=True)
     
     # ----- VECTOR DATABASE OPERATIONS -----

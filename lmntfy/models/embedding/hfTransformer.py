@@ -16,7 +16,7 @@ class UAEEmbedding(Embedding):
         # see: https://github.com/SeanLee97/AnglE/blob/main/angle_emb/angle.py
         query_prefix = 'Represent this sentence for searching relevant passages: '
         super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, 
-                         query_prefix=query_prefix, device=device)
+                         query_prefix, device=device)
         # loads the model
         self.tokenizer = AutoTokenizer.from_pretrained(self.pretrained_model_name_or_path)
         self.model = AutoModelForCausalLM.from_pretrained(self.pretrained_model_name_or_path, 

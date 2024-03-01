@@ -68,11 +68,14 @@ class Embedding(ABC):
         """
         pass
 
-from .sbert import MPNetEmbedding # good overall default
-from .sbert import QAMPNetEmbedding # finetuned for Q&A, weaker than MPNet
-from .sbert import SOMPNetEmbedding # stackoverflow finetuned, weaker than MPNet
-from .uae import UAEEmbedding # weaker than MPNet on our tests
-from .sbert import E5BaseEmbedding # a bit weaker than large
-from .sbert import E5LargeEmbedding # somewhat better than MPNet?
+from .sentenceTransformer import MPNetEmbedding # good overall default
+from .sentenceTransformer import QAMPNetEmbedding # finetuned for Q&A, weaker than MPNet
+from .sentenceTransformer import SOMPNetEmbedding # stackoverflow finetuned, weaker than MPNet
+from .hfTransformer import UAEEmbedding # weaker than MPNet on our tests
+from .sentenceTransformer import E5BaseEmbedding # a bit weaker than large
+from .sentenceTransformer import E5LargeEmbedding # somewhat better than MPNet?
+from .sentenceTransformer import GISTEmbedding # somewhat weaker than MPNet
+from .sentenceTransformer import BGELargeEmbedding # somewhat better than E5Large
+from .sentenceTransformer import NomicEmbedding # does fine, massive (useless) context size
 # embeddings used by default everywhere
-Default = E5LargeEmbedding
+Default = BGELargeEmbedding
