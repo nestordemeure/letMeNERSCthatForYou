@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List
 from .document_loader import Chunk, chunk_file
 from . import Database
-from ..models import LanguageModel, Embedding
+from ..models import LanguageModel, Embedding, Reranker
 from .file import File
 from datetime import datetime
 
@@ -43,14 +43,15 @@ class WhooshDatabase(Database):
     Traditional search algorithm instead of a vector database.
     WARNING: as the index update requires modifications on file, it cannot be updated from a compute node.
     """
-    def __init__(self, llm:LanguageModel, embedder:Embedding,
-                       documentation_folder:Path, database_folder:Path, 
-                       min_chunks_per_query=8, update_database=True, name='whoosh'):
+    def __init__(self, documentation_folder:Path, database_folder:Path,
+                       llm:LanguageModel, embedder:Embedding, reranker:Reranker=None,
+                       min_chunks_per_query=8, update_database=True,
+                       name:str='whoosh'):
         # whoosh database that will be used to store the chunks
         self.index = None
         self.current_id = 0
-        # conclude the initialisation
-        super().__init__(llm, embedder, documentation_folder, database_folder, min_chunks_per_query, update_database, name)
+        # concludes the initialisation
+        super().__init__(documentation_folder, database_folder, llm, embedder, reranker, min_chunks_per_query, update_database, name)
 
     def _index_add(self, embedding) -> int:
         """

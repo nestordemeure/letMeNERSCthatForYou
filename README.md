@@ -44,16 +44,13 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* create a reranker class
-* integrate a reranker (default to noop, also has tfidf) in the get closest pipeline
+* check the init function of the various databases
 * try a reranker model:
    * [reranker model](https://github.com/FlagOpen/FlagEmbedding/tree/master/FlagEmbedding/reranker)
    * [cross encoder](https://www.sbert.net/examples/applications/cross-encoder/README.html)
    * [this article](https://www.llamaindex.ai/blog/boosting-rag-picking-the-best-embedding-reranker-models-42d079022e83)
 * try using the reranker to pick the best references
 
-* add a dedicated code formater? (yapf?)
-* clean-up code and improve comments / documentation,
 * document the inner-workings,
 
 * establish a canonical list of test questions / conversations,

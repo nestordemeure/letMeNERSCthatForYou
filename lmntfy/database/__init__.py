@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Set
 from abc import ABC, abstractmethod
-from ..models import LanguageModel, Embedding
+from ..models import LanguageModel, Embedding, Reranker
 from .document_loader import Chunk, chunk_file
 from .document_loader.markdown_spliter import markdown_splitter
 from .file import File
@@ -22,29 +22,31 @@ def remove_duplicates(chunks:List[Chunk]) -> Chunk:
     return result
 
 class Database(ABC):
-    def __init__(self, llm:LanguageModel, embedder:Embedding,
-                       documentation_folder:Path, database_folder:Path, 
-                       min_chunks_per_query=8, update_database=True, name=None):
+    def __init__(self, documentation_folder:Path, database_folder:Path,
+                       llm:LanguageModel, embedder:Embedding, reranker:Reranker=None,
+                       min_chunks_per_query=8, update_database=True, name:str=''):
+        # names and paths
         self.name = name
+        self.documentation_folder = documentation_folder.absolute().resolve()
+        self.database_folder = database_folder.absolute().resolve() / (self.name + '_' + embedder.name)
+        # llm
+        self.count_tokens_llm = llm.count_tokens # token counting function of the llm
+        self.max_tokens_per_chunk = llm.context_size / (min_chunks_per_query + 2) # maximum size of each chunk
+        # NOTE: we leave space for two additional chunks, representing the prompt and the model's answer
+        # embedder
         self.embedder = embedder
         self.embedding_length = embedder.embedding_length
-        # maximum size of each chunk
-        # we leave space for two additional chunks, representing the prompt and the model's answer
-        self.max_tokens_per_chunk = llm.context_size / (min_chunks_per_query + 2)
-        # the token counting function of the llm
-        self.count_tokens_llm = llm.count_tokens
+        # reranker
+        self.reranker = reranker
+        self.use_reranker = not (self.reranker is None)
         # dictionary of all files
-        # file_path -> File
-        self.files: Dict[Path, File] = dict()
+        self.files: Dict[Path, File] = dict() # file_path -> File
         # dictionary of all chunk
-        # vector_database_index -> Chunk
         # NOTE: it might contain identical chunks pointed at by different indices
-        self.chunks: Dict[int, Chunk] = dict()
+        self.chunks: Dict[int, Chunk] = dict() # vector_database_index -> Chunk
         # set of file and folder names that will not be processed
         self.ignored_files_and_folders: Set[str] = {'timeline'}
         # loads the database from file if possible
-        self.documentation_folder = documentation_folder.absolute().resolve()
-        self.database_folder = database_folder.absolute().resolve() / (self.name + '_' + embedder.name)
         self.load(update_database=update_database, verbose=True)
     
     # ----- VECTOR DATABASE OPERATIONS -----
@@ -75,25 +77,30 @@ class Database(ABC):
         """
         returns the (at most) k chunks that contains pieces of text closest to the input_text according to its embedding
         """
-        if len(self.chunks) <= k: return list(self.chunks.values())
-        # Generate input text embedding
-        # WARNING: we assume that the input is small enough to be embedded
-        input_embedding = self.embedder.embed(input_text, is_query=True)
-        # Loop until we get enough distinct chunks
-        # NOTE: identical chunks is *only* a risk when several indices might be pointing to (diferent parts of) the same chunk
-        chunks = list()
-        k_growing_factor = 1
-        while len(chunks) < k:
-            # Query the vector database
-            indices = self._index_get_closest(input_embedding, k*k_growing_factor)
-            # Gets the correspondings chunks ensuring uniqueness
-            chunks = remove_duplicates([self.chunks[i] for i in indices])
-            # If we fail, the next call will request twice as many items
-            k_growing_factor *= 2
-        # converts chunks into a properly sized list
-        chunks = chunks[:k]
-        # Return the corresponding chunks
-        return chunks
+        # we might want to query more chunks than needed then keep the best ones
+        nb_chunks_needed = (2*k) if self.use_reranker else k
+        # gets the chunks
+        if len(self.chunks) <= nb_chunks_needed:
+            # we get all the chunks we have
+            chunks = list(self.chunks.values())
+        else:
+            # assumes the input is small enough to be embedded
+            input_embedding = self.embedder.embed(input_text, is_query=True)
+            # Loop until we get enough *distinct* chunks
+            # (duplicates can stem from embedding the chunk as several subtexts to fit in the embedder context size)
+            chunks = list()
+            growing_factor = 1
+            while len(chunks) < nb_chunks_needed:
+                # query the vector database
+                chunks_indices = self._index_get_closest(input_embedding, nb_chunks_needed*growing_factor)
+                # ensures uniqueness
+                chunks = remove_duplicates([self.chunks[i] for i in chunks_indices])
+                # the next call will request twice as many items
+                growing_factor *= 2
+        # reranks the chunks
+        chunks = self.reranker.rerank(input_text, chunks) if self.use_reranker else chunks
+        # keep only the required number of chunks
+        return chunks[:k] if (len(chunks) > k) else chunks
 
     # ----- FILE OPERATIONS -----
 
@@ -193,6 +200,5 @@ class Database(ABC):
 
 from .faiss import FaissDatabase
 from .whoosh import WhooshDatabase
-from .rescoring import RescoringDatabase
 # the database used by default everywhere
 Default = FaissDatabase

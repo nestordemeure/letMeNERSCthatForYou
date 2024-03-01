@@ -33,7 +33,8 @@ def main():
     # load the database
     llm = lmntfy.models.llm.Default(models_folder, device='cpu')
     embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
-    database = lmntfy.database.Default(llm, embedder, docs_folder, database_folder, update_database=False)
+    reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
+    database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=False)
 
     # runs the retrieval and displays the urls
     for question in TEST_QUESTIONS:
