@@ -78,7 +78,7 @@ class Database(ABC):
         if len(self.chunks) <= k: return list(self.chunks.values())
         # Generate input text embedding
         # WARNING: we assume that the input is small enough to be embedded
-        input_embedding = self.embedder.embed(input_text)
+        input_embedding = self.embedder.embed(input_text, is_query=True)
         # Loop until we get enough distinct chunks
         # NOTE: identical chunks is *only* a risk when several indices might be pointing to (diferent parts of) the same chunk
         chunks = list()

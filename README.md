@@ -44,8 +44,8 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* try to find a more recent sentence embedder ([leaderboard](https://huggingface.co/spaces/mteb/leaderboard))
-* make rescoring into rerankerdatabse and make it more flexible (taking a database and a reranker class as inputs)
+* create a reranker class
+* integrate a reranker (default to noop, also has tfidf) in the get closest pipeline
 * try a reranker model:
    * [reranker model](https://github.com/FlagOpen/FlagEmbedding/tree/master/FlagEmbedding/reranker)
    * [cross encoder](https://www.sbert.net/examples/applications/cross-encoder/README.html)

@@ -6,7 +6,7 @@ class Embedding(ABC):
     """
     See this page for a comparison of various embeddings: https://huggingface.co/spaces/mteb/leaderboard
     """
-    def __init__(self, models_folder:Path, name:str, embedding_length:int, max_input_tokens:int, normalized:bool):
+    def __init__(self, models_folder:Path, name:str, embedding_length:int, max_input_tokens:int, normalized:bool, device:str=None):
         """
         Parameters:
             models_folder (Path): The path to the directory containing the model files.
@@ -15,18 +15,20 @@ class Embedding(ABC):
             max_input_tokens (int): The maximum number of tokens that can be processed in one input sequence.
             normalized (bool): A flag indicating whether the model's output embeddings are normalized.
         """
+        self.pretrained_model_name_or_path = str(models_folder / name)
         self.models_folder = models_folder
         self.name = name
         self.embedding_length = embedding_length
         self.max_input_tokens = max_input_tokens
         self.normalized = normalized
+        self.device=device
 
-    def embed(self, text:str) -> np.ndarray:
+    def embed(self, text:str, is_query=False) -> np.ndarray:
         """
         Converts text into an embedding.
         """
         try:
-            raw_embedding = self._embed(text)
+            raw_embedding = self._embed(text, is_query)
         except Exception as e:
             print(f"An error occurred while embedding the text '{text}': {str(e)}")
             raise  # rethrow the exception after handling
@@ -41,9 +43,10 @@ class Embedding(ABC):
             return raw_embedding / norm
 
     @abstractmethod
-    def _embed(self, text:str) -> np.ndarray:
+    def _embed(self, text:str, is_query=False) -> np.ndarray:
         """
         Abstract method for converting text into an embedding.
+        is_query is there for models who have different methods to embed queries vs normal text
         """
         pass
 
@@ -54,7 +57,8 @@ class Embedding(ABC):
         """
         pass
 
-from .sbert_embedding import MPNetEmbedding # good overall default
-from .sbert_embedding import QAMPNetEmbedding # finetuned for Q&A, weaker than default
+from .sbert import MPNetEmbedding # good overall default
+from .sbert import QAMPNetEmbedding # finetuned for Q&A, weaker than default
+from .uae import UAEEmbedding
 # embeddings used by default everywhere
 Default = MPNetEmbedding
