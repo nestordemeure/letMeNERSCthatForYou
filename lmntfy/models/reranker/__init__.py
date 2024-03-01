@@ -4,7 +4,9 @@ from pathlib import Path
 from ...database.document_loader import Chunk
 
 class Reranker(ABC):
-    """used to compute similarity between a query and passages"""
+    """
+    used to compute similarity between a query and passages
+    """
     def __init__(self, models_folder:Path, name:str, device:str='cuda'):
         self.pretrained_model_name_or_path = str(models_folder / name)
         self.device = device
@@ -91,7 +93,9 @@ class Reranker(ABC):
         return passages_kept
 
 from .tfidf import TFIDFReranker # keyword based: can miss but very orthogonal to classic sentence embedding
-from .hfTransformer import BGEBaseReranker # a bit weaker than base
+from .hfTransformer import BGEBaseReranker # a bit weaker than BGE large
 from .hfTransformer import BGELargeReranker # a bit lower than tfidf
+from .hfTransformer import BCEBaseReranker # a bit weaker than BGE large
+from .sentenceTransformer import MXbaiLargeReranker # TODO test
 # default reranker
-Default = TFIDFReranker
+Default = MXbaiLargeReranker

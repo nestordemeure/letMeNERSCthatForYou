@@ -1,28 +1,29 @@
-import torch
+import numpy as np
 from pathlib import Path
 from typing import List
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from . import Reranker
+from sentence_transformers import CrossEncoder
 from ...database.document_loader.markdown_spliter import markdown_splitter
 
 #------------------------------------------------------------------------------
 # ABSTRACT CLASS
 
-class HFReranker(Reranker):
-    """Rerankers based on hugginface transformers"""
+class STReranker(Reranker):
+    """
+    Rerankers based on sentence transformers
+    https://www.sbert.net/examples/applications/cross-encoder/README.html
+    """
     def __init__(self, models_folder:Path, name:str, device:str='cuda', context_length=512):
         super().__init__(models_folder, name, device)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.pretrained_model_name_or_path)
-        self.model = AutoModelForSequenceClassification.from_pretrained(self.pretrained_model_name_or_path, torch_dtype=torch.bfloat16).to(device)
+        self.model = CrossEncoder(self.pretrained_model_name_or_path, device=device)
         self.context_length = context_length
 
     def _count_tokens(self, text:str) -> int:
         """
         Counts the number of tokens used to represent the given text
         """
-        tokens = self.tokenizer.encode(text, return_tensors='pt')
-        token_number = tokens.size(-1)
-        return token_number
+        encoded_text = self.model.tokenize([text])['input_ids']
+        return encoded_text.numel()
 
     def _generate_all_pairs(self, query:str, passage:str) -> List[List[str]]:
         """
@@ -54,29 +55,15 @@ class HFReranker(Reranker):
         # generate text pairs to be evaluated
         pairs = self._generate_all_pairs(query, passage)
         # measures the similarity between each text pair
-        with torch.no_grad():
-            tokens = self.tokenizer(pairs, padding=True, truncation=True, return_tensors='pt', max_length=self.context_length)
-            for k, v in tokens.items():
-                tokens[k] = v.to(self.device)
-            scores = self.model(**tokens, return_dict=True).logits.view(-1, ).float()
-            # gets the maximum similarity found
-            similarity = scores.max().item()
+        scores = self.model.predict(pairs, convert_to_numpy=True)
+        # gets the maximum similarity found
+        similarity = np.max(scores)
         return similarity
 
 #------------------------------------------------------------------------------
 # MODELS
 
-class BGELargeReranker(HFReranker):
-    """https://huggingface.co/BAAI/bge-reranker-large"""
-    def __init__(self, models_folder:Path, name:str='bge-reranker-large', device:str='cuda', context_length=512):
-        super().__init__(models_folder, name, device, context_length)
-
-class BGEBaseReranker(HFReranker):
-    """https://huggingface.co/BAAI/bge-reranker-base"""
-    def __init__(self, models_folder:Path, name:str='bge-reranker-base', device:str='cuda', context_length=512):
-        super().__init__(models_folder, name, device, context_length)
-
-class BCEBaseReranker(HFReranker):
-    """https://huggingface.co/maidalun1020/bce-reranker-base_v1"""
-    def __init__(self, models_folder:Path, name:str='bce-reranker-base_v1', device:str='cuda', context_length=512):
+class MXbaiLargeReranker(STReranker):
+    """https://huggingface.co/mixedbread-ai/mxbai-rerank-large-v1"""
+    def __init__(self, models_folder:Path, name:str='mxbai-rerank-large-v1', device:str='cuda', context_length=512):
         super().__init__(models_folder, name, device, context_length)
