@@ -133,9 +133,10 @@ async def wait_for_next_iteration(last_active_time, start_time, min_refresh_time
 async def main():
     # Initialize models and API details
     args = parse_args()
-    llm = lmntfy.models.llm.Default(args.models_folder)
-    embedder = lmntfy.models.embedding.Default(args.models_folder)
-    database = lmntfy.database.Default(llm, embedder, args.docs_folder, args.database_folder, update_database=False)
+    llm = lmntfy.models.llm.Default(args.models_folder, device='cuda')
+    embedder = lmntfy.models.embedding.Default(args.models_folder, device='cuda')
+    reranker = lmntfy.models.reranker.Default(args.models_folder, device='cuda')
+    database = lmntfy.database.Default(args.docs_folder, args.database_folder, llm, embedder, reranker, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
     semaphore = asyncio.Semaphore(args.max_concurrent_tasks)
 

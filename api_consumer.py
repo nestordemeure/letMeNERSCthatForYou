@@ -38,9 +38,10 @@ def main():
     oauth_client = SFAPIOAuthClient(api_base_url=API_BASE_URL, token_url=TOKEN_URL)
 
     # initializes models
-    llm = lmntfy.models.llm.Default(models_folder)
-    embedder = lmntfy.models.embedding.Default(models_folder)
-    database = lmntfy.database.Default(llm, embedder, docs_folder, database_folder, update_database=False)
+    llm = lmntfy.models.llm.Default(models_folder, device='cuda')
+    embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
+    reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
+    database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
 
     # run a loop to check on files

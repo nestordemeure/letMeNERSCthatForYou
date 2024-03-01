@@ -31,7 +31,7 @@ def main():
     models_folder = args.models_folder
 
     # load the database
-    llm = lmntfy.models.llm.Default(models_folder, device='cpu')
+    llm = lmntfy.models.llm.Default(models_folder, device='cuda')
     embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
     reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
     database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=False)

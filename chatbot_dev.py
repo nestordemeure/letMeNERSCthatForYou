@@ -26,9 +26,10 @@ def main():
 
     # initializes models
     print("Loading the database and models...")
-    llm = lmntfy.models.llm.Default(models_folder)
-    embedder = lmntfy.models.embedding.Default(models_folder)
-    database = lmntfy.database.Default(llm, embedder, docs_folder, database_folder, update_database=update_database)
+    llm = lmntfy.models.llm.Default(models_folder, device='cuda')
+    embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
+    reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
+    database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=update_database)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)
 
     # answers questions

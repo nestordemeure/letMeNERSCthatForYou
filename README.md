@@ -44,7 +44,6 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* check the init function of the various databases
 * try using the reranker to pick the best references
 
 * document the inner-workings,
