@@ -6,7 +6,10 @@ class Embedding(ABC):
     """
     See this page for a comparison of various embeddings: https://huggingface.co/spaces/mteb/leaderboard
     """
-    def __init__(self, models_folder:Path, name:str, embedding_length:int, max_input_tokens:int, normalized:bool, device:str=None):
+    def __init__(self, models_folder:Path, name:str, 
+                 embedding_length:int, max_input_tokens:int, normalized:bool, 
+                 query_prefix:str='', passage_prefix:str='',
+                 device:str='cuda'):
         """
         Parameters:
             models_folder (Path): The path to the directory containing the model files.
@@ -14,6 +17,10 @@ class Embedding(ABC):
             embedding_length (int): The size of the embedding vectors produced by the model.
             max_input_tokens (int): The maximum number of tokens that can be processed in one input sequence.
             normalized (bool): A flag indicating whether the model's output embeddings are normalized.
+            query_prefix (str): optional prefix to put in front of queries
+            passage_prefix (str): optional prefix to put in front of passages
+            device (str): on which device should the model be
+
         """
         self.pretrained_model_name_or_path = str(models_folder / name)
         self.models_folder = models_folder
@@ -21,6 +28,8 @@ class Embedding(ABC):
         self.embedding_length = embedding_length
         self.max_input_tokens = max_input_tokens
         self.normalized = normalized
+        self.query_prefix = query_prefix
+        self.passage_prefix = passage_prefix
         self.device=device
 
     def embed(self, text:str, is_query=False) -> np.ndarray:
@@ -28,6 +37,7 @@ class Embedding(ABC):
         Converts text into an embedding.
         """
         try:
+            text = (self.query_prefix + text) if is_query else (self.passage_prefix + text)
             raw_embedding = self._embed(text, is_query)
         except Exception as e:
             print(f"An error occurred while embedding the text '{text}': {str(e)}")
@@ -47,6 +57,7 @@ class Embedding(ABC):
         """
         Abstract method for converting text into an embedding.
         is_query is there for models who have different methods to embed queries vs normal text
+        (note that we ake prefixes into account above this level)
         """
         pass
 
@@ -59,6 +70,9 @@ class Embedding(ABC):
 
 from .sbert import MPNetEmbedding # good overall default
 from .sbert import QAMPNetEmbedding # finetuned for Q&A, weaker than MPNet
+from .sbert import SOMPNetEmbedding # stackoverflow finetuned, weaker than MPNet
 from .uae import UAEEmbedding # weaker than MPNet on our tests
+from .sbert import E5BaseEmbedding # a bit weaker than large
+from .sbert import E5LargeEmbedding # somewhat better than MPNet?
 # embeddings used by default everywhere
-Default = MPNetEmbedding
+Default = E5LargeEmbedding
