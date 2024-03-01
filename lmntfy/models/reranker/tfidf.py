@@ -24,7 +24,6 @@ word_preprocesses = [
 ]
 
 class TFIDFReranker(Reranker):
-    """used to compute similarity between a query and passages"""
     def __init__(self, models_folder:Path, name:str='tfidf', device:str='cpu'):
         # initialize the class
         super().__init__(models_folder, name, device)

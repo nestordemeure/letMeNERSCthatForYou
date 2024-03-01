@@ -82,7 +82,7 @@ class Markdown:
                 result.extend(heading.to_chunks(url, token_counter, max_tokens))
             return result
 
-def markdown_splitter(url:str, markdown:str, token_counter:Callable[[str],int], max_tokens:int) -> List[str]:
+def markdown_splitter(url:str, markdown:str, token_counter:Callable[[str],int], max_tokens:int) -> List[Chunk]:
     """
     takes a markdown file as a string
     a function that can count the number of tokens in a string
