@@ -44,8 +44,7 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* try using the reranker to pick the best references
-
+* try using the reranker to pick the best references?
 * document the inner-workings,
 
 * establish a canonical list of test questions / conversations,

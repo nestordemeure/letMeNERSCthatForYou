@@ -77,12 +77,13 @@ def stem_url(url: str) -> str:
     # If '#' is not found, return the original URL
     return url
 
-def validate_references(references:str, chunks:List[Chunk], prompt:str, stem_before_validation=True) -> str:
+def validate_references(references:str, chunks:List[Chunk], prompt:str, stem_before_validation=False) -> str:
     """
     Takes:
     - references: a string with references for the current answer
     - chunks: a list of chnuks used to build the answer
     - prompt: the prompt which contains the conversation so far
+    - stem_before_validation (bool): should we ignore the # section at the end of the url?
 
     A reference is only valid if its root (minus any last minute '#' paragraph):
     - is a chunk's url,
