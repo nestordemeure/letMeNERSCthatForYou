@@ -382,5 +382,6 @@ from .zephyr import Zephyr #good but can miss some information from the doc prov
 from .codellama import CodeLlama #good answers but does not care much for the provided doc
 from .mixtral import Mixtral #too heavy for local serving
 from .gemma import Gemma # tends to answer not quite the question asked
+from .openchat import OpenChat # TODO check
 # the default model
-Default = Mistral
+Default = OpenChat # Mistral
