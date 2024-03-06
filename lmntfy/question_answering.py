@@ -32,6 +32,10 @@ class QuestionAnswerer:
             self.latest_question = question
             self.latest_chunks = chunks
         except Exception as e:
+            # reraise cuda errors as those are not recovereable
+            cuda_error_keywords = ["CUDA out of memory", "CUDA error"]
+            if any(keyword in str(e) for keyword in cuda_error_keywords):
+                raise
             # propagate the exeption as usual
             if self.logs_folder is None:
                 raise
@@ -57,6 +61,10 @@ class QuestionAnswerer:
             self.latest_question = keywords
             self.latest_chunks = chunks
         except Exception as e:
+            # reraise cuda errors as those are not recovereable
+            cuda_error_keywords = ["CUDA out of memory", "CUDA error"]
+            if any(keyword in str(e) for keyword in cuda_error_keywords):
+                raise
             # propagate the exeption as usual
             if self.logs_folder is None:
                 raise
