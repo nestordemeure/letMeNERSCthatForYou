@@ -45,7 +45,7 @@ for kind in ['answer', 'question']:
     print(f"99% quantile: {quantile_99}")
 
 """
-GPT35's tokeniser:
+Tiktoken (GPT35's tokeniser):
 *** Answers:
 Mean size: 96.20449718925671
 Median size: 85.0
@@ -85,4 +85,24 @@ Max size: 171
 90% quantile: 22.0
 95% quantile: 25.0
 99% quantile: 32.0
+
+Qwen2TokenizerFast (Qwen):
+*** answer:
+Mean size: 97.31930043722673
+Median size: 86.0
+Standard deviation of size: 75.4232263238064
+Upper bound (mean+2std): 248.16575308483954
+Max size: 954
+90% quantile: 185.0
+95% quantile: 225.0
+99% quantile: 353.96000000000004
+*** question:
+Mean size: 13.236352279825109
+Median size: 12.0
+Standard deviation of size: 5.291229015598518
+Upper bound (mean+2std): 23.818810311022148
+Max size: 151
+90% quantile: 19.0
+95% quantile: 22.0
+99% quantile: 29.0
 """
