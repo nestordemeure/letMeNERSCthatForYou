@@ -352,7 +352,7 @@ class LanguageModel(ABC):
 
         # generates an answer in two part to ensure it follows our prefered format
         # 1. body of the answer
-        reference_section_titles = ["References:", "Reference(s):", "Sources:", "Ressources:", "Source URL:"]
+        reference_section_titles = ["References:", "Reference(s):", "Sources:", "Ressources:", "Source URL:", "Source URLs:"]
         answer_body = self.base_generator(prompt, stop_at=reference_section_titles)
         # Normalize reference section title
         for title in reference_section_titles:
@@ -383,7 +383,7 @@ from .codellama import CodeLlama #good answers but does not care much for the pr
 from .mixtral import Mixtral #too heavy for local serving
 from .gemma import Gemma # tends to answer not quite the question asked
 from .openchat import OpenChat # answers somewhat in league with mistral
-from .qwen import Qwen # TODO check
-from .snorkel import Snorkel # TODO check
+from .qwen import Qwen7, Qwen14 # 7 sometimes uses chinese words, 14 is really nice (competitive with mistral)
+from .snorkel import Snorkel # good answers but high hallucinations
 # the default model
 Default = Mistral

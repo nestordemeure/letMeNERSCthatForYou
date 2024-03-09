@@ -12,3 +12,5 @@ class Snorkel(LanguageModel):
                          model_kwargs={'torch_dtype':torch.bfloat16, 'attn_implementation':'flash_attention_2'})
         self.upper_answer_size = 450
         self.upper_question_size = 200
+        # NOTE: needed as the model's maximum value is too large for the tokenizer, causing nonsense answers
+        self.context_size = 2048
