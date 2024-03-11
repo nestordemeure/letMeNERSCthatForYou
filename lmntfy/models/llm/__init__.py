@@ -142,6 +142,9 @@ class LanguageModel(ABC):
         self.upper_answer_size = None # needs to be filled per tokenizer
         self.upper_question_size = None # needs to be filled per tokenizer
         self.use_system_prompt = use_system_prompt
+        # prompts
+        self.CHAT_PROMPT_SYSTEM = CHAT_PROMPT_SYSTEM
+        self.ANSWERING_PROMPT = ANSWERING_PROMPT
         # generators
         self.base_generator = outlines.generate.text(self.model)
         self.reflist_generator = outlines.generate.regex(self.model, REFLIST_REGEX)
@@ -285,7 +288,7 @@ class LanguageModel(ABC):
         if len(previous_messages) == 1:
             return previous_messages[-1]['content']
         # builds the messages
-        system_message = {"role": "system", "content": CHAT_PROMPT_SYSTEM}
+        system_message = {"role": "system", "content": self.CHAT_PROMPT_SYSTEM}
         formatted_discussion = [{**message, 'relevancy': i} for (i,message) in enumerate(previous_messages)]
         messages = [system_message] + formatted_discussion
         # builds the base prompt
@@ -300,7 +303,7 @@ class LanguageModel(ABC):
         Tries to extract relevant search keywords
         """
         # builds the messages
-        system_message = {"role": "system", "content": CHAT_PROMPT_SYSTEM}
+        system_message = {"role": "system", "content": self.CHAT_PROMPT_SYSTEM}
         formatted_discussion = [{**message, 'relevancy': i} for (i,message) in enumerate(previous_messages)]
         messages = [system_message] + formatted_discussion
         # builds the base prompt
@@ -329,7 +332,7 @@ class LanguageModel(ABC):
         # builds the messages
         nb_messages_minimum = 3 # keep at least that many messages (when possible)
         nb_relevant_messages = len(chunks) + max(0, len(discussion)-nb_messages_minimum)
-        system_message = {"role": "system", "content": ANSWERING_PROMPT}
+        system_message = {"role": "system", "content": self.ANSWERING_PROMPT}
         # formats the chunks
         chunks_messages = [{"role": "system", "content": f"\n{chunk.to_markdown()}", "relevancy": (nb_relevant_messages-i)} for (i,chunk) in enumerate(chunks)]
         # formats the discussion
@@ -383,7 +386,7 @@ from .codellama import CodeLlama #good answers but does not care much for the pr
 from .mixtral import Mixtral #too heavy for local serving
 from .gemma import Gemma # tends to answer not quite the question asked
 from .openchat import OpenChat # answers somewhat in league with mistral
-from .qwen import Qwen7, Qwen14 # 7 sometimes uses chinese words, 14 is really nice (competitive with mistral)
+from .qwen import Qwen # really nice (feels competitive with mistral)
 from .snorkel import Snorkel # good answers but high hallucinations
 # the default model
 Default = Mistral

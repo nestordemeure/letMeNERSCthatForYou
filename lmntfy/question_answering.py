@@ -32,16 +32,11 @@ class QuestionAnswerer:
             self.latest_question = question
             self.latest_chunks = chunks
         except Exception as e:
-            # reraise cuda errors as those are not recovereable
-            cuda_error_keywords = ["CUDA out of memory", "CUDA error"]
-            if any(keyword in str(e) for keyword in cuda_error_keywords):
-                raise
-            # propagate the exeption as usual
-            if self.logs_folder is None:
-                raise
-            # returns the error message instead of the model's answer
-            self.log_error(question, e)
-            answer = f"ERROR: {str(e)}"
+           # log the exception if possible
+            if not (self.logs_folder is None):
+                self.log_error(messages, e)
+            # then fail
+            raise
         return answer
 
     def chat(self, messages:List[Dict], max_context_size=8, verbose=False) -> Dict:
@@ -61,16 +56,11 @@ class QuestionAnswerer:
             self.latest_question = keywords
             self.latest_chunks = chunks
         except Exception as e:
-            # reraise cuda errors as those are not recovereable
-            cuda_error_keywords = ["CUDA out of memory", "CUDA error"]
-            if any(keyword in str(e) for keyword in cuda_error_keywords):
-                raise
-            # propagate the exeption as usual
-            if self.logs_folder is None:
-                raise
-            # returns the error message instead of the model's answer
-            self.log_error(messages, e)
-            answer = f"ERROR: {str(e)}"
+           # log the exception if possible
+            if not (self.logs_folder is None):
+                self.log_error(messages, e)
+            # then fail
+            raise
         return {'role':'assistant', 'content': answer}
 
     def log_error(self, input_data, error: BaseException):
