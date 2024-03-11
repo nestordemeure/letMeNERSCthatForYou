@@ -51,7 +51,9 @@ In no particular order:
 * update `accelerate` (and all of our dependencies) to latest version
 * retry Gemma once bugfixes have been pushed to latest hugginface
 
-* take loggin logic out of the question answerer and into the worker (we can then send a `SORRY we are down` message then throw)
+* take loggin loggin out of the question answerer and into the worker (we can then send a `SORRY we are down` message then throw)
+* cut non async worker?
+
 * document the inner-workings,
 * establish a canonical list of test questions / conversations,
 * move this code to the NERSC github,

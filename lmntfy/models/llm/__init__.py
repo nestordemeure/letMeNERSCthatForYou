@@ -127,6 +127,8 @@ class LanguageModel(ABC):
     Abstraction over large language models
     Built on top of the [Outlines](https://github.com/outlines-dev/outlines) library
 
+    See [this leaderboard](https://huggingface.co/spaces/lmsys/chatbot-arena-leaderboard) for a good list of current models that you might want to use.
+
     Message format:
         we expect messages to have a "role" ("system", "user", or "assistant") as well as a "content" field
         all "system" messages will be concatenated and put at the beginning of the conversation
@@ -384,9 +386,10 @@ from .mistral import Mistral #good at answering, not at picking references
 from .zephyr import Zephyr #good but can miss some information from the doc provided
 from .codellama import CodeLlama #good answers but does not care much for the provided doc
 from .mixtral import Mixtral #too heavy for local serving
-from .gemma import Gemma # tends to answer not quite the question asked
+from .gemma import Gemma # tends to answer not quite the question asked TODO to be reevaluated after transformer update
 from .openchat import OpenChat # answers somewhat in league with mistral
 from .qwen import Qwen # really nice (feels competitive with mistral)
 from .snorkel import Snorkel # good answers but high hallucinations
+from .starling import Starling, StarlingCode # TODO currently segfaults
 # the default model
 Default = Mistral
