@@ -46,8 +46,9 @@ In no particular order:
 
 * refresh prompt (and move information chunks elsewhere?)
 * try using the reranker (or just TFIDF) to pick the best references?
-* refuse `svg` files from the doc
+* refuse `svg` files from the doc (which file types are in the doc?)
 
+* try solar, starling-11b
 * retry Gemma once bugfixes have been pushed to latest hugginface
 
 * document the inner-workings,

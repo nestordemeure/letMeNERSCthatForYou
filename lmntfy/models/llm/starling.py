@@ -23,7 +23,7 @@ class StarlingCode(Starling):
                  model_name: str='Starling-LM-7B-alpha',
                  use_system_prompt=False,
                  device='cuda'):
-        super().__init__(models_folder / model_name, use_system_prompt=use_system_prompt, device=device)
+        super().__init__(models_folder, use_system_prompt=use_system_prompt, device=device)
         # switch template version
         self.tokenizer.chat_template = self.tokenizer.chat_template.replace('GPT4 Correct', 'Code')
         

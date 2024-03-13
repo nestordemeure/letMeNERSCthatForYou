@@ -1,12 +1,9 @@
-import os
-import re
-import string
 from abc import ABC
 from copy import copy
 from typing import List, Dict
 from ...database.document_loader import Chunk
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from .utilities import StopWordStoppingCriteria
+from .utilities import StopWordStoppingCriteria, validate_references, format_reference_list
 
 #----------------------------------------------------------------------------------------
 # PROMPTS
@@ -47,68 +44,6 @@ References:
 
 #----------------------------------------------------------------------------------------
 # MODEL ABSTRACTION
-
-def stem_url(url: str) -> str:
-    """Takes a URL and cuts it at the latest '#' if possible.
-    
-    Args:
-        url (str): The URL to be processed.
-        
-    Returns:
-        str: The stemmed URL without the fragment part after the latest '#'.
-    """
-    # Find the position of the last occurrence of '#'
-    hash_position = url.rfind('#')
-    # If '#' is found, return the URL up to (but not including) the '#'
-    if hash_position != -1:
-        return url[:hash_position]
-    # If '#' is not found, return the original URL
-    return url
-
-def validate_references(references:str, chunks:List[Chunk], prompt:str, stem_before_validation=False) -> str:
-    """
-    Takes:
-    - references: a string with references for the current answer
-    - chunks: a list of chnuks used to build the answer
-    - prompt: the prompt which contains the conversation so far
-    - stem_before_validation (bool): should we ignore the # section at the end of the url?
-
-    A reference is only valid if its root (minus any last minute '#' paragraph):
-    - is a chunk's url,
-    - or appears inside a chunk,
-    - or was referenced in a previous message,
-    - AND be in a NERSC domain.
-
-    Returns "https://docs.nersc.gov/" if no valid reference is found.
-    """
-    # the stemmer function
-    stemmer = stem_url if stem_before_validation else (lambda url: url)
-    # all urls in prompts
-    chunk_urls = {stemmer(chunk.url) for chunk in chunks}
-    # all urls in the conversation so far
-    reference_pattern = r"\* \<([^\>]*?)\>"
-    prompt_urls = {stemmer(url) for url in re.findall(reference_pattern, prompt)}
-    # all urls that will be accepted in the output
-    valid_urls = chunk_urls | prompt_urls
-
-    # all urls in the references
-    references_urls = re.findall(reference_pattern, references)
-
-    # keep only urls referenced or appearing inside a chunk
-    urls = set()
-    for url in references_urls:
-        stemmed_url = stemmer(url)
-        if (url.startswith('https://docs.nersc.gov') or url.startswith('https://nersc.gov')) and ((stemmed_url in valid_urls) or any((stemmed_url in chunk.content) for chunk in chunks)):
-                urls.add(url)
-
-    if len(urls) == 0:
-        # default (useless) references used if no reference is valid
-        return " * <https://docs.nersc.gov/>\n * <https://www.nersc.gov/users/getting-help/online-help-desk/>"
-    else:
-        # builds list of references
-        references = [f" * <{url}>" for url in urls]
-        # Joins the lines and returns
-        return '\n'.join(references)
 
 class LanguageModel(ABC):
     """
@@ -242,7 +177,7 @@ class LanguageModel(ABC):
             
         return output_string
 
-    def generate(self, prompt:str, stopwords:List[str]=[], verbose:bool=False) -> str:
+    def generate(self, prompt:str, stopwords:List[str]=[], strip_stopword:bool=True, verbose:bool=False) -> str:
         """
         Query the model and get a response.
         NOTE: this function is written to deal with a single piece of text, not a batch
@@ -250,6 +185,7 @@ class LanguageModel(ABC):
         Args:
             prompt (str): the text prompt
             stopwords (List[str]): the words on which to stop the generation, if any
+            strip_stopword (bool): should we strip the stopword from our output (default to True)
             verbose (bool): should we print debug information? (defaults to False)
 
         Returns:
@@ -262,10 +198,13 @@ class LanguageModel(ABC):
         inputs_tokens = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
 
         # runs the LLM, producing tokens for output=input+answer+stopword+?
-        output_tokens = self.model.generate(inputs_tokens, max_length=self.context_size, stopping_criteria=[stopping_criteria])
+        output_tokens = self.model.generate(inputs_tokens, 
+                                            max_length=self.context_size, 
+                                            pad_token_id=self.tokenizer.eos_token_id,
+                                            stopping_criteria=[stopping_criteria])
         
-        # extract answer text from output tokens
-        answer = stopping_criteria.extract_answers(output_tokens)[0]
+        # extract answer text from output tokens, cutting prompt and stop words
+        answer = stopping_criteria.extract_answers(output_tokens, strip_stopword=strip_stopword)[0]
 
         # debugging information
         if verbose: print(f"{prompt}\n{answer}")
@@ -316,31 +255,50 @@ class LanguageModel(ABC):
 
         # turns the messages into a prompt
         prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_answer_size)
-        if verbose: print(f"PROMPT: {prompt}")
 
-        # generates an answer in two part to ensure it follows our prefered format
-        # 1. body of the answer
+        # generates an answer, stopping at the reference section
         reference_section_titles = ["References:", "Reference(s):", "Sources:", "Ressources:", "Source URL:", "Source URLs:"]
         answer_body = self.generate(prompt, stopwords=reference_section_titles, verbose=verbose)
-        # Normalize reference section title
-        for title in reference_section_titles:
-            answer_body = answer_body.replace(title, "References:")
-        # check for the presence of a reference section
-        if not "References:" in answer_body: 
-            if any(substr in answer_body for substr in ["\n * [", "\n * <", "\n* [", "\n* <"]):
-                # there are already references in the answer, exit
-                return answer_body
-            else:
-                # no references found, let's add some
-                answer_body += "\n\nReferences:"
-        # 2. references, generating following our prefered format
-        prompt_extended = prompt + answer_body + '\n'
-        answer_references = self.generate(prompt_extended, verbose=verbose)
-        # keep only valid references
-        answer_references = validate_references(answer_references, chunks, prompt)
+        # generate a reference section to go with the answer
+        reference_section = self.add_references(prompt + answer_body, chunks, verbose=verbose)
         # assemble the answer
-        answer = answer_body + '\n' + answer_references
-        return answer
+        return answer_body + '\n\n' + reference_section
+
+    def add_references(self, original_prompt: str, chunks: List[Chunk], verbose: bool = False) -> str:
+        """
+        Generates a reference section for a given prompt using specified documentation chunks.
+
+        Args:
+            original_prompt (str): The text generated so far, including the initial prompt.
+            chunks (List[Chunk]): A list of documentation data chunks to be referenced.
+            verbose (bool, optional): If True, enables verbose output. Defaults to False.
+
+        Returns:
+            str: The prompt text appended with a formatted reference section containing URLs.
+        """
+        # prompt the model to start writing a properly formated reference section
+        prompt = original_prompt + "\n\nReferences:\n * <"
+
+        # gets at most one url per chunk
+        urls = []
+        for _ in chunks:
+            # Generate a reference, stops if it is done or ready to start a new reference
+            generated_reference = self.generate(prompt, stopwords=['<'], strip_stopword=False, verbose=verbose)
+            # Update the prompt for the next generation
+            prompt += generated_reference
+            # Extracts the url
+            url = generated_reference.split('>', 1)[0]
+            urls.append(url)
+            # Break the loop if the model is not getting ready to start on a new reference
+            if not generated_reference.endswith('<'):
+                break
+
+        # Validate and filter URLs.
+        valid_urls = validate_references(urls, chunks, original_prompt)
+        # Builds a reference section with only the validated URLs.
+        reference_section = "References:\n" + format_reference_list(valid_urls)
+        return reference_section
+
 
 from .llama2 import Llama2 #hallucinate often
 from .vicuna import Vicuna #good but I have had some cut-offs problems
@@ -352,14 +310,7 @@ from .gemma import Gemma # tends to answer not quite the question asked TODO to 
 from .openchat import OpenChat # answers somewhat in league with mistral
 from .qwen import Qwen # really nice (feels competitive with mistral)
 from .snorkel import Snorkel # good answers but high hallucinations
-from .starling import Starling, StarlingCode # TODO currently segfaults
+from .starling import Starling # a bit verbose but very good
+from .starling import StarlingCode # not as good as base (understandable as this one is for code writing only)
 # the default model
 Default = Mistral
-
-"""
-TODO:
-* fix warnings
-  The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-  Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
-* fix reference cleaning
-"""
