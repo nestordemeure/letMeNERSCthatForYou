@@ -22,6 +22,24 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+def get_conversation(input_endpoint:str, oauth_client:SFAPIOAuthClient, verbose=False):
+    """
+    GET the conversations stored in the API
+    """
+    conversations = requests.get(input_endpoint, headers=oauth_client.get_authorization_header()).json()
+    if verbose: print(f"\nGET:\n{json.dumps(conversations, indent=4)}")
+    return conversations
+
+def post_answer(output_endpoint:str, oauth_client:SFAPIOAuthClient, conversation_key:str, answer, verbose=False):
+    """
+    POSTS an answer to the API
+    """
+    output={conversation_key: [answer]}
+    headers = {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': oauth_client.get_authorization_header()['Authorization']}
+    response = requests.post(output_endpoint, json=output, headers=headers)
+    if verbose: print(f"POST (status code:{response.status_code}):\n{json.dumps(answer, indent=4)}")
+    return response
+
 def main():
     # process command line arguments
     args= parse_args()
@@ -49,20 +67,21 @@ def main():
     while True:
         # gets conversations as a json
         get_time = time.time()
-        conversations = requests.get(input_endpoint, headers=oauth_client.get_authorization_header()).json()
-        if verbose: print(f"\nGET:\n{json.dumps(conversations, indent=4)}")
+        conversations = get_conversation(input_endpoint, oauth_client, verbose=verbose)
         # loop on all conversation
         for id, messages in conversations.items():
-            # gets an answer from the model
             try:
+                # gets an answer from the model
                 answer = question_answerer.chat(messages, verbose=False)
+                # post the answer with the conversation key
+                post_answer(output_endpoint, oauth_client, id, answer, verbose=verbose)
             except Exception as e:
-                answer = {'role':'assistant', 'content': f"ERROR: {str(e)}"}
-            # post the answer with the conversation key
-            output={id: [answer]}
-            headers = {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': oauth_client.get_authorization_header()['Authorization']}
-            response = requests.post(output_endpoint, json=output, headers=headers)
-            if verbose: print(f"POST (status code:{response.status_code}):\n{json.dumps(output, indent=4)}")
+                # produce a polite answer in case of crash
+                answer = {'role':'assistant', 'content': "Error: I am terribly sorry, but the Documentation chatbot is currently experiencing technical difficulties. Please try again in ten minutes or more."}
+                # post the answer with the conversation key
+                post_answer(output_endpoint, oauth_client, id, answer)
+                # then crash
+                raise
         # calculate how long the answering took
         # if it took less than min_refresh_time seconds, sleep for the remaining time
         elapsed_time = time.time() - get_time

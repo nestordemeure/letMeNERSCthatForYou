@@ -60,47 +60,53 @@ async def fetch_conversations(session, input_endpoint, oauth_client, max_refresh
         print(f"\nGET:\n{json.dumps(conversations, indent=4)}")
     return conversations
 
-# ensures only one thread can run the chat answering
+# Global lock to ensure thread safety in async environments
 chat_lock = asyncio.Lock()
+
+async def post_answer(session, oauth_client, output_endpoint, id, answer, verbose=False):
+    """
+    Post the generated answer or error message to the specified output endpoint.
+
+    Args:
+    - session (aiohttp.ClientSession): The session used for making HTTP requests.
+    - oauth_client: The OAuth client used for authorization headers.
+    - output_endpoint (str): The URL to which the generated answer should be posted.
+    - id (str or int): The identifier of the conversation.
+    - answer (dict): The answer or error message to be posted.
+    - verbose (bool): If True, prints additional details about the POST request.
+    """
+    output = {id: [answer]}
+    headers = {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': oauth_client.get_authorization_header()['Authorization']
+    }
+
+    async with session.post(output_endpoint, json=output, headers=headers) as response:
+        status = response.status  # Retrieves the status code of the POST request.
+
+    if verbose:
+        print(f"POST (status code:{status}):\n{json.dumps(output, indent=4)}")
 
 async def process_conversation(session, oauth_client, output_endpoint, question_answerer, id, messages, verbose):
     """
     Process an individual conversation by generating a response and posting it to the output endpoint.
-
-    This function first attempts to generate a response using the `question_answerer` model. 
-    If successful, the answer is sent back to the specified output endpoint. 
-    If an exception occurs during answer generation, an error message is constructed and sent instead.
-
-    Args:
-    - session (aiohttp.ClientSession): The session used for making HTTP requests.
-    - oauth_client (SFAPIOAuthClient): The SFAPIOAuthClient to connect to the API
-    - output_endpoint (str): The URL to which the generated answer should be posted.
-    - question_answerer (QuestionAnswerer): The model used for generating answers to the incoming messages.
-    - id (str or int): The identifier of the conversation to which the messages belong.
-    - messages (list): The list of messages for which the answer is to be generated.
-    - verbose (bool): If True, additional details (such as POST request status) will be printed to the console.
-
-    This function ensures that the number of concurrent executions does not exceed the limit set by the semaphore.
     """
-    # Ensures only one coroutine at a time can call question_answerer.chat
-    async with chat_lock:
-        try:
+    try:
+        # Ensures only one coroutine at a time can call question_answerer.chat
+        async with chat_lock:
             # Generates an answer using the question_answerer model.
             # Run the blocking function in a separate thread to let other threads do their processing
             answer = await asyncio.to_thread(question_answerer.chat, messages)
-        except Exception as e:
-            # Constructs an error message in case of an exception during answer generation.
-            answer = {'role': 'assistant', 'content': f"ERROR: {str(e)}"}
-    output = {id: [answer]}
-
-    # Sends the generated answer or error message to the output endpoint.
-    headers = {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': oauth_client.get_authorization_header()['Authorization']}
-    async with session.post(output_endpoint, json=output, headers=headers) as response:
-        status = response.status  # Retrieves the status code of the POST request.
-
-    # Optionally prints details of the POST request if verbose mode is enabled.
-    if verbose:
-        print(f"POST (status code:{status}):\n{json.dumps(output, indent=4)}")
+    except Exception as e:
+        # generate an error message
+        answer = {'role': 'assistant', 'content': "Error: I am terribly sorry, but the Documentation chatbot is currently experiencing technical difficulties. Please try again in ten minutes or more."}
+        # sends the error message to the user
+        await post_answer(session, oauth_client, output_endpoint, id, answer, verbose)
+        # burns and crash
+        raise
+    # post the answer
+    await post_answer(session, oauth_client, output_endpoint, id, answer, verbose)
 
 async def wait_for_next_iteration(last_active_time, start_time, min_refresh_time, max_refresh_time, cooldown_time):
     """

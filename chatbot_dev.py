@@ -6,7 +6,6 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--docs_folder", default="./data/nersc_doc/docs", type=Path, help="path to the NERSC documentation folder")
     parser.add_argument("--database_folder", default="./data/database", type=Path, help="path to the database saving folder") 
-    parser.add_argument("--logs_folder", default=None, type=Path, help="path to the log saving folder") 
     parser.add_argument("--models_folder",default="../models", type=Path, help="path to the folder containing all the models")
     parser.add_argument("--update_database", default=False, action='store_true', help="whether to update database to the current documentation")
     parser.add_argument("--use_test_questions", default=True, action='store_true', help="whether to run on the test questions (for debugging purposes)")
@@ -20,7 +19,6 @@ def main():
     docs_folder = args.docs_folder
     database_folder = args.database_folder
     models_folder = args.models_folder
-    logs_folder = args.logs_folder
     update_database = args.update_database
     use_test_questions = args.use_test_questions
 
@@ -30,7 +28,7 @@ def main():
     embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
     reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
     database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=update_database)
-    question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database, logs_folder=logs_folder)
+    question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
 
     # answers questions
     lmntfy.user_interface.command_line.display_logo()

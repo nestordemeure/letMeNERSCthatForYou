@@ -45,14 +45,15 @@ Those scripts are meant to be user with the superfacility API:
 In no particular order:
 
 * refresh prompt (and move information chunks elsewhere?)
-* try `device_map="auto"`, is loading faster?
 * try using the reranker (or just TFIDF) to pick the best references?
 
-* update `accelerate` (and all of our dependencies) to latest version
+* try `device_map="auto"`, is loading faster?
 * retry Gemma once bugfixes have been pushed to latest hugginface
 
-* take loggin loggin out of the question answerer and into the worker (we can then send a `SORRY we are down` message then throw)
-* cut non async worker?
+* we only use `start` and `stop` words from outline (FSM capabilities are touched but not vital): remove dependency?
+  * remove deoendency?
+  * see [this](https://discuss.huggingface.co/t/implimentation-of-stopping-criteria-list/20040/16) for a stop_at implementation
+    see also outline's SequenceGenerator implementation
 
 * document the inner-workings,
 * establish a canonical list of test questions / conversations,
