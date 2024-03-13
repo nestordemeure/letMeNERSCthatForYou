@@ -5,15 +5,7 @@ from abc import ABC
 from copy import copy
 from typing import List, Dict
 from ...database.document_loader import Chunk
-from transformers import PreTrainedTokenizer
-import outlines
-from outlines.models.transformers import Transformer
-from outlines.generate import SequenceGenerator
-
-# NOTE: this is needed as the initialization of outlines's caching system will try to write to $HOME/.chache/outlines
-os.environ['OUTLINES_CACHE_DIR'] = os.environ.get('TMPDIR')
-# disables caching
-outlines.disable_cache()
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 #----------------------------------------------------------------------------------------
 # PROMPTS
@@ -51,11 +43,6 @@ References:
 
 ### Information Sources:
 """
-
-# regex that produces a bullet list of, at most, 10 urls
-# NOTE: we purposefully allow non-NERSC url
-#       if the system produces garbage we want easily deleted random urls rather than previous valid NERSC ones
-REFLIST_REGEX = r"( \* \<([^\>]*?)\>\n){1,10}\n"
 
 #----------------------------------------------------------------------------------------
 # MODEL ABSTRACTION
@@ -138,18 +125,16 @@ class LanguageModel(ABC):
     """
     def __init__(self, pretrained_model_name_or_path:str, model_kwargs:dict=dict(), use_system_prompt=True, device='cuda'):
         self.pretrained_model_name_or_path = str(pretrained_model_name_or_path)
-        self.model: Transformer = outlines.models.transformers(self.pretrained_model_name_or_path, model_kwargs=model_kwargs, device=device)
-        self.tokenizer: PreTrainedTokenizer = self.model.tokenizer.tokenizer # get the Transformer Tokenizer for chattemplating purposes
-        self.context_size = self.model.model.config.max_position_embeddings
+        self.device = device
+        self.tokenizer = AutoTokenizer.from_pretrained(self.pretrained_model_name_or_path)
+        self.model = AutoModelForCausalLM.from_pretrained(self.pretrained_model_name_or_path, device_map=device, **model_kwargs)
+        self.context_size = self.model.config.max_position_embeddings
         self.upper_answer_size = None # needs to be filled per tokenizer
         self.upper_question_size = None # needs to be filled per tokenizer
         self.use_system_prompt = use_system_prompt
         # prompts
         self.CHAT_PROMPT_SYSTEM = CHAT_PROMPT_SYSTEM
         self.ANSWERING_PROMPT = ANSWERING_PROMPT
-        # generators
-        self.base_generator = outlines.generate.text(self.model)
-        self.reflist_generator = outlines.generate.regex(self.model, REFLIST_REGEX)
 
     def count_tokens(self, text:str) -> int:
         """
@@ -256,31 +241,34 @@ class LanguageModel(ABC):
             
         return output_string
 
-    def generate(self, text:str, verbose:bool=False, generator:SequenceGenerator=None) -> str:
+    def generate(self, prompt:str, stopwords:List[str]=[], verbose:bool=False) -> str:
         """
         Query the model and get a response.
+        NOTE: this function is written to deal with a single piece of text, not a batch
 
         Args:
-            input_data (str): the text prompt
+            prompt (str): the text prompt
+            stopwords (List[str]): the words on which to stop the generation, if any
             verbose (bool): should we print debug information? (defaults to False)
-            generator (SequenceGenerator): outline generator and the counstraints that go with it
 
         Returns:
             str: The generated response from the model.
-        """
-        # picks a generator, defaults to basic text completion
-        if generator is None:
-            generator = self.base_generator
+        """       
+        # tokenize the input text
+        inputs_tokens = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
 
-        # runs the generator
-        output = generator(text)
+        # runs the LLM, producing tokens for output=input+answer
+        output_tokens = self.model.generate(inputs_tokens, max_length=self.context_size)[0]
+
+        # extract answer tokens
+        answer_tokens = output_tokens[inputs_tokens.size(-1):]
+
+        # turn answer tokens into answer text
+        answer = self.tokenizer.decode(answer_tokens, skip_special_tokens=True)
 
         # debugging information
-        if verbose:
-            print(text)
-            print(output)
-
-        return output
+        if verbose: print(f"{prompt}\n{answer}")
+        return answer
 
     def extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
         """
@@ -297,34 +285,8 @@ class LanguageModel(ABC):
         prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_question_size)
         # prime the model to extract the question
         prompt_question_extraction = prompt + 'If I understand you clearly, your question is: "'
-        question = self.base_generator(prompt_question_extraction, stop_at='"')[:-1]
+        question = self.generate(prompt_question_extraction, stopwords=['"'], verbose=verbose)[:-1]
         return question
-
-    def extract_keywords(self, previous_messages:List[Dict], verbose=False) -> str:
-        """
-        Tries to extract relevant search keywords
-        """
-        # builds the messages
-        system_message = {"role": "system", "content": self.CHAT_PROMPT_SYSTEM}
-        formatted_discussion = [{**message, 'relevancy': i} for (i,message) in enumerate(previous_messages)]
-        messages = [system_message] + formatted_discussion
-        # builds the base prompt
-        prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_question_size)
-        # prime the model to extract the keywords
-        prompt_keyword_extraction = prompt + 'Search for the following in the NERSC documentation\'s search bar; it will give you the relevant pages: "'
-        keywords = self.base_generator(prompt_keyword_extraction, stop_at='"')[:-1]
-        # redo it to get some synonyms
-        prompt_keyword_extraction2 = prompt_keyword_extraction + keywords + '"\nDo not hesitate to use synonyms or more general terms in case the keywords you used are not present on the page with your answer. For example: "'
-        keywords2 = self.base_generator(prompt_keyword_extraction2, stop_at='"')[:-1]
-        # even more
-        prompt_keyword_extraction3 = prompt_keyword_extraction2 + keywords2 + '\" or: "'
-        keywords3 = self.base_generator(prompt_keyword_extraction3, stop_at='"')[:-1]
-        # merge keywords
-        keywords = f"{keywords} {keywords2} {keywords3}"
-        # remove punctuation
-        no_punctuation_translator = str.maketrans('', '', string.punctuation)
-        keywords = keywords.translate(no_punctuation_translator)
-        return keywords
 
     def chat(self, discussion:List[Dict[str, str]], chunks:List[Chunk], verbose=False) -> str:
         """
@@ -358,7 +320,7 @@ class LanguageModel(ABC):
         # generates an answer in two part to ensure it follows our prefered format
         # 1. body of the answer
         reference_section_titles = ["References:", "Reference(s):", "Sources:", "Ressources:", "Source URL:", "Source URLs:"]
-        answer_body = self.base_generator(prompt, stop_at=reference_section_titles)
+        answer_body = self.generate(prompt, stopwords=reference_section_titles, verbose=verbose)
         # Normalize reference section title
         for title in reference_section_titles:
             answer_body = answer_body.replace(title, "References:")
@@ -372,12 +334,11 @@ class LanguageModel(ABC):
                 answer_body += "\n\nReferences:"
         # 2. references, generating following our prefered format
         prompt_extended = prompt + answer_body + '\n'
-        answer_references = self.reflist_generator(prompt_extended)
+        answer_references = self.generate(prompt_extended, verbose=verbose)
         # keep only valid references
         answer_references = validate_references(answer_references, chunks, prompt)
         # assemble the answer
         answer = answer_body + '\n' + answer_references
-
         return answer
 
 from .llama2 import Llama2 #hallucinate often
@@ -393,3 +354,12 @@ from .snorkel import Snorkel # good answers but high hallucinations
 from .starling import Starling, StarlingCode # TODO currently segfaults
 # the default model
 Default = Mistral
+
+"""
+TODO:
+* fix warnings
+  The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+  Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+* use stopwords
+* fix reference cleaning
+"""

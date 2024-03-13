@@ -46,8 +46,8 @@ In no particular order:
 
 * refresh prompt (and move information chunks elsewhere?)
 * try using the reranker (or just TFIDF) to pick the best references?
+* refuse `svg` files from the doc
 
-* try `device_map="auto"`, is loading faster?
 * retry Gemma once bugfixes have been pushed to latest hugginface
 
 * we only use `start` and `stop` words from outline (FSM capabilities are touched but not vital): remove dependency?

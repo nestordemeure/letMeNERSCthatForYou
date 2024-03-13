@@ -29,6 +29,7 @@ class QuestionAnswerer:
         # stores information for later debugging
         self.latest_question = question
         self.latest_chunks = chunks
+        return answer
 
     def chat(self, messages:List[Dict], max_context_size=8, verbose=False) -> Dict:
         """
