@@ -11,7 +11,7 @@ class StopWordStoppingCriteria(StoppingCriteria):
     Inspired by https://discuss.huggingface.co/t/implimentation-of-stopping-criteria-list/20040/9
     And: https://github.com/outlines-dev/outlines/blob/main/outlines/generate/api.py
     """
-    def __init__(self, tokenizer:AutoTokenizer, prompts:List[str], stop_words:List[str]=[], check_every:int=10):
+    def __init__(self, tokenizer:AutoTokenizer, prompts:List[str], stop_words:List[str]=[], check_every:int=20):
         """
         tokenizer is the tokenizer used by the model
         prompts are the input prompts (to identify new tokens)
@@ -79,7 +79,7 @@ class StopWordStoppingCriteria(StoppingCriteria):
                         # records the stop index
                         lower_stop_index = min(stop_index, lower_stop_index)
             # cut the text a the first stopword if any
-            answer_text = answer_text[:stop_index]
+            answer_text = answer_text[:lower_stop_index]
             # add to results
             result.append(answer_text)
         return result
