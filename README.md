@@ -50,11 +50,6 @@ In no particular order:
 
 * retry Gemma once bugfixes have been pushed to latest hugginface
 
-* we only use `start` and `stop` words from outline (FSM capabilities are touched but not vital): remove dependency?
-  * remove deoendency?
-  * see [this](https://discuss.huggingface.co/t/implimentation-of-stopping-criteria-list/20040/16) for a stop_at implementation
-    see also outline's SequenceGenerator implementation
-
 * document the inner-workings,
 * establish a canonical list of test questions / conversations,
 * move this code to the NERSC github,

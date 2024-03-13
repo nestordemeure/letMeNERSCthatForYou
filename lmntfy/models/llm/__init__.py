@@ -6,6 +6,7 @@ from copy import copy
 from typing import List, Dict
 from ...database.document_loader import Chunk
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from .utilities import StopWordStoppingCriteria
 
 #----------------------------------------------------------------------------------------
 # PROMPTS
@@ -253,18 +254,18 @@ class LanguageModel(ABC):
 
         Returns:
             str: The generated response from the model.
-        """       
+        """
+        # used to stop on the stop words
+        stopping_criteria = StopWordStoppingCriteria(tokenizer=self.tokenizer, prompts=[prompt], stop_words=stopwords)
+
         # tokenize the input text
         inputs_tokens = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
 
-        # runs the LLM, producing tokens for output=input+answer
-        output_tokens = self.model.generate(inputs_tokens, max_length=self.context_size)[0]
-
-        # extract answer tokens
-        answer_tokens = output_tokens[inputs_tokens.size(-1):]
-
-        # turn answer tokens into answer text
-        answer = self.tokenizer.decode(answer_tokens, skip_special_tokens=True)
+        # runs the LLM, producing tokens for output=input+answer+stopword+?
+        output_tokens = self.model.generate(inputs_tokens, max_length=self.context_size, stopping_criteria=[stopping_criteria])
+        
+        # extract answer text from output tokens
+        answer = stopping_criteria.extract_answers(output_tokens)[0]
 
         # debugging information
         if verbose: print(f"{prompt}\n{answer}")
@@ -360,6 +361,5 @@ TODO:
 * fix warnings
   The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
   Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
-* use stopwords
 * fix reference cleaning
 """
