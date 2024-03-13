@@ -1,2 +1,2 @@
-from .stopping_criteria import StopWordStoppingCriteria
+from .stopping_criteria import StopWordCriteria
 from .reference_cleaning import validate_references, format_reference_list

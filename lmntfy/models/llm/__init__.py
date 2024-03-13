@@ -3,7 +3,7 @@ from copy import copy
 from typing import List, Dict
 from ...database.document_loader import Chunk
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from .utilities import StopWordStoppingCriteria, validate_references, format_reference_list
+from .utilities import StopWordCriteria, validate_references, format_reference_list
 
 #----------------------------------------------------------------------------------------
 # PROMPTS
@@ -192,7 +192,7 @@ class LanguageModel(ABC):
             str: The generated response from the model.
         """
         # used to stop on the stop words
-        stopping_criteria = StopWordStoppingCriteria(tokenizer=self.tokenizer, prompts=[prompt], stop_words=stopwords)
+        stopping_criteria = StopWordCriteria(tokenizer=self.tokenizer, prompts=[prompt], stop_words=stopwords)
 
         # tokenize the input text
         inputs_tokens = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
