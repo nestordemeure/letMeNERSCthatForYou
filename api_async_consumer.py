@@ -160,8 +160,14 @@ async def main():
         while True:
             start_time = time.time()
 
-            # Filter out the completed tasks
-            running_tasks = [task for task in running_tasks if not task.done()]
+            # filter out completed tasks and raise exeptions
+            new_running_tasks = []
+            for task in running_tasks: 
+                if task.exception(): 
+                    raise task.exception()
+                elif not task.done():
+                    new_running_tasks.append(task)
+            running_tasks = new_running_tasks
 
             # Get conversations as JSON
             conversations = await fetch_conversations(session, input_endpoint, oauth_client, args.max_refresh_time, args.verbose)
