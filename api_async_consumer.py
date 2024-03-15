@@ -145,6 +145,8 @@ async def main():
     database = lmntfy.database.Default(args.docs_folder, args.database_folder, llm, embedder, reranker, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
     semaphore = asyncio.Semaphore(args.max_concurrent_tasks)
+    # run a test question to make sure the model has enough memory for its needs
+    question_answerer.chat(messages=[{'role':'user', 'content':'This is a text, write a long, VERY LONG, description of the things NERSC an do.'}])
 
     # API details
     input_endpoint = f"{API_BASE_URL}/ai/docs/work"
@@ -163,10 +165,12 @@ async def main():
             # filter out completed tasks and raise exeptions
             new_running_tasks = []
             for task in running_tasks: 
-                if task.exception(): 
-                    raise task.exception()
-                elif not task.done():
+                if not task.done():
+                    # keep the task for the next round
                     new_running_tasks.append(task)
+                elif task.exception():
+                    # if done but exception, triggers
+                    raise task.exception()
             running_tasks = new_running_tasks
 
             # Get conversations as JSON
