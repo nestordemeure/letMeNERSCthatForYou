@@ -5,7 +5,7 @@
 JOB_NAME=singleton_chatbot_worker # Name of the original job to check in the SLURM queue
 RESTART_JOB_NAME="${JOB_NAME}_restarted" # Name for restarted job
 RESTART_JOB_INDICATOR="restart" # Indicator to identify restart jobs, can be part of the job name or description
-END_TIME=$(date -d "tomorrow 01:15 AM PST" "+%s") # Target end time for the script
+END_TIME=$(date -d 'tomorrow 01:15 AM' "+%s") # Target end time for the script
 OUTPUT_PATH="/global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/data/logs/api_worker/restarted_worker_output-%j.out" # Path for SLURM job output files
 
 # Check if the original job is already running
