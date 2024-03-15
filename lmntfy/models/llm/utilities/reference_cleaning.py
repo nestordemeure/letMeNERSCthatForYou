@@ -32,7 +32,6 @@ def validate_references(urls:List[str], chunks:List[Chunk], prompt:str, stem_bef
     - stem_before_validation (bool): should we ignore the # section at the end of the url when validating?
 
     Returns urls that are:
-    - a NERSC url (https://docs.nersc.gov or https://nersc.gov)
     - a chunk's url OR previously referenced OR in a chunk
 
     Returns DEFAULT_REFERENCES if no valid reference is found.
@@ -48,15 +47,12 @@ def validate_references(urls:List[str], chunks:List[Chunk], prompt:str, stem_bef
     # set of urls accepted
     accepted_urls = chunk_urls | prompt_urls
 
-    # keep only urls that are:
-    # * a NERSC url
-    # * previously referenced OR a chunk url OR in a chunk
+    # keep only urls that are previously referenced OR a chunk url OR in a chunk
     valid_urls = set()
     for url in urls:
         stemmed_url = stemmer(url)
-        if (url.startswith('https://docs.nersc.gov') or url.startswith('https://nersc.gov')) and \
-            ((stemmed_url in accepted_urls) or any((stemmed_url in chunk.content) for chunk in chunks)):
-                valid_urls.add(url)
+        if ((stemmed_url in accepted_urls) or any((stemmed_url in chunk.content) for chunk in chunks)):
+            valid_urls.add(url)
     
     # returns, providing default urls if none was valid
     return DEFAULT_REFERENCES if (len(valid_urls) == 0) else valid_urls

@@ -47,6 +47,7 @@ In no particular order:
 * refresh prompt (and move information chunks elsewhere?)
 * try using the reranker (or just TFIDF) to pick the best references?
 * refuse `svg` files from the doc (which file types are in the doc?)
+* allow links from accepted domains (ie wikipedia, cppref) if they are valid (requiers a web request)
 
 * try solar, starling-11b
 * retry Gemma once bugfixes have been pushed to latest hugginface
