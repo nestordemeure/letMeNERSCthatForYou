@@ -60,7 +60,11 @@ In no particular order:
 * add a [page rank](https://en.wikipedia.org/wiki/PageRank) type of score to documentation items? (to be integrated with the vector search)
 * try a home-trained model,
 
-* batch process questions and make sure we can load balance to deal with large number of users (using vLLM?).
+* batch process questions and make sure we can load balance to deal with large number of users (using [vLLM](https://docs.vllm.ai/en/latest/getting_started/quickstart.html#offline-batched-inference)?).
+* move to vLLM:
+  * add vLLM-based LLM class with generate method overloaded
+  * add stopwords
+  * make sure async method in worker is not blocking
 
 ## Developers
 

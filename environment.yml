@@ -4,25 +4,27 @@ channels:
   - nvidia
   - huggingface
   - conda-forge
+  - defaults
 dependencies:
-  - python~=3.11
+  - python~=3.10
   - pip
   - faiss-cpu~=1.7.4  # CPU version of the FAISS library for efficient similarity search
   - sentence-transformers~=2.5.0  # For generating sentence embeddings
   - rich~=13.7.0  # Rich text and formatting in the terminal
   - pytorch
-  - pytorch-cuda=11.7 # compatible with perlmutter default
-  - cudatoolkit=11.7 # compatible with perlmutter default
+  - pytorch-cuda=12.1
   - huggingface_hub
   - transformers
   - accelerate
   - protobuf
   - aiohttp # async http requests
-  - whoosh # search engine
+  - whoosh # search engine (not currently used)
   - gensim # text comparison
   - pip:
     - sfapi_client~=0.0.6 # Python client for NERSC SF API
     - flash-attn # support for flash attention2
+    - vllm # cuda12 install
+prefix: /global/cfs/cdirs/nstaff/chatbot/conda
 # use the following to check that you have a GPU version of Pytorch:
 # conda list pytorch
 #

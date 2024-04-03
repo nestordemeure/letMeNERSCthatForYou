@@ -52,7 +52,13 @@ def validate_references(urls:List[str], chunks:List[Chunk], prompt:str, stem_bef
     for url in urls:
         stemmed_url = stemmer(url)
         if ((stemmed_url in accepted_urls) or any((stemmed_url in chunk.content) for chunk in chunks)):
+            # known url
             valid_urls.add(url)
+        # NOTE: experiemnt with opening us up to generated urls
+        #elif (not url.startswith('https://docs.nersc.gov/')) and validators.url(url):
+        #    # valid, unknown, url
+        #    url = f"{url} (VALIDATED)"
+        #    valid_urls.add(url)
     
     # returns, providing default urls if none was valid
     return DEFAULT_REFERENCES if (len(valid_urls) == 0) else valid_urls
