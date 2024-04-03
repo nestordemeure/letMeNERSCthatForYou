@@ -8,11 +8,12 @@ channels:
 dependencies:
   - python~=3.10
   - pip
-  - faiss-cpu~=1.7.4  # CPU version of the FAISS library for efficient similarity search
+  - faiss-cpu~=1.8.0  # CPU version of the FAISS library for efficient similarity search
   - sentence-transformers~=2.5.0  # For generating sentence embeddings
   - rich~=13.7.0  # Rich text and formatting in the terminal
   - pytorch
-  - pytorch-cuda=12.1
+  - pytorch-cuda=12.1 # pytorch
+  - cuda-toolkit=12.1 # corresponding cuda-toolkit
   - huggingface_hub
   - transformers
   - accelerate
