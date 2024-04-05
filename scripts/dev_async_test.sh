@@ -16,7 +16,6 @@ documentation_folder="$data_folder/nersc_doc/docs"
 database_folder="$data_folder/database"
 python_instance="$chatbot_root/conda/chatbot/bin/python3"
 
-# Update the documentation
-# Using python_instance to run the update_database script in code_folder
-$python_instance $dev_code_folder/check_retrieval.py --docs_folder $documentation_folder --database_folder $database_folder --models_folder $models_folder
-
+# runs the worker
+# Using python_instance to run the chatbot script in code_folder
+$python_instance $dev_code_folder/local_async_stresstester.py --docs_folder $documentation_folder --database_folder $database_folder --models_folder $models_folder

@@ -1,5 +1,6 @@
 import lmntfy
 import argparse
+import asyncio
 from pathlib import Path
 
 def parse_args():
@@ -13,9 +14,9 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def main():
+async def main():
     # process command line arguments
-    args= parse_args()
+    args = parse_args()
     docs_folder = args.docs_folder
     database_folder = args.database_folder
     models_folder = args.models_folder
@@ -42,10 +43,10 @@ def main():
                           "How can I run a job on GPU?"]
                           #"What is the meaning of life?",
                           #"What is NERSC?"]
-        lmntfy.user_interface.command_line.answer_questions(question_answerer, test_questions)
+        await lmntfy.user_interface.command_line.answer_questions(question_answerer, test_questions)
     else:
         # chat with the model
-        lmntfy.user_interface.command_line.chat(question_answerer)
- 
+        await lmntfy.user_interface.command_line.chat(question_answerer)
+
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -60,9 +60,6 @@ async def fetch_conversations(session, input_endpoint, oauth_client, max_refresh
         print(f"\nGET:\n{json.dumps(conversations, indent=4)}")
     return conversations
 
-# Global lock to ensure thread safety in async environments
-chat_lock = asyncio.Lock()
-
 async def post_answer(session, oauth_client, output_endpoint, id, answer, verbose=False):
     """
     Post the generated answer or error message to the specified output endpoint.
@@ -93,11 +90,8 @@ async def process_conversation(session, oauth_client, output_endpoint, question_
     Process an individual conversation by generating a response and posting it to the output endpoint.
     """
     try:
-        # Ensures only one coroutine at a time can call question_answerer.chat
-        async with chat_lock:
-            # Generates an answer using the question_answerer model.
-            # Run the blocking function in a separate thread to let other threads do their processing
-            answer = await asyncio.to_thread(question_answerer.chat, messages)
+        # Generates an answer using the question_answerer model.
+        answer = await question_answerer.chat(messages)
     except Exception as e:
         # generate an error message
         answer = {'role': 'assistant', 'content': "Error: I am terribly sorry, but the Documentation chatbot is currently experiencing technical difficulties. Please try again in ten minutes or more."}

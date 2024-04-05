@@ -2,6 +2,7 @@ from abc import ABC
 from copy import copy
 from typing import List, Dict
 from ...database.document_loader import Chunk
+import asyncio
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from .utilities import StopWordCriteria, validate_references, format_reference_list
 
@@ -44,6 +45,9 @@ References:
 
 #----------------------------------------------------------------------------------------
 # MODEL ABSTRACTION
+
+# Ensure that not more than one transformer model is currently running on the GPU
+transformer_gpu_lock = asyncio.Lock()
 
 class LanguageModel(ABC):
     """
@@ -177,10 +181,12 @@ class LanguageModel(ABC):
             
         return output_string
 
-    def generate(self, prompt:str, stopwords:List[str]=[], strip_stopword:bool=True, verbose:bool=False) -> str:
+    async def generate(self, prompt:str, stopwords:List[str]=[], strip_stopword:bool=True, verbose:bool=False) -> str:
         """
         Query the model and get a response.
-        NOTE: this function is written to deal with a single piece of text, not a batch
+        NOTE: 
+        * this function is written to deal with a single piece of text, not a batch
+        * this function is not async
 
         Args:
             prompt (str): the text prompt
@@ -198,11 +204,20 @@ class LanguageModel(ABC):
         inputs_tokens = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
 
         # runs the LLM, producing tokens for output=input+answer+stopword+?
-        output_tokens = self.model.generate(inputs_tokens, 
-                                            max_length=self.context_size, 
-                                            pad_token_id=self.tokenizer.eos_token_id,
-                                            stopping_criteria=[stopping_criteria])
-        
+        #output_tokens = self.model.generate(inputs_tokens, 
+        #                                    max_length=self.context_size, 
+        #                                    pad_token_id=self.tokenizer.eos_token_id,
+        #                                    stopping_criteria=[stopping_criteria])
+        # NOTE: we ensure that only one request is currently running on the GPU
+        #       meanwhile, other CPU tasks can be done
+        #       -> we could cut the code and have this engine be actualy synchronous (but this would be bad)
+        async with transformer_gpu_lock:
+            output_tokens = await asyncio.to_thread(self.model.generate, 
+                                                    inputs_tokens, 
+                                                    max_length=self.context_size, 
+                                                    pad_token_id=self.tokenizer.eos_token_id,
+                                                    stopping_criteria=[stopping_criteria])
+
         # extract answer text from output tokens, cutting prompt and stop words
         answer = stopping_criteria.extract_answers(output_tokens, strip_stopword=strip_stopword)[0]
 
@@ -210,7 +225,7 @@ class LanguageModel(ABC):
         if verbose: print(f"{prompt}\n{answer}")
         return answer
 
-    def extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
+    async def extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
         """
         Tries to extract the last question.
         """
@@ -225,10 +240,10 @@ class LanguageModel(ABC):
         prompt = self.apply_chat_template(messages, nb_tokens_max=self.context_size-self.upper_question_size)
         # prime the model to extract the question
         prompt_question_extraction = prompt + 'If I understand you clearly, your question is: "'
-        question = self.generate(prompt_question_extraction, stopwords=['"'], verbose=verbose)[:-1]
+        question = await self.generate(prompt_question_extraction, stopwords=['"'], verbose=verbose)
         return question
 
-    def chat(self, discussion:List[Dict[str, str]], chunks:List[Chunk], verbose=False) -> str:
+    async def chat(self, discussion:List[Dict[str, str]], chunks:List[Chunk], verbose=False) -> str:
         """
         Chat with the model given the previous messages
         and relevant chunks of the documentation to enrich the chat.
@@ -258,13 +273,13 @@ class LanguageModel(ABC):
 
         # generates an answer, stopping at the reference section
         reference_section_titles = ["References:", "Reference(s):", "Sources:", "Ressources:", "Source URL:", "Source URLs:"]
-        answer_body = self.generate(prompt, stopwords=reference_section_titles, verbose=verbose)
+        answer_body = await self.generate(prompt, stopwords=reference_section_titles, verbose=verbose)
         # generate a reference section to go with the answer
-        reference_section = self.add_references(prompt + answer_body, chunks, verbose=verbose)
+        reference_section = await self.add_references(prompt + answer_body, chunks, verbose=verbose)
         # assemble the answer
         return answer_body + '\n\n' + reference_section
 
-    def add_references(self, original_prompt: str, chunks: List[Chunk], verbose: bool = False) -> str:
+    async def add_references(self, original_prompt: str, chunks: List[Chunk], verbose: bool = False) -> str:
         """
         Generates a reference section for a given prompt using specified documentation chunks.
 
@@ -283,7 +298,7 @@ class LanguageModel(ABC):
         urls = []
         for _ in chunks:
             # Generate a reference, stops if it is done or ready to start a new reference
-            generated_reference = self.generate(prompt, stopwords=['<'], strip_stopword=False, verbose=verbose)
+            generated_reference = await self.generate(prompt, stopwords=['<'], strip_stopword=False, verbose=verbose)
             # Update the prompt for the next generation
             prompt += generated_reference
             # Extracts the url
@@ -299,7 +314,7 @@ class LanguageModel(ABC):
         reference_section = "References:\n" + format_reference_list(valid_urls)
         return reference_section
 
-
+# Transformers
 from .llama2 import Llama2 #hallucinate often
 from .vicuna import Vicuna #good but I have had some cut-offs problems
 from .mistral import Mistral #good at answering, not at picking references
@@ -312,5 +327,7 @@ from .qwen import Qwen # really nice (feels competitive with mistral)
 from .snorkel import Snorkel # good answers but high hallucinations
 from .starling import Starling # a bit verbose but very good
 from .starling import StarlingCode # not as good as base (understandable as this one is for code writing only)
-# the default model
+# vLLM
+from .utilities.vllm_backend import MistralVllm
+# default model
 Default = Mistral

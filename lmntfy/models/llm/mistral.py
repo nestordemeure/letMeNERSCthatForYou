@@ -9,6 +9,6 @@ class Mistral(LanguageModel):
                  use_system_prompt=False,
                  device='cuda'):
         super().__init__(models_folder / model_name, use_system_prompt=use_system_prompt, device=device,
-                         model_kwargs={'torch_dtype':torch.bfloat16, 'attn_implementation':'flash_attention_2'})
+                         model_kwargs={'torch_dtype':torch.bfloat16}) # TODO fix 'attn_implementation':'flash_attention_2'
         self.upper_answer_size = 450
         self.upper_question_size = 200

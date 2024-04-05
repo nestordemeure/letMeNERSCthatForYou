@@ -14,10 +14,10 @@ def display_logo():
 ╚══════╝╚═╝     ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═╝        ╚═╝   "
     print(lmntfy)
 
-def answer_question(question_answerer:QuestionAnswerer, question, verbose=False) -> str:
+async def answer_question(question_answerer:QuestionAnswerer, question, verbose=False) -> str:
     """answers a single question"""
     # gets an answer
-    answer = question_answerer.get_answer(question, verbose=verbose)
+    answer = await question_answerer.get_answer(question, verbose=verbose)
     # pretty prints the answer
     markdown_answer = Markdown(answer)
     print()
@@ -25,8 +25,9 @@ def answer_question(question_answerer:QuestionAnswerer, question, verbose=False)
     print()
     return answer
 
-def answer_questions(question_answerer:QuestionAnswerer, questions:List[str], verbose=False) -> List[str]:
+async def answer_questions(question_answerer:QuestionAnswerer, questions:List[str], verbose=False) -> List[str]:
     """run on a handful of test question for quick evaluation purposes"""
+    # NOTE: we could run those concurently, but it is only faster on a true async llmengine
     answers = []
     console = Console()
     print()
@@ -34,7 +35,7 @@ def answer_questions(question_answerer:QuestionAnswerer, questions:List[str], ve
         # displays question
         print(f"> {question}")
         # gets an answer and stores it
-        answer = question_answerer.get_answer(question, verbose=verbose)
+        answer = await question_answerer.get_answer(question, verbose=verbose)
         answers.append(answer)
         # pretty prints the answer
         markdown_answer = Markdown(answer)
@@ -43,7 +44,7 @@ def answer_questions(question_answerer:QuestionAnswerer, questions:List[str], ve
         print()
     return answers
 
-def chat(question_answerer:QuestionAnswerer, verbose=False) -> List[Dict]:
+async def chat(question_answerer:QuestionAnswerer, verbose=False) -> List[Dict]:
     """chat with the model"""
     messages = []
     console = Console()
@@ -61,7 +62,7 @@ def chat(question_answerer:QuestionAnswerer, verbose=False) -> List[Dict]:
             question = user_input
             messages.append({'role':'user', 'content': question})
             # gets an answer and stores it
-            answer_message = question_answerer.chat(messages, verbose=verbose)
+            answer_message = await question_answerer.chat(messages, verbose=verbose)
             messages.append(answer_message)
         # pretty prints the answer
         markdown_answer = Markdown(answer_message['content'])

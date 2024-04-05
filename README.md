@@ -44,8 +44,10 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
+* move to container
+* get flash attention back to working[^error]
+
 * refresh prompt (and move information chunks elsewhere?)
-* try using the reranker (or just TFIDF) to pick the best references?
 * refuse `svg` files from the doc (which file types are in the doc?)
 * allow links from accepted domains (ie wikipedia, cppref) if they are valid (requiers a web request)
 
@@ -62,9 +64,10 @@ In no particular order:
 
 * batch process questions and make sure we can load balance to deal with large number of users (using [vLLM](https://docs.vllm.ai/en/latest/getting_started/quickstart.html#offline-batched-inference)?).
 * move to vLLM:
-  * add vLLM-based LLM class with generate method overloaded
-  * add stopwords
-  * make sure async method in worker is not blocking
+  * introduce llmengine abstraction
+  * use all gpus
+
+[^error]: Currently, running `python -c "import flash_attn"` triggers a `ImportError: libcudart.so.11.0: cannot open shared object file: No such file or directory` error.
 
 ## Developers
 
