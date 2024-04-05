@@ -65,7 +65,7 @@ In no particular order:
 * batch process questions and make sure we can load balance to deal with large number of users (using [vLLM](https://docs.vllm.ai/en/latest/getting_started/quickstart.html#offline-batched-inference)?).
 * move to vLLM:
   * introduce llmengine abstraction
-  * use all gpus
+  * get multigpu working (currently 3 requests, one per gpu, never return?) and introduce logic to count available GPUs
 
 [^error]: Currently, running `python -c "import flash_attn"` triggers a `ImportError: libcudart.so.11.0: cannot open shared object file: No such file or directory` error.
 

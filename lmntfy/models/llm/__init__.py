@@ -330,4 +330,4 @@ from .starling import StarlingCode # not as good as base (understandable as this
 # vLLM
 from .utilities.vllm_backend import MistralVllm
 # default model
-Default = Mistral
+Default = MistralVllm

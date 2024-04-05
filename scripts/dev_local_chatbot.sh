@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # load dependencies
-module load python/3.10 cudatoolkit/12.2 cudnn/8.9.3_cuda12
+module load python/3.10 cudatoolkit/12.0 cudnn/8.9.3_cuda12 pytorch/2.1.0-cu12
 conda activate /global/cfs/cdirs/nstaff/chatbot/conda/chatbot
 
 # base folder

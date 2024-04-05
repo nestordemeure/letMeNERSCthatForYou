@@ -48,7 +48,7 @@ async def client_task(question_answerer: QuestionAnswerer, client_id:int, nb_mes
         display_answer = answer_message['content'] if (len(answer_message['content']) < 10) else (answer_message['content'][:10] + "...")
         print(f"Client {client_id} received answer {message_id}/{nb_messages}: '{display_answer}'")
 
-async def main(nb_clients:int=3, nb_messages:int=3):
+async def main(nb_clients:int=10, nb_messages:int=5):
     """
     Set up and run chat sessions concurrently.
 
@@ -75,6 +75,7 @@ async def main(nb_clients:int=3, nb_messages:int=3):
     # Create and start tasks for all clients
     tasks = [client_task(question_answerer, i, nb_messages) for i in range(1, nb_clients+1)]
     await asyncio.gather(*tasks)
+    return
 
 # Entry point of the script
 if __name__ == "__main__":
