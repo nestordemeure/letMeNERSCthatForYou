@@ -1,5 +1,5 @@
 from pathlib import Path
-from . import LanguageModel
+from .. import LanguageModel
 from ..engine import VllmEngine
 
 class Qwen(LanguageModel):

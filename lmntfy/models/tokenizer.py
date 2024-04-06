@@ -41,9 +41,10 @@ class ChatTokenizer(Tokenizer):
 
         if `use_system_prompt` is False, then the system prompt will be converted into a starting message
     """
-    def __init__(self, pretrained_model_name_or_path:str, context_size:int=None, chat_template:str=None):
+    def __init__(self, pretrained_model_name_or_path:str, context_size:int=None, chat_template:str=None, use_system_prompt:bool=True):
         super().__init__(pretrained_model_name_or_path, context_size)
         # loads chat specific, tokenizer-dependant parameters
+        self.use_system_prompt = use_system_prompt
         self._set_upper_sizes()
         self._set_chat_template(chat_template)
 

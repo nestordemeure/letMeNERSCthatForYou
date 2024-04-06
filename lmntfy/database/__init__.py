@@ -132,7 +132,7 @@ class Database(ABC):
         chunks = chunk_file(file_path, self.documentation_folder, self.llm.count_tokens, max_tokens_per_chunk)
         for chunk in chunks:
             # slice chunk into sub chunks small enough to be embedded
-            sub_chunks = markdown_splitter(chunk.url, chunk.content, self.embedder.count_tokens, self.embedder.max_input_tokens)
+            sub_chunks = markdown_splitter(chunk.url, chunk.content, self.embedder.count_tokens, self.embedder.context_size)
             for sub_chunk in sub_chunks:
                 # compute the embedding of the sub-chunk
                 embedding = self.embedder.embed(sub_chunk.content)

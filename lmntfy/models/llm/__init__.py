@@ -17,9 +17,9 @@ class LanguageModel(ABC):
         self.pretrained_model_name_or_path = str(models_folder / name)
         # loads the components of the model
         self.engine: LLMEngine = engineType(self.pretrained_model_name_or_path, device=device, **engine_kwargs)
-        self.tokenizer = ChatTokenizer(self.pretrained_model_name_or_path, context_size=self.engine.context_size, chat_template=chat_template)
+        self.tokenizer = ChatTokenizer(self.pretrained_model_name_or_path, context_size=self.engine.context_size, 
+                                       chat_template=chat_template, use_system_prompt=use_system_prompt)
         # parameters of the LLM
-        self.use_system_prompt = use_system_prompt
         self.context_size = self.engine.context_size
         self.upper_answer_size = self.tokenizer.upper_answer_size
         self.upper_question_size = self.tokenizer.upper_question_size
@@ -54,6 +54,6 @@ class LanguageModel(ABC):
         Returns:
             str: The generated response from the model.
         """
-        return self.engine.generate(prompt, stopwords, strip_stopword, verbose)
+        return await self.engine.generate(prompt, stopwords, strip_stopword, verbose)
 
 from .models import *
