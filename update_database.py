@@ -23,7 +23,8 @@ def main():
     # load the database and updates it if needed
     llm = lmntfy.models.llm.Default(models_folder, device='cpu')
     embedder = lmntfy.models.embedding.Default(models_folder)
-    database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker=None, update_database=False)
+    reranker = lmntfy.models.reranker.NoReranker(models_folder)
+    database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=True)
     print("Done!")
 
 if __name__ == "__main__":

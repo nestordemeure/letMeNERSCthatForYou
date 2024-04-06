@@ -29,7 +29,7 @@ class Database(ABC):
         # names and paths
         self.name = name
         self.documentation_folder = documentation_folder.absolute().resolve()
-        self.database_folder = database_folder.absolute().resolve() / (self.name + '_' + embedder.name + '_' + reranker.name  + '_' + llm.tokenizer.name)
+        self.database_folder = database_folder.absolute().resolve() / (self.name + '_' + embedder.name + '_' + llm.tokenizer.name)
         # models
         self.llm = llm
         self.embedder = embedder

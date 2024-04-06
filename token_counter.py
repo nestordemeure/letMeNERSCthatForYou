@@ -10,9 +10,9 @@ import lmntfy
 
 # Define your model here
 models_folder = Path("/global/cfs/cdirs/nstaff/chatbot/models")
-model = lmntfy.models.llm.Default(models_folder=models_folder)
-token_counter = model.count_tokens
-print(f"Tokeniser type: {type(model.tokenizer)}")
+tokenizer = lmntfy.models.llm.Default(models_folder=models_folder, device='cpu').tokenizer
+token_counter = tokenizer.count_tokens
+print(f"Tokeniser type: {tokenizer.name}")
 
 # Load JSON data
 with open('./data/various/questions.json', 'r') as f:
