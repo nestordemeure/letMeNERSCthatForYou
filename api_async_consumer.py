@@ -91,7 +91,7 @@ async def process_conversation(session, oauth_client, output_endpoint, question_
     """
     try:
         # Generates an answer using the question_answerer model.
-        answer = await question_answerer.chat(messages)
+        answer = await question_answerer.answer_messages(messages)
     except Exception as e:
         # generate an error message
         answer = {'role': 'assistant', 'content': "Error: I am terribly sorry, but the Documentation chatbot is currently experiencing technical difficulties. Please try again in ten minutes or more."}
@@ -137,16 +137,14 @@ async def main():
     embedder = lmntfy.models.embedding.Default(args.models_folder, device='cuda')
     reranker = lmntfy.models.reranker.Default(args.models_folder, device='cuda')
     database = lmntfy.database.Default(args.docs_folder, args.database_folder, llm, embedder, reranker, update_database=False)
-    question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
-    semaphore = asyncio.Semaphore(args.max_concurrent_tasks)
-    # run a test question to make sure the model has enough memory for its needs
-    question_answerer.chat(messages=[{'role':'user', 'content':'This is a text, write a long, VERY LONG, description of the things NERSC an do.'}])
+    question_answerer = lmntfy.QuestionAnswerer(llm, database)
 
     # API details
     input_endpoint = f"{API_BASE_URL}/ai/docs/work"
     output_endpoint = f"{API_BASE_URL}/ai/docs/work_results"
     oauth_client = SFAPIOAuthClient(api_base_url=API_BASE_URL, token_url=TOKEN_URL)
-
+    
+    semaphore = asyncio.Semaphore(args.max_concurrent_tasks)
     async with aiohttp.ClientSession() as session:
         if args.verbose: 
             lmntfy.user_interface.command_line.display_logo()

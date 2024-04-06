@@ -17,12 +17,12 @@ class SentenceTransformerEmbedding(Embedding):
                  models_folder,
                  name='all-mpnet-base-v2', 
                  embedding_length=768,
-                 max_input_tokens=384,
+                 context_size=384,
                  normalized=True,
                  query_prefix='',
                  passage_prefix='',
                  device='cuda'):
-        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized,
+        super().__init__(models_folder, name, embedding_length, context_size, normalized,
                          query_prefix, passage_prefix, device)
         # loads the model
         self.model = SentenceTransformer(self.pretrained_model_name_or_path, device=device)
@@ -33,13 +33,6 @@ class SentenceTransformerEmbedding(Embedding):
         """
         return self.model.encode([text], convert_to_numpy=True, normalize_embeddings=self.normalized)[0]
 
-    def count_tokens(self, text):
-        """
-        Counts the number of tokens used to represent the given text
-        """
-        encoded_text = self.model.tokenize([text])['input_ids']
-        return encoded_text.numel()
-
 #--------------------------------------------------------------------------------------------------
 # MODELS
 
@@ -49,37 +42,10 @@ class MPNetEmbedding(SentenceTransformerEmbedding):
                  models_folder,
                  name='all-mpnet-base-v2', 
                  embedding_length=768,
-                 max_input_tokens=384,
+                 context_size=384,
                  normalized=True,
                  device=None):
-        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, device=device)
-
-# TODO cut
-class QAMPNetEmbedding(SentenceTransformerEmbedding):
-    """Q&A-tuned SBert embeddings"""
-    def __init__(self, 
-                 models_folder,
-                 name='multi-qa-mpnet-base-cos-v1', 
-                 embedding_length=768,
-                 max_input_tokens=384,
-                 normalized=True,
-                 device=None):
-        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, device=device)
-
-# TODO cut
-class SOMPNetEmbedding(SentenceTransformerEmbedding):
-    """
-    Stackoverflow tuned SBert embeddings
-    https://huggingface.co/flax-sentence-embeddings/stackoverflow_mpnet-base
-    """
-    def __init__(self, 
-                 models_folder,
-                 name='stackoverflow_mpnet-base', 
-                 embedding_length=768,
-                 max_input_tokens=384,
-                 normalized=True,
-                 device=None):
-        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, device=device)
+        super().__init__(models_folder, name, embedding_length, context_size, normalized, device=device)
 
 class E5LargeEmbedding(SentenceTransformerEmbedding):
     """
@@ -89,12 +55,12 @@ class E5LargeEmbedding(SentenceTransformerEmbedding):
                  models_folder,
                  name='e5-large-v2', 
                  embedding_length=1024,
-                 max_input_tokens=512,
+                 context_size=512,
                  normalized=True,
                  query_prefix="query: ",
                  passage_prefix="passage: ",
                  device='cuda'):
-        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, 
+        super().__init__(models_folder, name, embedding_length, context_size, normalized, 
                          query_prefix, passage_prefix, device)
 
 class E5BaseEmbedding(SentenceTransformerEmbedding):
@@ -105,12 +71,12 @@ class E5BaseEmbedding(SentenceTransformerEmbedding):
                  models_folder,
                  name='e5-base-v2', 
                  embedding_length=768,
-                 max_input_tokens=512,
+                 context_size=512,
                  normalized=True,
                  query_prefix="query: ",
                  passage_prefix="passage: ",
                  device='cuda'):
-        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, 
+        super().__init__(models_folder, name, embedding_length, context_size, normalized, 
                          query_prefix, passage_prefix, device)
 
 class GISTEmbedding(SentenceTransformerEmbedding):
@@ -121,12 +87,12 @@ class GISTEmbedding(SentenceTransformerEmbedding):
                  models_folder,
                  name='GIST-large-Embedding-v0', 
                  embedding_length=1024,
-                 max_input_tokens=512,
+                 context_size=512,
                  normalized=True,
                  query_prefix='',
                  passage_prefix='',
                  device='cuda'):
-        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, 
+        super().__init__(models_folder, name, embedding_length, context_size, normalized, 
                          query_prefix, passage_prefix, device)
 
 class BGELargeEmbedding(SentenceTransformerEmbedding):
@@ -137,12 +103,12 @@ class BGELargeEmbedding(SentenceTransformerEmbedding):
                  models_folder,
                  name='bge-large-en-v1.5', 
                  embedding_length=1024,
-                 max_input_tokens=512,
+                 context_size=512,
                  normalized=True,
                  query_prefix='Represent this sentence for searching relevant passages: ',
                  passage_prefix='',
                  device='cuda'):
-        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, 
+        super().__init__(models_folder, name, embedding_length, context_size, normalized, 
                          query_prefix, passage_prefix, device)
 
 class NomicEmbedding(SentenceTransformerEmbedding):
@@ -153,12 +119,12 @@ class NomicEmbedding(SentenceTransformerEmbedding):
                  models_folder,
                  name='nomic-embed-text-v1.5', 
                  embedding_length=768,
-                 max_input_tokens=8192,
+                 context_size=8192,
                  normalized=True,
                  query_prefix='search_query: ',
                  passage_prefix='search_document: ',
                  device='cuda'):
-        Embedding.__init__(self, models_folder, name, embedding_length, max_input_tokens, normalized,
+        Embedding.__init__(self, models_folder, name, embedding_length, context_size, normalized,
                            query_prefix, passage_prefix, device)
         # loads the model
         self.model = SentenceTransformer(self.pretrained_model_name_or_path, trust_remote_code=True, device=device)
@@ -171,10 +137,10 @@ class GTELargeEmbedding(SentenceTransformerEmbedding):
                  models_folder,
                  name='gte-large', 
                  embedding_length=1024,
-                 max_input_tokens=512,
+                 context_size=512,
                  normalized=True,
                  query_prefix='',
                  passage_prefix='',
                  device='cuda'):
-        super().__init__(models_folder, name, embedding_length, max_input_tokens, normalized, 
+        super().__init__(models_folder, name, embedding_length, context_size, normalized, 
                          query_prefix, passage_prefix, device)

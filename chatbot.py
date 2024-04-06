@@ -28,7 +28,7 @@ async def main():
     embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
     reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
     database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=False)
-    question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
+    question_answerer = lmntfy.QuestionAnswerer(llm, database)
 
     # answers questions
     if len(question) > 0:
@@ -37,7 +37,7 @@ async def main():
     else:
         # chat with the model
         lmntfy.user_interface.command_line.display_logo()
-        await lmntfy.user_interface.command_line.chat(question_answerer, verbose=False)
+        await lmntfy.user_interface.command_line.answer_messages(question_answerer, verbose=False)
  
 if __name__ == "__main__":
     asyncio.run(main())

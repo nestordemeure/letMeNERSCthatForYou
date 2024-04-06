@@ -4,7 +4,7 @@ from typing import List
 from .document_loader import Chunk, chunk_file
 from . import Database
 from ..models import LanguageModel, Embedding, Reranker
-from .file import File
+from .utilities.file import File
 from datetime import datetime
 
 from whoosh.index import exists_in, create_in, open_dir
@@ -44,9 +44,8 @@ class WhooshDatabase(Database):
     WARNING: as the index update requires modifications on file, it cannot be updated from a compute node.
     """
     def __init__(self, documentation_folder:Path, database_folder:Path,
-                       llm:LanguageModel, embedder:Embedding, reranker:Reranker=None,
-                       min_chunks_per_query=8, update_database=True,
-                       name:str='whoosh'):
+                       llm: LanguageModel, embedder: Embedding, reranker: Reranker,
+                       min_chunks_per_query=8, update_database=True, name:str='whoosh'):
         # whoosh database that will be used to store the chunks
         self.index = None
         self.current_id = 0

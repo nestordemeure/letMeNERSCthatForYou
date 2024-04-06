@@ -46,6 +46,7 @@ In no particular order:
 
 * move to container
 * get flash attention back to working[^error]
+* get vllm multigpu working (currently 3 requests, one per gpu, never return?) and introduce logic to count available GPUs
 
 * refresh prompt (and move information chunks elsewhere?)
 * refuse `svg` files from the doc (which file types are in the doc?)
@@ -61,11 +62,6 @@ In no particular order:
 * try fine-tuning sentence embedder,
 * add a [page rank](https://en.wikipedia.org/wiki/PageRank) type of score to documentation items? (to be integrated with the vector search)
 * try a home-trained model,
-
-* batch process questions and make sure we can load balance to deal with large number of users (using [vLLM](https://docs.vllm.ai/en/latest/getting_started/quickstart.html#offline-batched-inference)?).
-* move to vLLM:
-  * introduce llmengine abstraction
-  * get multigpu working (currently 3 requests, one per gpu, never return?) and introduce logic to count available GPUs
 
 [^error]: Currently, running `python -c "import flash_attn"` triggers a `ImportError: libcudart.so.11.0: cannot open shared object file: No such file or directory` error.
 

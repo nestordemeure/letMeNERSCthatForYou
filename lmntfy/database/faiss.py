@@ -8,19 +8,18 @@ from ..models import LanguageModel, Embedding, Reranker
 
 class FaissDatabase(Database):
     def __init__(self, documentation_folder:Path, database_folder:Path,
-                       llm:LanguageModel, embedder:Embedding, reranker:Reranker=None,
-                       min_chunks_per_query=8, update_database=True,
-                       name:str='faiss'):
+                       llm: LanguageModel, embedder: Embedding, reranker: Reranker,
+                       min_chunks_per_query=8, update_database=True, name:str='faiss'):
         # vector database that will be used to store the vectors
         raw_index = faiss.IndexFlatIP(embedder.embedding_length)
         # index on top of the database to support addition and deletion by id
         self.index = faiss.IndexIDMap(raw_index)
         self.current_id = 0
-        # concludes the initialisation
+        # concludes the initialisation and loads
         super().__init__(documentation_folder, database_folder, llm, embedder, reranker, min_chunks_per_query, update_database, name)
 
     def _index_add(self, embedding: np.ndarray) -> int:
-        assert (embedding.size == self.embedding_length), f"Invalid shape for embedding ({embedding.size} instead of {self.embedding_length})"
+        assert (embedding.size == self.embedder.embedding_length), f"Invalid shape for embedding ({embedding.size} instead of {self.embedder.embedding_length})"
         # create a single element batch with the embeddings and indices
         embedding_batch = embedding.reshape((1,-1))
         id_batch = np.array([self.current_id], dtype=np.int64)
@@ -34,7 +33,7 @@ class FaissDatabase(Database):
         self.index.remove_ids(np.array(indices, dtype=np.int64))
 
     def _index_get_closest(self, input_embedding: np.ndarray, k=3) -> List[int]:
-        assert (input_embedding.size == self.embedding_length), "Invalid shape for input_embedding"
+        assert (input_embedding.size == self.embedder.embedding_length), "Invalid shape for input_embedding"
         input_embedding_batch = input_embedding.reshape((1,-1))
         distances, indices = self.index.search(input_embedding_batch, k)
         return indices.flatten().tolist()

@@ -1,6 +1,6 @@
 import re
 from typing import List
-from ....database.document_loader import Chunk
+from ..database.document_loader import Chunk
 
 # references to be returned in the absence of further information
 DEFAULT_REFERENCES = ["https://docs.nersc.gov/", "https://www.nersc.gov/users/getting-help/online-help-desk/"]

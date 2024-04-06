@@ -35,13 +35,13 @@ async def client_task(question_answerer: QuestionAnswerer, client_id:int, nb_mes
         messages.append({'role': 'user', 'content': fixed_question})
         
         # raw, sync, call
-        #answer_message = question_answerer.chat(messages) # TODO async_chat?
+        #answer_message = question_answerer.answer_messages(messages) # TODO async_chat?
 
         # pseudo async, one at a time in a thread
         #async with chat_lock:
         #    answer_message = await asyncio.to_thread(question_answerer.chat, messages)
 
-        answer_message = await question_answerer.chat(messages)
+        answer_message = await question_answerer.answer_messages(messages)
 
         messages.append(answer_message)
         # Display progress with truncated answers for brevity
@@ -70,7 +70,7 @@ async def main(nb_clients:int=10, nb_messages:int=5):
     embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
     reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
     database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=False)
-    question_answerer = lmntfy.QuestionAnswerer(llm, embedder, database)
+    question_answerer = lmntfy.QuestionAnswerer(llm, database)
 
     # Create and start tasks for all clients
     tasks = [client_task(question_answerer, i, nb_messages) for i in range(1, nb_clients+1)]

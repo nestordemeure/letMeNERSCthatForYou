@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 import numpy as np
+from ..tokenizer import Tokenizer
 
 class Embedding(ABC):
     """
     See this page for a comparison of various embeddings: https://huggingface.co/spaces/mteb/leaderboard
     """
     def __init__(self, models_folder:Path, name:str, 
-                 embedding_length:int, max_input_tokens:int, normalized:bool, 
+                 embedding_length:int, context_size:int, normalized:bool, 
                  query_prefix:str='', passage_prefix:str='',
                  device:str='cuda'):
         """
@@ -15,22 +16,30 @@ class Embedding(ABC):
             models_folder (Path): The path to the directory containing the model files.
             name (str): The name of the embedding model.
             embedding_length (int): The size of the embedding vectors produced by the model.
-            max_input_tokens (int): The maximum number of tokens that can be processed in one input sequence.
+            context_size (int): The maximum number of tokens that can be processed in one input sequence.
             normalized (bool): A flag indicating whether the model's output embeddings are normalized.
             query_prefix (str): optional prefix to put in front of queries
             passage_prefix (str): optional prefix to put in front of passages
             device (str): on which device should the model be
-
         """
-        self.pretrained_model_name_or_path = str(models_folder / name)
-        self.models_folder = models_folder
+        # names of the things
         self.name = name
+        self.pretrained_model_name_or_path = str(models_folder / name)
+        # parameters of the embedding
         self.embedding_length = embedding_length
-        self.max_input_tokens = max_input_tokens
+        self.context_size = context_size
         self.normalized = normalized
         self.query_prefix = query_prefix
         self.passage_prefix = passage_prefix
         self.device=device
+        # loads the tokenizer
+        self.tokenizer = Tokenizer(self.pretrained_model_name_or_path, context_size=self.context_size)
+
+    def count_tokens(self, text:str) -> int:
+        """
+        Counts the number of tokens in a given string.
+        """
+        return self.tokenizer.count_tokens(text)
 
     def embed(self, text:str, is_query=False) -> np.ndarray:
         """
@@ -61,17 +70,7 @@ class Embedding(ABC):
         """
         pass
 
-    @abstractmethod
-    def count_tokens(self, text:str) -> int:
-        """
-        Counts the number of tokens used to represent the given text
-        """
-        pass
-
 from .sentenceTransformer import MPNetEmbedding # good overall default
-from .sentenceTransformer import QAMPNetEmbedding # finetuned for Q&A, weaker than MPNet
-from .sentenceTransformer import SOMPNetEmbedding # stackoverflow finetuned, weaker than MPNet
-from .hfTransformer import UAEEmbedding # weaker than MPNet on our tests
 from .sentenceTransformer import E5BaseEmbedding # a bit weaker than large
 from .sentenceTransformer import E5LargeEmbedding # somewhat better than MPNet?
 from .sentenceTransformer import GISTEmbedding # somewhat weaker than MPNet

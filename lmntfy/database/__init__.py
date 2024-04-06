@@ -6,10 +6,10 @@ from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Set
 from abc import ABC, abstractmethod
-from ..models import LanguageModel, Embedding, Reranker
+from ..models import LanguageModel, Embedding, embedding, Reranker, reranker
 from .document_loader import Chunk, chunk_file
 from .document_loader.markdown_spliter import markdown_splitter
-from .file import File
+from .utilities.file import File
 
 def remove_duplicates(chunks:List[Chunk]) -> Chunk:
     """remove duplicates from a list while preserving element order"""
@@ -22,23 +22,21 @@ def remove_duplicates(chunks:List[Chunk]) -> Chunk:
     return result
 
 class Database(ABC):
+    """Vector Database"""
     def __init__(self, documentation_folder:Path, database_folder:Path,
-                       llm:LanguageModel, embedder:Embedding, reranker:Reranker=None,
+                       llm: LanguageModel, embedder: Embedding, reranker: Reranker,
                        min_chunks_per_query=8, update_database=True, name:str=''):
         # names and paths
         self.name = name
         self.documentation_folder = documentation_folder.absolute().resolve()
-        self.database_folder = database_folder.absolute().resolve() / (self.name + '_' + embedder.name)
-        # llm
-        self.count_tokens_llm = llm.count_tokens # token counting function of the llm
-        self.max_tokens_per_chunk = llm.context_size / (min_chunks_per_query + 2) # maximum size of each chunk
-        # NOTE: we leave space for two additional chunks, representing the prompt and the model's answer
-        # embedder
+        self.database_folder = database_folder.absolute().resolve() / (self.name + '_' + embedder.name + '_' + reranker.name  + '_' + llm.tokenizer.name)
+        # models
+        self.llm = llm
         self.embedder = embedder
-        self.embedding_length = embedder.embedding_length
-        # reranker
         self.reranker = reranker
-        self.use_reranker = not (self.reranker is None)
+        # parameters
+        self.min_chunks_per_query = min_chunks_per_query
+        # NOTE: we leave space for two additional chunks, representing the prompt and the model's answer
         # dictionary of all files
         self.files: Dict[Path, File] = dict() # file_path -> File
         # dictionary of all chunk
@@ -78,7 +76,8 @@ class Database(ABC):
         returns the (at most) k chunks that contains pieces of text closest to the input_text according to its embedding
         """
         # we might want to query more chunks than needed then keep the best ones
-        nb_chunks_needed = (2*k) if self.use_reranker else k
+        use_reranker = not isinstance(self.reranker, reranker.NoReranker)
+        nb_chunks_needed = (2*k) if use_reranker else k
         # gets the chunks
         if len(self.chunks) <= nb_chunks_needed:
             # we get all the chunks we have
@@ -98,7 +97,7 @@ class Database(ABC):
                 # the next call will request twice as many items
                 growing_factor *= 2
         # reranks the chunks
-        chunks = self.reranker.rerank(input_text, chunks) if self.use_reranker else chunks
+        chunks = self.reranker.rerank(input_text, chunks) if use_reranker else chunks
         # keep only the required number of chunks
         return chunks[:k] if (len(chunks) > k) else chunks
 
@@ -129,7 +128,8 @@ class Database(ABC):
         file_update_date = datetime.fromtimestamp(file_path.stat().st_mtime)
         file = File(creation_date=file_update_date)
         # slice file into chunks small enough to fit several in the model's context size
-        chunks = chunk_file(file_path, self.documentation_folder, self.count_tokens_llm, self.max_tokens_per_chunk)
+        max_tokens_per_chunk = self.llm.context_size / (self.min_chunks_per_query + 2)
+        chunks = chunk_file(file_path, self.documentation_folder, self.llm.count_tokens, max_tokens_per_chunk)
         for chunk in chunks:
             # slice chunk into sub chunks small enough to be embedded
             sub_chunks = markdown_splitter(chunk.url, chunk.content, self.embedder.count_tokens, self.embedder.max_input_tokens)

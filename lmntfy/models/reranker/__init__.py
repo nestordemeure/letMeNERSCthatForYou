@@ -8,6 +8,7 @@ class Reranker(ABC):
     used to compute similarity between a query and passages
     """
     def __init__(self, models_folder:Path, name:str, device:str='cuda'):
+        self.name = name
         self.pretrained_model_name_or_path = str(models_folder / name)
         self.device = device
     
@@ -92,6 +93,7 @@ class Reranker(ABC):
         passages_kept = [passage for (passage,similarity) in passages_kept]
         return passages_kept
 
+from .noop import NoReranker # does nothing, triggers on call
 from .tfidf import TFIDFReranker # keyword based: can miss but very orthogonal to classic sentence embedding
 from .hfTransformer import BGEBaseReranker # a bit weaker than BGE large
 from .hfTransformer import BGELargeReranker # a bit lower than tfidf
