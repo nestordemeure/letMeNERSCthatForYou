@@ -1,3 +1,4 @@
+import asyncio
 from rich.markdown import Markdown
 from rich.console import Console
 from typing import List , Dict
@@ -27,15 +28,17 @@ async def answer_question(question_answerer:QuestionAnswerer, question, verbose=
 
 async def answer_questions(question_answerer:QuestionAnswerer, questions:List[str], verbose=False) -> List[str]:
     """run on a handful of test question for quick evaluation purposes"""
-    # NOTE: we could run those concurently, but it is only faster on a true async llmengine like vllm
+    # starts tasks concurently
+    tasks = [asyncio.create_task(question_answerer.answer_question(question, verbose=verbose)) for question in questions]
+    # displays the answers in order
     answers = []
     console = Console()
     print()
-    for question in questions:
+    for question, answer_task in zip(questions, tasks):
         # displays question
         print(f"> {question}")
         # gets an answer and stores it
-        answer = await question_answerer.answer_question(question, verbose=verbose)
+        answer = await answer_task
         answers.append(answer)
         # pretty prints the answer
         markdown_answer = Markdown(answer)
