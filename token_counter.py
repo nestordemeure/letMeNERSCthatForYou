@@ -105,4 +105,24 @@ Max size: 151
 90% quantile: 19.0
 95% quantile: 22.0
 99% quantile: 29.0
+
+Tokeniser type: PreTrainedTokenizerFast
+*** answer:
+Mean size: 97.19400374765772
+Median size: 86.0
+Standard deviation of size: 73.77911198753304
+Upper bound (mean+2std): 244.7522277227238
+Max size: 940
+90% quantile: 184.0
+95% quantile: 223.0
+99% quantile: 346.0
+*** question:
+Mean size: 14.171767645221736
+Median size: 13.0
+Standard deviation of size: 5.110017833585836
+Upper bound (mean+2std): 24.391803312393407
+Max size: 131
+90% quantile: 20.0
+95% quantile: 23.0
+99% quantile: 29.960000000000036
 """

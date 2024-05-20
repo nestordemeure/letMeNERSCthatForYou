@@ -1,7 +1,7 @@
 from abc import ABC
 from copy import copy
 from typing import List, Dict
-from transformers import AutoTokenizer, LlamaTokenizerFast, Qwen2TokenizerFast
+from transformers import AutoTokenizer, LlamaTokenizerFast, Qwen2TokenizerFast, PreTrainedTokenizerFast
 
 #--------------------------------------------------------------------------------------------------
 # GENERALIST
@@ -55,9 +55,15 @@ class ChatTokenizer(Tokenizer):
         if (self.tokenizer is None):
             raise RuntimeError("You need to initialize the tokenizer before you can decide on appropriate upper sizes for it.")
         elif isinstance(self.tokenizer, LlamaTokenizerFast):
+            # most llama and mistral based models
             self.upper_answer_size = 450
             self.upper_question_size = 200
+        elif isinstance(self.tokenizer, PreTrainedTokenizerFast):
+            # llama3
+            self.upper_answer_size = 400
+            self.upper_question_size = 180
         elif isinstance(self.tokenizer, Qwen2TokenizerFast):
+            # qwen models
             self.upper_answer_size = 400
             self.upper_question_size = 180
         else:
