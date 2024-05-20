@@ -37,7 +37,7 @@ async def main():
     else:
         # chat with the model
         lmntfy.user_interface.command_line.display_logo()
-        await lmntfy.user_interface.command_line.answer_messages(question_answerer, verbose=False)
+        await lmntfy.user_interface.command_line.chat(question_answerer, verbose=False)
  
 if __name__ == "__main__":
     asyncio.run(main())
