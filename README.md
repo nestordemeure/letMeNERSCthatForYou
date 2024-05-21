@@ -50,7 +50,6 @@ In no particular order:
 
 * refresh prompt (and move information chunks elsewhere?)
 * refuse `svg` files from the doc (which file types are in the doc?)
-* allow links from accepted domains (ie wikipedia, cppref) if they are valid (requiers a web request)
 
 * document the inner-workings,
 * establish a canonical list of test questions / conversations,

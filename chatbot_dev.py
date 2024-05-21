@@ -9,7 +9,7 @@ def parse_args():
     parser.add_argument("--database_folder", default="./data/database", type=Path, help="path to the database saving folder") 
     parser.add_argument("--models_folder",default="../models", type=Path, help="path to the folder containing all the models")
     parser.add_argument("--update_database", default=False, action='store_true', help="whether to update database to the current documentation")
-    parser.add_argument("--use_test_questions", default=False, action='store_true', help="whether to run on the test questions (for debugging purposes)")
+    parser.add_argument("--use_test_questions", default=True, action='store_true', help="whether to run on the test questions (for debugging purposes)")
     parser.add_argument("--debug",default=False,action="store_true",help="Print useful debug information (e.g., prompts)",)
     args = parser.parse_args()
     return args

@@ -12,10 +12,10 @@ dependencies:
   - faiss-cpu~=1.8.0  # CPU version of the FAISS library for efficient similarity search
   - sentence-transformers~=2.5.0  # For generating sentence embeddings
   - rich~=13.7.0  # Rich text and formatting in the terminal
-  - pytorch=2.1.2 # exact version needed for vllm
+  - pytorch=2.3.0 # exact version needed for vllm
   - pytorch-cuda=12.1 # pytorch
   - cuda-toolkit=12.1 # corresponding cuda-toolkit
-  - xformers=0.0.23.post1 # exact version needed for vllm
+  - xformers=0.0.26.post1 # exact version needed for vllm
   - huggingface_hub
   - transformers
   - accelerate
@@ -26,13 +26,13 @@ dependencies:
   - pip:
     - sfapi_client~=0.0.6 # Python client for NERSC SF API
     - vllm # NOTE: this bundles its own compatible pytorch+cuda
-    - flash-attn # flash-attention2
+    - vllm-flash-attn==2.5.8.post2 # flash-attention2
 prefix: /global/cfs/cdirs/nstaff/chatbot/conda/chatbot
 # use the following to check that you have a GPU version of Pytorch:
 # conda list pytorch
 #
 # be careful about the vLLM requirements:
-# https://github.com/vllm-project/vllm/blob/main/requirements.txt
+# https://github.com/vllm-project/vllm/blob/main/requirements-cuda.txt
 #
 # creating the environment:
 # conda env create --prefix /global/cfs/cdirs/nstaff/chatbot/conda/chatbot --file environment.yml

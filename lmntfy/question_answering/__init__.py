@@ -139,7 +139,6 @@ class QuestionAnswerer:
         # generates an answer, stopping at the reference section
         reference_section_titles = ["References:", "**References**:", "Reference(s):", "Sources:", "Ressources:", "Source URL:", "Source URLs:"]
         answer_body = await self.llm.generate(prompt, stopwords=reference_section_titles, verbose=verbose)
-        print(f"body: {answer_body}")
         # generate a reference section to go with the answer
         reference_section = await self._add_references(prompt + answer_body, chunks, verbose=verbose)
         # assemble the answer
