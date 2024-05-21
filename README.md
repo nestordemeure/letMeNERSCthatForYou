@@ -52,9 +52,6 @@ In no particular order:
 * refuse `svg` files from the doc (which file types are in the doc?)
 * allow links from accepted domains (ie wikipedia, cppref) if they are valid (requiers a web request)
 
-* try solar, starling-11b
-* retry Gemma once bugfixes have been pushed to latest hugginface
-
 * document the inner-workings,
 * establish a canonical list of test questions / conversations,
 * move this code to the NERSC github,
