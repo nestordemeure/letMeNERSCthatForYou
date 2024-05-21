@@ -14,7 +14,7 @@ from .mistral import StarlingCode # not as good as base (understandable as this 
 from .mistral import Mixtral # too heavy to serve on a single GPU
 from .gemma import Gemma # tends to answer not quite the question asked (TODO to be reevaluated)
 from .qwen import Qwen # really nice (feels competitive with mistral)
-from .llama3 import Llama3 # very good, if a bit litteral in its understanding of queries
+from .llama3 import Llama3, Llama3_70b # very good, if a bit litteral in its understanding of queries
 
 # default model
 Default = Llama3
