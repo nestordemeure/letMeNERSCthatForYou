@@ -48,7 +48,7 @@ async def client_task(question_answerer: QuestionAnswerer, client_id:int, nb_mes
         display_answer = answer_message['content'] if (len(answer_message['content']) < 10) else (answer_message['content'][:10] + "...")
         print(f"Client {client_id} received answer {message_id}/{nb_messages}: '{display_answer}'")
 
-async def main(nb_clients:int=4, nb_messages:int=5):
+async def main(nb_clients:int=10, nb_messages:int=10):
     """
     Set up and run chat sessions concurrently.
 

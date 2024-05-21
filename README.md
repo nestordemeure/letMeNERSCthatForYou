@@ -46,7 +46,6 @@ In no particular order:
 
 * move to container
 * get flash attention back to working[^error]
-* get vllm multigpu working (currently 3 requests, one per gpu, never return?) and introduce logic to count available GPUs
 
 * refresh prompt (and move information chunks elsewhere?)
 * refuse `svg` files from the doc (which file types are in the doc?)
