@@ -24,7 +24,7 @@ class VllmEngine(LLMEngine):
     """
     vLLM-based engine
     """
-    def __init__(self, pretrained_model_name_or_path:str, device='cuda', nb_gpus=4):
+    def __init__(self, pretrained_model_name_or_path:str, device='cuda', nb_gpus=1):
         # ensuring the device is a GPU
         if (device == 'cpu'):
             device = 'cuda'
