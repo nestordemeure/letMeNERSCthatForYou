@@ -46,7 +46,7 @@ DURATION=$((END_TIME - CURRENT_TIME))
 DURATION_HMS=$(printf '%02d:%02d:%02d' $(($DURATION / 3600)) $(($DURATION % 3600 / 60)) $(($DURATION % 60)))
 
 # Update the SBATCH command to include the new job name for restarts
-SBATCH_COMMAND="sbatch --dependency=singleton --time=$DURATION_HMS --qos cron --output=$OUTPUT_PATH -J $RESTART_JOB_NAME /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh"
+SBATCH_COMMAND="sbatch --dependency=singleton --time=$DURATION_HMS --qos preempt --output=$OUTPUT_PATH -J $RESTART_JOB_NAME /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh"
 
 # Echo the sbatch command for logging
 printf '[%s] %s \n' $(date "+%m-%d-%Y-%H:%M:%S") "$SBATCH_COMMAND"

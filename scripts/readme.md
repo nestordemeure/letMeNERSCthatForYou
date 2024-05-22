@@ -37,6 +37,8 @@ The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file look
 */5 * * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker_restarter.sh
 ```
 
+You can use `scrontab -l` to vizualize it and `scrontab -e` to tweak it.
+
 ## Various Scripts
 
 * `local_chatbot.sh` starts a chatbot running on the current node,

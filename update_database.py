@@ -21,7 +21,9 @@ def main():
     models_folder = args.models_folder
 
     # load the database and updates it if needed
-    llm = lmntfy.models.llm.Default(models_folder, device='cpu')
+    llm = lmntfy.models.llm.Default(models_folder,
+                                    # keep the model on CPU as we will not need to draw upon it
+                                    device='cpu', engineType=lmntfy.models.llm.engine.TransformerEngine)
     embedder = lmntfy.models.embedding.Default(models_folder)
     reranker = lmntfy.models.reranker.NoReranker(models_folder)
     database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=True)
