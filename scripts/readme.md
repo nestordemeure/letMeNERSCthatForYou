@@ -12,7 +12,7 @@ The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file look
 # Updates database for 10min everyday at 1am PST (9am UTC)
 #SCRON --job-name=chatbot_database_update
 #SCRON --account=nstaff
-#SCRON --time=00:10:00
+#SCRON --time=00:20:00
 #SCRON -o /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/data/logs/update_database/output-%j.out
 #SCRON --open-mode=append
 0 9 * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/update_database.sh
