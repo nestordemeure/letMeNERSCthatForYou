@@ -1,5 +1,6 @@
 import asyncio
 from typing import List
+from torch import bfloat16
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from .stopping_criteria import StopWordCriteria
 from .. import LLMEngine
@@ -13,7 +14,9 @@ class TransformerEngine(LLMEngine):
     """
     def __init__(self, pretrained_model_name_or_path:str, device='cuda', model_kwargs:dict=dict()):
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
-        self.model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path, device_map=device, **model_kwargs)
+        self.model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path, 
+                                                          device_map=device, dtype=bfloat16,
+                                                          **model_kwargs)
          # initializes the rest of the engine
         self.context_size = self.model.config.max_position_embeddings
         super().__init__(pretrained_model_name_or_path, self.context_size, device)

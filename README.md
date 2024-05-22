@@ -48,7 +48,7 @@ In no particular order:
 * get flash attention back to working[^error]
 
 * refresh prompt (and move information chunks elsewhere?)
-* refuse `svg` files from the doc (which file types are in the doc?)
+* refuse `svg` and `out` files from the doc (which file types are in the doc?)
 
 * document the inner-workings,
 * establish a canonical list of test questions / conversations,
