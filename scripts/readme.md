@@ -9,7 +9,7 @@
 The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file looks like this:
 
 ```shell
-# Updates database for 10min everyday at 1am PST (9am UTC)
+# Updates database for 20min tops everyday at 1am PST (9am UTC)
 #SCRON --job-name=chatbot_database_update
 #SCRON --account=nstaff
 #SCRON --time=00:20:00
@@ -17,16 +17,7 @@ The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file look
 #SCRON --open-mode=append
 0 9 * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/update_database.sh
 
-# Starts worker for 24h at 1:15am PST (9:15am UTC)
-#SCRON --job-name=singleton_chatbot_worker
-#SCRON --account=nstaff
-#SCRON --time=24:00:00
-#SCRON --dependency=singleton
-#SCRON -o /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/data/logs/api_worker/worker_output-%j.out
-#SCRON --open-mode=append
-15 9 * * * /global/cfs/cdirs/nstaff/chatbot/letMeNERSCthatForYou/scripts/api_worker.sh
-
-# Checks every 5 minutes if our worker is alive, if not restart it.
+# Checks every 5 minutes if a worker is alive / pending, if not start one.
 #SCRON --job-name=chatbot_worker_starter
 #SCRON --account=nstaff
 #SCRON --qos=cron
