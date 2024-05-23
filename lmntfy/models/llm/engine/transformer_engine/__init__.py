@@ -15,7 +15,7 @@ class TransformerEngine(LLMEngine):
     def __init__(self, pretrained_model_name_or_path:str, device='cuda', model_kwargs:dict=dict()):
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path)
         self.model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path, 
-                                                          device_map=device, dtype=bfloat16,
+                                                          device_map=device, torch_dtype=bfloat16,
                                                           **model_kwargs)
          # initializes the rest of the engine
         self.context_size = self.model.config.max_position_embeddings
