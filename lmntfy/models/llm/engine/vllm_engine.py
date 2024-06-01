@@ -72,5 +72,6 @@ class VllmEngine(LLMEngine):
 
     def __del__(self):
         """gets rid of the (while True) engine_loop task on deletion"""
-        if self.llm_engine._background_loop_unshielded is not None:
+        # note that the attribue might not exist due to early failure
+        if hasattr(self, 'llm_engine') and (self.llm_engine._background_loop_unshielded is not None):
             self.llm_engine._background_loop_unshielded.cancel()
