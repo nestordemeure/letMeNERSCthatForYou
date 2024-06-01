@@ -6,6 +6,9 @@ conda activate /global/cfs/cdirs/nstaff/chatbot/conda/chatbot
 
 # base folder
 chatbot_root="/global/cfs/cdirs/nstaff/chatbot"
+# local folders
+script_dir=$(dirname "$(realpath "$0")")
+local_code_folder=$(dirname "$script_dir")
 # main folders
 code_folder="$chatbot_root/production_code"
 models_folder="$chatbot_root/models"
@@ -17,4 +20,4 @@ python_instance="$chatbot_root/conda/chatbot/bin/python3"
 
 # runs the worker
 # Using python_instance to run the chatbot script in code_folder
-$python_instance $code_folder/chatbot.py --docs_folder $documentation_folder --database_folder $database_folder --models_folder $models_folder
+$python_instance $local_code_folder/chatbot.py --docs_folder $documentation_folder --database_folder $database_folder --models_folder $models_folder

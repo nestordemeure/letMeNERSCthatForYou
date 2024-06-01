@@ -6,9 +6,11 @@ conda activate /global/cfs/cdirs/nstaff/chatbot/conda/chatbot
 
 # base folder
 chatbot_root="/global/cfs/cdirs/nstaff/chatbot"
+# local folders
+script_dir=$(dirname "$(realpath "$0")")
+dev_code_folder=$(dirname "$script_dir")
 # main folders
 code_folder="$chatbot_root/production_code"
-dev_code_folder="$chatbot_root/letMeNERSCthatForYou"
 models_folder="$chatbot_root/models"
 data_folder="$code_folder/data"
 # data folders
