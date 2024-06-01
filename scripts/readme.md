@@ -30,6 +30,16 @@ The current [scrontab](https://docs.nersc.gov/jobs/workflow/scrontab/) file look
 
 You can use `scrontab -l` to vizualize it and `scrontab -e` to tweak it.
 
+## Containers use
+
+We use the [`asnaylor/lmntfy` image](https://hub.docker.com/r/asnaylor/lmntfy) (see also our `Dockerfile`) based on the [vLLM image](https://docs.vllm.ai/en/latest/serving/deploying_with_docker.html).
+
+You can deploy it with [Shifter](https://docs.nersc.gov/development/containers/shifter/how-to-use/), running it interactively on a login node:
+
+```sh
+shifter --module=gpu,nccl-2.18 --image=asnaylor/lmntfy:v0.3 /bin/bash
+```
+
 ## Various Scripts
 
 * `local_chatbot.sh` starts a chatbot running on the current node,
