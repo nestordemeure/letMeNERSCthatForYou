@@ -44,21 +44,14 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* move to container
-* get flash attention back to working[^error]
-
-* refresh prompt (and move information chunks elsewhere?)
-* refuse `svg` and `out` files from the doc (which file types are in the doc?)
-
-* document the inner-workings,
-* establish a canonical list of test questions / conversations,
+* document container use
 * move this code to the NERSC github,
 
-* try fine-tuning sentence embedder,
-* add a [page rank](https://en.wikipedia.org/wiki/PageRank) type of score to documentation items? (to be integrated with the vector search)
-* try a home-trained model,
+* refresh prompt (and move information chunks elsewhere?)
 
-[^error]: Currently, running `python -c "import flash_attn"` triggers a `ImportError: libcudart.so.11.0: cannot open shared object file: No such file or directory` error.
+* refactor daabase and search engine
+* introduce hybrid search variants
+* refuse `svg` and `out` files from the doc (which file types are in the doc?)
 
 ## Developers
 
