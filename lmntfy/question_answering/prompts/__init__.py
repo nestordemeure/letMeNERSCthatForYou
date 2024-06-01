@@ -39,18 +39,18 @@ class Prompt:
 #--------------------------------------------------------------------------------------------------
 # PROMPTS
 
-CHAT_PROMPT_SYSTEM = Prompt('chat_system_prompt.md')
+MINIMAL_SYSTEM_PROMPT = Prompt('chat_system_prompt.md')
 """
 Basic system prompt.
 
-This prompt is only used to generate a user's question by starting the model's answer with:
+This prompt is ONLY used to generate a user's question by starting the model's answer with:
 
 ```
 If I understand you clearly, your question is: "
 ```
 """
 
-ANSWERING_PROMPT = Prompt('answering_prompt.md')
+ANSWERING_SYSTEM_PROMPT = Prompt('answering_prompt.md')
 """
 Prompt to answer a question
 NOTE: 

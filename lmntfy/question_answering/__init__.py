@@ -2,7 +2,7 @@ from typing import List, Dict
 from ..models import LanguageModel
 from ..database import Database, Chunk
 from .reference_cleaning import validate_references, format_reference_list
-from .prompts import Prompt, CHAT_PROMPT_SYSTEM, ANSWERING_PROMPT
+from .prompts import Prompt, MINIMAL_SYSTEM_PROMPT, ANSWERING_SYSTEM_PROMPT
 
 #----------------------------------------------------------------------------------------
 # CLASS
@@ -16,8 +16,8 @@ class QuestionAnswerer:
         self.llm: LanguageModel = llm
         self.database: Database = database
         # prompts
-        self.CHAT_PROMPT_SYSTEM: Prompt = CHAT_PROMPT_SYSTEM
-        self.ANSWERING_PROMPT: Prompt = ANSWERING_PROMPT
+        self.MINIMAL_SYSTEM_PROMPT: Prompt = MINIMAL_SYSTEM_PROMPT
+        self.ANSWERING_SYSTEM_PROMPT: Prompt = ANSWERING_SYSTEM_PROMPT
 
     async def _extract_question(self, previous_messages:List[Dict], verbose=False) -> str:
         """
@@ -27,7 +27,7 @@ class QuestionAnswerer:
         if len(previous_messages) == 1:
             return previous_messages[-1]['content']
         # builds the messages
-        system_message = {"role": "system", "content": self.CHAT_PROMPT_SYSTEM.to_string()}
+        system_message = {"role": "system", "content": self.MINIMAL_SYSTEM_PROMPT.to_string()}
         formatted_discussion = [{**message, 'relevancy': i} for (i,message) in enumerate(previous_messages)]
         messages = [system_message] + formatted_discussion
         # builds the base prompt
@@ -80,7 +80,7 @@ class QuestionAnswerer:
         # builds the messages
         nb_messages_minimum = 3 # keep at least that many messages (when possible)
         nb_relevant_messages = len(chunks) + max(0, len(discussion)-nb_messages_minimum)
-        system_message = {"role": "system", "content": self.ANSWERING_PROMPT.to_string()}
+        system_message = {"role": "system", "content": self.ANSWERING_SYSTEM_PROMPT.to_string()}
         # formats the chunks
         chunks_messages = [{"role": "system", "content": f"\n{chunk.to_markdown()}", "relevancy": (nb_relevant_messages-i)} for (i,chunk) in enumerate(chunks)]
         # formats the discussion
