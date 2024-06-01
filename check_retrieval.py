@@ -4,6 +4,7 @@ This script runs the retriveal pipeline for various questions in order to see ho
 import lmntfy
 import argparse
 from pathlib import Path
+from lmntfy.models.llm.engine import TransformerEngine
 
 # questions that will be used to test the retrieval
 TEST_QUESTIONS = [
@@ -31,7 +32,7 @@ def main():
     models_folder = args.models_folder
 
     # load the database
-    llm = lmntfy.models.llm.Default(models_folder, device='cuda')
+    llm = lmntfy.models.llm.Default(models_folder, device='cpu', engineType=TransformerEngine)
     embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
     reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
     database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=False)

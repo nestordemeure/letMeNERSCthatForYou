@@ -2,6 +2,7 @@ import lmntfy
 import argparse
 import asyncio
 from pathlib import Path
+from lmntfy.models.llm.engine import VllmEngine
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -25,7 +26,7 @@ async def main():
 
     # initializes models
     print("Loading the database and models...")
-    llm = lmntfy.models.llm.Default(models_folder, device='cuda')
+    llm = lmntfy.models.llm.Default(models_folder, device='cuda', engineType=VllmEngine)
     embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
     reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
     database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=update_database)
