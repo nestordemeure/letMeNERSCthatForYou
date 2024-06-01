@@ -1,6 +1,6 @@
 from pathlib import Path
 from .. import LanguageModel
-from ..engine import VllmEngine
+from ..engine import TransformerEngine
 
 # Jinja chat template
 # found [here](https://github.com/chujiezheng/chat_templates/blob/main/chat_templates/llama-2-chat.jinja)
@@ -32,7 +32,7 @@ LLAMA2_CHAT_TEMPLATE = """
 class Llama2(LanguageModel):
     def __init__(self, models_folder:Path, name:str='Llama-2-13b-chat-hf',
                  use_system_prompt:bool=True, chat_template:str=None, 
-                 device:str='cuda', engineType=VllmEngine):
+                 device:str='cuda', engineType=TransformerEngine):
         # TODO need LLAMA2_CHAT_TEMPLATE?
         super().__init__(models_folder=models_folder, name=name, use_system_prompt=use_system_prompt, 
                          chat_template=chat_template, device=device, engineType=engineType)
@@ -40,7 +40,7 @@ class Llama2(LanguageModel):
 class CodeLlama(LanguageModel):
     def __init__(self, models_folder:Path, name:str='CodeLlama-13b-Instruct-hf',
                  use_system_prompt:bool=True, chat_template:str=None, 
-                 device:str='cuda', engineType=VllmEngine):
+                 device:str='cuda', engineType=TransformerEngine):
         # TODO need LLAMA2_CHAT_TEMPLATE?
         super().__init__(models_folder=models_folder, name=name, use_system_prompt=use_system_prompt, 
                          chat_template=chat_template, device=device, engineType=engineType)
@@ -74,7 +74,7 @@ VICUNA_CHAT_TEMPLATE = """
 class Vicuna(LanguageModel):
     def __init__(self, models_folder:Path, name:str='vicuna-13b-v1.5',
                  use_system_prompt:bool=True, chat_template:str=None, 
-                 device:str='cuda', engineType=VllmEngine):
+                 device:str='cuda', engineType=TransformerEngine):
         # TODO need VICUNA_CHAT_TEMPLATE?
         super().__init__(models_folder=models_folder, name=name, use_system_prompt=use_system_prompt, 
                          chat_template=chat_template, device=device, engineType=engineType)
