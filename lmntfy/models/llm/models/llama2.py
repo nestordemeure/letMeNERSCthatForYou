@@ -73,9 +73,8 @@ VICUNA_CHAT_TEMPLATE = """
 
 class Vicuna(LanguageModel):
     def __init__(self, models_folder:Path, name:str='vicuna-13b-v1.5',
-                 use_system_prompt:bool=True, chat_template:str=None, 
+                 use_system_prompt:bool=True, chat_template:str=VICUNA_CHAT_TEMPLATE, 
                  device:str='cuda', engineType=TransformerEngine):
-        # TODO need VICUNA_CHAT_TEMPLATE?
         super().__init__(models_folder=models_folder, name=name, use_system_prompt=use_system_prompt, 
                          chat_template=chat_template, device=device, engineType=engineType)
         # fixes a too large context otherwise gotten
