@@ -24,7 +24,7 @@ class VllmEngine(LLMEngine):
     """
     vLLM-based engine
     """
-    def __init__(self, pretrained_model_name_or_path:str, device='cuda', nb_gpus=1):
+    def __init__(self, pretrained_model_name_or_path:str, device='cuda', nb_gpus=1, **engine_kwargs):
         # ensuring the device is a GPU
         if (device == 'cpu'):
             device = 'cuda'
@@ -32,7 +32,7 @@ class VllmEngine(LLMEngine):
         # load and starts the engine
         if (nb_gpus > 1): print(f"Setting up vLLM on {nb_gpus} GPUs, this might take some time.")
         engine_args = AsyncEngineArgs(model=pretrained_model_name_or_path, tensor_parallel_size=nb_gpus, device=device,
-                                      disable_log_requests=True, disable_log_stats=False)
+                                      disable_log_requests=True, disable_log_stats=False, **engine_kwargs)
         self.llm_engine = AsyncLLMEngine.from_engine_args(engine_args, start_engine_loop=True, usage_context=UsageContext.API_SERVER)
         # initializes the rest of the engine
         self.context_size = self.llm_engine.engine.model_config.max_model_len
