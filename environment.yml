@@ -45,3 +45,6 @@ prefix: /global/cfs/cdirs/nstaff/chatbot/conda/chatbot
 #
 # to update the environment:
 # conda env update --prefix /global/cfs/cdirs/nstaff/chatbot/conda/chatbot --file environment.yml --prune
+
+# you can also use our shifer container to load everything:
+# shifter --module=gpu,nccl-2.18 --image=asnaylor/lmntfy:v0.3 /bin/bash
