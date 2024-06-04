@@ -56,9 +56,7 @@ In no particular order:
     * <https://techcommunity.microsoft.com/t5/ai-azure-ai-services-blog/azure-ai-search-outperforming-vector-search-with-hybrid/ba-p/3929167>
     * <https://docs.llamaindex.ai/en/stable/examples/retrievers/relative_score_dist_fusion/>
 
-we are now taking an absolue path
-`relative_path = file_path.relative_to(documentation_folder_path)`
-move file extension filtering logic up?
+* split embedding into embedding large
 
 ## Developers
 

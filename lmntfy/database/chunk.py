@@ -13,12 +13,6 @@ class Chunk:
         markdown_content = "\n".join([f"> {line}" for line in self.content.split('\n')])
         return f"Source URL: <{self.url}>\n\nExtract:\n{markdown_content}\n\n---\n"
 
-    def to_dict(self):
-        return {
-            'url': self.url,
-            'content': self.content
-        }
-
     def __eq__(self, other):
         if not isinstance(other, Chunk):
             return False
@@ -26,6 +20,12 @@ class Chunk:
 
     def __hash__(self):
         return hash((self.url, self.content))
+
+    def to_dict(self):
+        return {
+            'url': self.url,
+            'content': self.content
+        }
 
     @staticmethod
     def from_dict(data):
