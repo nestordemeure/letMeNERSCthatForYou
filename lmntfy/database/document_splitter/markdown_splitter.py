@@ -1,7 +1,7 @@
 import re
 from .text_splitter import text_splitter
 from ..utilities import Chunk
-from ..utilities.path_to_url import addHeader2url
+from .path_to_url import addHeader2url
 from typing import Callable, List
 
 #----------------------------------------------------------------------------------------

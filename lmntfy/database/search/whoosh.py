@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
 from typing import List
-from .document_splitter import Chunk, chunk_file
-from . import Database
-from ..models import LanguageModel, Embedding, Reranker
-from .utilities.file import File
+from ..document_splitter import Chunk, chunk_file
+from .. import Database
+from ...models import LanguageModel, Embedding, Reranker
+from ..document_store.file import File
 from datetime import datetime
 
 from whoosh.index import exists_in, create_in, open_dir

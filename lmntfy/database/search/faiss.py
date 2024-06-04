@@ -3,8 +3,8 @@ import json
 import numpy as np
 from pathlib import Path
 from typing import List
-from . import Database
-from ..models import LanguageModel, Embedding, Reranker
+from .. import Database
+from ...models import LanguageModel, Embedding, Reranker
 
 class FaissDatabase(Database):
     def __init__(self, documentation_folder:Path, database_folder:Path,

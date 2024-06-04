@@ -4,7 +4,7 @@ Utilities to split various document types into properly sized chunks
 from pathlib import Path
 from typing import Callable, List
 from ..utilities import Chunk
-from ..utilities.path_to_url import path2url, resolve_all_paths2urls
+from .path_to_url import path2url, resolve_all_paths2urls
 from .text_splitter import text_splitter
 from .markdown_splitter import markdown_splitter
 

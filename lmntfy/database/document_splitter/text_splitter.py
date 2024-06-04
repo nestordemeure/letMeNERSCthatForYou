@@ -1,6 +1,6 @@
 import math
 from typing import Callable, List
-from ..utilities.chunk import Chunk
+from ..chunk import Chunk
 
 def text_splitter(url:str, text:str, token_counter:Callable[[str],int], max_tokens:int) -> List[Chunk]:
     """

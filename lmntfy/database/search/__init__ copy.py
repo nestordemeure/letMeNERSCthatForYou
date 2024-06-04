@@ -6,10 +6,20 @@ from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Set
 from abc import ABC, abstractmethod
-from ..models import LanguageModel, Embedding, Reranker
-from .document_splitter import Chunk
+from ..models import LanguageModel, Embedding, embedding, Reranker, reranker
+from .document_splitter import Chunk, chunk_file
 from .document_splitter.markdown_splitter import markdown_splitter
-from .document_store.file import File
+from .utilities.file import File
+
+def remove_duplicates(chunks:List[Chunk]) -> Chunk:
+    """remove duplicates from a list while preserving element order"""
+    seen = set()
+    result = []
+    for item in chunks:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
 
 class Database(ABC):
     """Vector Database"""

@@ -1,6 +1,5 @@
-import re
-
 class Chunk:
+    """Represents a piece of tex and its source in the documentation."""
     def __init__(self, url:str, content:str):
         self.url = url
         self.content = content.strip()
