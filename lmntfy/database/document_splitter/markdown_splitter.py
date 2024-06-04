@@ -1,12 +1,16 @@
 import re
 from .text_splitter import text_splitter
-from ..utilities.chunk import Chunk, header2url
+from ..utilities import Chunk
+from ..utilities.path_to_url import addHeader2url
 from typing import Callable, List
 
 #----------------------------------------------------------------------------------------
 # MARKDOWN PARSING
 
 class Markdown:
+    """
+    Tree representation for a markdown file
+    """
     def __init__(self, header: str, level: int, headings: list=[]):
         self.header = header 
         self.level = level
@@ -63,7 +67,7 @@ class Markdown:
 
     def to_chunks(self, url, token_counter, max_tokens):
         # computes the url to the current heading
-        local_url = header2url(url, self.header)
+        local_url = addHeader2url(url, self.header)
         # computes the current chunks
         if (self.count_tokens(token_counter) < max_tokens) and (len(self.headings) > 0):
             # small enough to fit
@@ -73,8 +77,7 @@ class Markdown:
             # include header only if it has more than one line
             header = self.header.strip()
             if ('\n' in header):
-                raw_chunks = text_splitter(header, token_counter, max_tokens)
-                result = [Chunk(url=local_url, content=content) for content in raw_chunks]
+                result = text_splitter(local_url, header, token_counter, max_tokens)
             else:
                 result = []
             # include all subheadings
@@ -82,14 +85,23 @@ class Markdown:
                 result.extend(heading.to_chunks(url, token_counter, max_tokens))
             return result
 
-def markdown_splitter(url:str, markdown:str, token_counter:Callable[[str],int], max_tokens:int) -> List[Chunk]:
-    """
-    takes a markdown file as a string
-    a function that can count the number of tokens in a string
-    and a maximum number of tokens to be accepted
+#----------------------------------------------------------------------------------------
+# PUBLIC FUNCTION
 
-    parses the markdown into a tree representation along its headings
-    cut down recurcively until it is small enough to fit out maximum number of tokens allowed
+def markdown_splitter(url:str, markdown:str, token_counter:Callable[[str], int], max_tokens:int) -> List[Chunk]:
+    """
+    Splits a given markdown file into chunks based on a maximum token limit.
+
+    Args:
+        url (str): The URL where the markdown file can be found.
+        markdown (str): The input markdown content to be split.
+        token_counter (Callable[[str], int]): A function that returns the number of tokens in a given string.
+        max_tokens (int): The maximum number of tokens allowed in each chunk.
+
+    Returns:
+        List[Chunk]: A list of chunks, each having a URL derived from he given one (taking headers into account) and containing no more than the specified maximum number of tokens.
+
+    The function parses the markdown content into a tree representation based on its headings. It recursively splits the content until each chunk is small enough to fit within the maximum number of tokens allowed.
     """
     # shortcut if the text is short enough to be returned uncut
     if token_counter(markdown) < max_tokens:

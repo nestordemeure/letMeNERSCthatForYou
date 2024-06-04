@@ -7,7 +7,7 @@ def text_splitter(url:str, text:str, token_counter:Callable[[str],int], max_toke
     Splits a given text into chunks based on a maximum token limit.
 
     Args:
-        url (srt): The url where the tex can be found.
+        url (srt): The URL where the tex can be found.
         text (str): The input text to be split.
         token_counter (Callable[[str], int]): A function that returns the number of tokens in a given string.
         max_tokens (int): The maximum number of tokens allowed in each chunk.

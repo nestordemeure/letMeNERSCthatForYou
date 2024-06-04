@@ -57,6 +57,9 @@ In no particular order:
     * <https://docs.llamaindex.ai/en/stable/examples/retrievers/relative_score_dist_fusion/>
   * refuse `svg` and `out` files from the doc (which file types are in the doc?)
 
+we are now taking an absolue path
+`relative_path = file_path.relative_to(documentation_folder_path)`
+
 ## Developers
 
 <table width="100%">
