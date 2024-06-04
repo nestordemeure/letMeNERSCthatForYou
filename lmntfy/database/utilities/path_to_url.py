@@ -1,10 +1,13 @@
+"""
+Utilities to convert paths and headers into urls
+"""
 from pathlib import Path
 from urllib.parse import quote
 import re
 
 def path2url(file_path:Path, documentation_folder_path:Path):
     """
-    takes a file path and the documentation folder containing the file
+    takes a relative file path and the documentation folder containing the file
     outputs the corresponding url
     """
     # remove the documentation folder from the path
@@ -18,6 +21,31 @@ def path2url(file_path:Path, documentation_folder_path:Path):
     # Convert spaces into URL valid format
     url = quote(url, safe='/:#')
     return url
+
+def paths2urls(markdown, file_path, folder_path):
+    """
+    Takes a markdown and turns all of its relative paths into urls
+    """
+    # turns the relative path into a proper url
+    def replacer(match):
+        # gets raw markdown link information
+        link_name = match.group(1)
+        link_relative_path = Path(match.group(2))
+        # turn the relative path (computed from the containing folder's perspective) into a url
+        while True:
+            try:
+                # gets an absolute path
+                link_path = (file_path.parent / link_relative_path).resolve()
+                # turns it into a url
+                link_url = path2url(link_path, folder_path)
+                return '[{}]({})'.format(link_name, link_url)
+            except:
+                # remove the first part of the relative path (usually one `../` too many)
+                parts = link_relative_path.parts[1:]
+                link_relative_path = Path(*parts)
+    # matches markdown links patterns where the link does not start with http
+    # (hinting at the fact that it is a relative path)
+    return re.sub(r'\[([^]]+)\]\(((?!http)[^)]+)\)', replacer, markdown)
 
 def header2url(url:str, header:str):
     """
@@ -40,35 +68,3 @@ def header2url(url:str, header:str):
     heading = '#' + heading
     # merges it with the url
     return url + heading
-
-class Chunk:
-    def __init__(self, url:str, content:str):
-        self.url = url
-        self.content = content.strip()
-
-    def __str__(self):
-        """turns a chunk into a string representation suitable for usage in a prompt"""
-        return f"URL: {self.url}\n\n{self.content}"
-
-    def to_markdown(self):
-        """turns a chunk into a markdown representation suitable for usage in a prompt"""
-        markdown_content = "\n".join([f"> {line}" for line in self.content.split('\n')])
-        return f"Source URL: <{self.url}>\n\nExtract:\n{markdown_content}\n\n---\n"
-
-    def to_dict(self):
-        return {
-            'url': self.url,
-            'content': self.content
-        }
-
-    def __eq__(self, other):
-        if not isinstance(other, Chunk):
-            return False
-        return (self.url == other.url) and (self.content == other.content)
-
-    def __hash__(self):
-        return hash((self.url, self.content))
-
-    @staticmethod
-    def from_dict(data):
-        return Chunk(data['url'], data['content'])

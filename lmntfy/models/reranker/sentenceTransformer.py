@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List
 from . import Reranker
 from sentence_transformers import CrossEncoder
-from ...database.document_loader.markdown_spliter import markdown_splitter
+from ...database.document_splitter.markdown_splitter import markdown_splitter
 
 #------------------------------------------------------------------------------
 # ABSTRACT CLASS

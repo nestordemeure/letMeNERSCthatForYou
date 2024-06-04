@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import List
-from .document_loader import Chunk, chunk_file
+from .document_splitter import Chunk, chunk_file
 from . import Database
 from ..models import LanguageModel, Embedding, Reranker
 from .utilities.file import File

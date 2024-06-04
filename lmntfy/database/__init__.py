@@ -7,8 +7,8 @@ from datetime import datetime
 from typing import List, Dict, Set
 from abc import ABC, abstractmethod
 from ..models import LanguageModel, Embedding, embedding, Reranker, reranker
-from .document_loader import Chunk, chunk_file
-from .document_loader.markdown_spliter import markdown_splitter
+from .document_splitter import Chunk, chunk_file
+from .document_splitter.markdown_splitter import markdown_splitter
 from .utilities.file import File
 
 def remove_duplicates(chunks:List[Chunk]) -> Chunk:
@@ -40,7 +40,7 @@ class Database(ABC):
         # dictionary of all files
         self.files: Dict[Path, File] = dict() # file_path -> File
         # dictionary of all chunk
-        # NOTE: it might contain identical chunks pointed at by different indices
+        # NOTE: it might contain identical chunks pointed at by different indices (parent child retrieval)
         self.chunks: Dict[int, Chunk] = dict() # vector_database_index -> Chunk
         # set of file and folder names that will not be processed
         self.ignored_files_and_folders: Set[str] = {'timeline'}

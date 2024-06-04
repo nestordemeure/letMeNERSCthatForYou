@@ -2,7 +2,7 @@ import re
 from typing import List
 from pathlib import Path
 from . import Reranker
-from ...database.document_loader import Chunk
+from ...database.document_splitter import Chunk
 from gensim.corpora import Dictionary
 from gensim.parsing.preprocessing import preprocess_string, strip_tags, strip_multiple_whitespaces, remove_stopwords
 from gensim.models import TfidfModel

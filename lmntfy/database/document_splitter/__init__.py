@@ -1,34 +1,11 @@
-import re
+"""
+Utilities to split various document types into properly sized chunks
+"""
 from pathlib import Path
-from .text_spliter import text_splitter
-from .markdown_spliter import markdown_splitter
-from .chunk import Chunk, path2url
+from .text_splitter import text_splitter
+from .markdown_splitter import markdown_splitter
+from ..utilities.chunk import Chunk, path2url
 from typing import Callable, List
-
-def paths2urls(markdown, file_path, folder_path):
-    """
-    Takes a markdown and turns all of its relative paths into urls
-    """
-    # turns the relative path into a proper url
-    def replacer(match):
-        # gets raw markdown link information
-        link_name = match.group(1)
-        link_relative_path = Path(match.group(2))
-        # turn the relative path (computed from the containing folder's perspective) into a url
-        while True:
-            try:
-                # gets an absolute path
-                link_path = (file_path.parent / link_relative_path).resolve()
-                # turns it into a url
-                link_url = path2url(link_path, folder_path)
-                return '[{}]({})'.format(link_name, link_url)
-            except:
-                # remove the first part of the relative path (usually one `../` too many)
-                parts = link_relative_path.parts[1:]
-                link_relative_path = Path(*parts)
-    # matches markdown links patterns where the link does not start with http
-    # (hinting at the fact that it is a relative path)
-    return re.sub(r'\[([^]]+)\]\(((?!http)[^)]+)\)', replacer, markdown)
 
 def chunk_file(file_path:Path, documentation_folder:Path, token_counter:Callable[[str],int], max_tokens_per_chunk: int, verbose=False) -> List[Chunk]:
     """Adds a markdown document to the Splitter, splitting it until it fits."""

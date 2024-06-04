@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 from pathlib import Path
-from ...database.document_loader import Chunk
+from ...database.document_splitter import Chunk
 
 class Reranker(ABC):
     """

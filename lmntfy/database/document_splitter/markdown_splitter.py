@@ -1,6 +1,6 @@
 import re
-from .text_spliter import text_splitter
-from .chunk import Chunk, header2url
+from .text_splitter import text_splitter
+from ..utilities.chunk import Chunk, header2url
 from typing import Callable, List
 
 #----------------------------------------------------------------------------------------

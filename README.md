@@ -44,14 +44,18 @@ Those scripts are meant to be user with the superfacility API:
 
 In no particular order:
 
-* document container use
 * move this code to the NERSC github,
+* refresh prompt (and move information chunks elsewhere? potentially as a tool use)
 
-* refresh prompt (and move information chunks elsewhere?)
-
-* refactor daabase and search engine
-* introduce hybrid search variants
-* refuse `svg` and `out` files from the doc (which file types are in the doc?)
+* refactor vector databse + search
+  * Document_splitter, document_store (in charge of giving ids to chnuks and storing hem and document modification dates), search (vector, keywords, rescore, hybrid)
+  * Introduce searcher classes that compose (using partial functions)
+  * introduce hybrid search
+    * <https://news.ycombinator.com/item?id=40524759>
+    * <https://www.assembled.com/blog/better-rag-results-with-reciprocal-rank-fusion-and-hybrid-search>
+    * <https://techcommunity.microsoft.com/t5/ai-azure-ai-services-blog/azure-ai-search-outperforming-vector-search-with-hybrid/ba-p/3929167>
+    * <https://docs.llamaindex.ai/en/stable/examples/retrievers/relative_score_dist_fusion/>
+  * refuse `svg` and `out` files from the doc (which file types are in the doc?)
 
 ## Developers
 
