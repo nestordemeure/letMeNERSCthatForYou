@@ -48,15 +48,14 @@ In no particular order:
 * refresh prompt (and move information chunks elsewhere? potentially as a tool use)
 
 * refactor vector databse + search
-  * Document_splitter, document_store (in charge of giving ids to chunks and storing them and document modification dates), search (vector, keywords, rescore, hybrid)
-  * Introduce searcher classes that compose (using partial functions)
+  * write searcher class (vector, keywords, rescore, hybrid) that compose (using partial functions)
+  * inroduce an embedding_large(str)->[str] function to the vector database
+  * update the databse with the new classes
   * introduce hybrid search
     * <https://news.ycombinator.com/item?id=40524759>
     * <https://www.assembled.com/blog/better-rag-results-with-reciprocal-rank-fusion-and-hybrid-search>
     * <https://techcommunity.microsoft.com/t5/ai-azure-ai-services-blog/azure-ai-search-outperforming-vector-search-with-hybrid/ba-p/3929167>
     * <https://docs.llamaindex.ai/en/stable/examples/retrievers/relative_score_dist_fusion/>
-
-* split embedding into embedding large
 
 ## Developers
 

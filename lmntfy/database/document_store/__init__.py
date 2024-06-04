@@ -13,7 +13,7 @@ from .file import File
 from ..document_splitter import file_splitter
 
 # set of file extension we drop
-# run the following to check which extensions are currently in he doc: `find . -type f | awk -F. 'NF>1 {print $NF}' | sort | uniq`
+# run the following to check which extensions are currently in the doc: `find . -type f | awk -F. 'NF>1 {print $NF}' | sort | uniq`
 # we are moslty interested in markdown, code, and script files
 FORBIDDEN_EXTENSIONS = {'gif', 'png', 'jpg', 'jpeg', 'css', 'gikeep', 'pdf', 'in', 'out', 'output'}
 
@@ -21,6 +21,9 @@ FORBIDDEN_EXTENSIONS = {'gif', 'png', 'jpg', 'jpeg', 'css', 'gikeep', 'pdf', 'in
 FORBIDDEN_FOLDERS = {'timeline'}
 
 class DocumentStore:
+    """
+    Used to keep track of files and their chunks, associating an id with each chunk.
+    """
     def __init__(self, database_folder:Path, documentation_folder:Path):
         """
         Takes the path where it should find the database as well as the path where it should find the documentation
@@ -31,6 +34,13 @@ class DocumentStore:
         # dictionary of all chunk
         self.chunks: Dict[int, Chunk] = dict() # chunk_id -> Chunk
         self.max_chunk_id = 0
+
+    def get_chunk(self, id:int) -> Chunk:
+        """
+        Returns he chunk associaed wih a given id.
+        Errors ou if it does no exist.
+        """
+        return self.chunks[id]
 
     #--------------------------------------------------------------------------
     # FILE PROCESSING
@@ -106,7 +116,7 @@ class DocumentStore:
                 file_remove_chunk_ids = self.remove_file(file_path)
                 remove_chunk_ids.extend(file_remove_chunk_ids)
         # gets relative paths for all documenaion files
-        # TODO will we be able to load them or do we need absolue pahs for that?
+        # TODO will we be able to load them or do we need absolue paths for that?
         current_files = [
             Path(root).joinpath(file).relative_to(self.documentation_folder)
             for root, dirs, files in os.walk(self.documentation_folder)
