@@ -74,7 +74,7 @@ class Markdown:
             return [Chunk(url=local_url, content=self.to_string())]
         else:
             # split along headings
-            # include header only if it has more than one line
+            # only turns header into chunks if it has more than a title
             header = self.header.strip()
             if ('\n' in header):
                 result = text_splitter(local_url, header, token_counter, max_tokens)
@@ -100,13 +100,18 @@ def markdown_splitter(url:str, markdown:str, token_counter:Callable[[str], int],
 
     Returns:
         List[Chunk]: A list of chunks, each having a URL derived from he given one (taking headers into account) and containing no more than the specified maximum number of tokens.
+                     All having `is_markdown=True`.
 
     The function parses the markdown content into a tree representation based on its headings. It recursively splits the content until each chunk is small enough to fit within the maximum number of tokens allowed.
     """
     # shortcut if the text is short enough to be returned uncut
     if token_counter(markdown) < max_tokens:
-        return [Chunk(url=url, content=markdown)]
+        return [Chunk(url=url, content=markdown, is_markdown=True)]
     # parses the text into a tree representation
     ast = Markdown.load(markdown)
     # turn it into a list of chunks of appropriate size
-    return ast.to_chunks(url, token_counter, max_tokens)
+    chunks = ast.to_chunks(url, token_counter, max_tokens)
+    # labels all chunks as markdown
+    for chunk in chunks:
+        chunk.is_markdown = True
+    return chunks
