@@ -52,7 +52,7 @@ In no particular order:
   * introduce hybrid search
   * update the database with the new classes
 
-* are scores ordered? add assert where it matters
+* are scores ordered (one way or the other, doesn't matter)? add assert where it matters
 
 ## Developers
 

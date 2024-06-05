@@ -1,5 +1,6 @@
 import faiss
 import numpy as np
+from functools import partial
 from pathlib import Path
 from typing import List
 from ..chunk import Chunk
@@ -7,7 +8,7 @@ from . import SearchEngine
 from ...models.embedding import Embedding
 from ..document_splitter import chunk_splitter
 
-class VectorSearch(SearchEngine):
+class VectorSearch_raw(SearchEngine):
     """
     Sentence-embedding based vector search.
     Based on [faiss](https://faiss.ai/).
@@ -61,8 +62,9 @@ class VectorSearch(SearchEngine):
         input_embedding = self.embedder.embed(input_text, is_query=True)
         # reshape it ino a batch of size one
         input_embedding_batch = input_embedding.reshape((1,-1))
+        # does the search
         distances, indices = self.index.search(input_embedding_batch, k=k)
-        # zip the results
+        # zip the results into a single list
         distances = distances.flatten().tolist()
         indices = indices.flatten().tolist()
         return list(zip(distances, indices))
@@ -80,3 +82,6 @@ class VectorSearch(SearchEngine):
         """
         index_path = database_folder / 'index.faiss'
         self.index = faiss.read_index(str(index_path))
+
+# instance that lets you define the embedder
+VectorSearch = lambda embedder: partial(VectorSearch_raw, embedder=embedder)

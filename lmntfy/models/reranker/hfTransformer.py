@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from . import Reranker
-from ...database.document_splitter.markdown_splitter import markdown_splitter
+from ...database.document_splitter import markdown_splitter
 
 #------------------------------------------------------------------------------
 # ABSTRACT CLASS

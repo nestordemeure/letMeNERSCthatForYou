@@ -60,3 +60,4 @@ class SearchEngine(ABC):
 # instances
 from .keywords import KeywordSearch
 from .vector import VectorSearch
+from .rerank import RerankSearch
