@@ -48,8 +48,7 @@ In no particular order:
 * refresh prompt (moving chunk information within the prompt)
 
 * refactor vector databse + search
-  * write searcher class (vector, keywords, rescore, hybrid) that compose (using partial functions)
-  * inroduce an embedding_large(str)->[str] function to the vector database
+  * write searcher class (rescore, hybrid) that compose (using partial functions)
   * introduce hybrid search
   * update the database with the new classes
 

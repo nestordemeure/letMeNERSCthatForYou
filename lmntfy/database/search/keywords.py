@@ -81,7 +81,7 @@ class KeywordSearch(SearchEngine):
     
     def get_closest_chunks(self, input_text: str, k: int) -> List[(float,int)]:
         """
-        Returns the (score,chunk_id) of the closest chunks, in order of decreasing scores.
+        Returns the (score,chunk_id) of the closest chunks, from best to worst
         """
         # does a search in the index
         result = []
