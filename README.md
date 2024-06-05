@@ -45,17 +45,15 @@ Those scripts are meant to be user with the superfacility API:
 In no particular order:
 
 * move this code to the NERSC github,
-* refresh prompt (and move information chunks elsewhere? potentially as a tool use)
+* refresh prompt (moving chunk information within the prompt)
 
 * refactor vector databse + search
   * write searcher class (vector, keywords, rescore, hybrid) that compose (using partial functions)
   * inroduce an embedding_large(str)->[str] function to the vector database
-  * update the databse with the new classes
   * introduce hybrid search
-    * <https://news.ycombinator.com/item?id=40524759>
-    * <https://www.assembled.com/blog/better-rag-results-with-reciprocal-rank-fusion-and-hybrid-search>
-    * <https://techcommunity.microsoft.com/t5/ai-azure-ai-services-blog/azure-ai-search-outperforming-vector-search-with-hybrid/ba-p/3929167>
-    * <https://docs.llamaindex.ai/en/stable/examples/retrievers/relative_score_dist_fusion/>
+  * update the database with the new classes
+
+* are scores ordered? add assert where it matters
 
 ## Developers
 

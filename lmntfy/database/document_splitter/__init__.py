@@ -10,7 +10,7 @@ from .markdown_splitter import markdown_splitter
 
 def file_splitter(file_path: Path, token_counter: Callable[[str], int], max_tokens_per_chunk: int) -> List[Chunk]:
     """
-    Splits a file into chunks based on a maximum token limit and saves the chunks in a specified documentation folder.
+    Splits a file into chunks based on a maximum token limit.
 
     Args:
         file_path (Path): The path to the file that needs to be split.
@@ -45,3 +45,20 @@ def file_splitter(file_path: Path, token_counter: Callable[[str], int], max_toke
         # unsupported format
         print(f"WARNING: File '{file_path}' does not appear to be a utf8 encoded text file.")
         return list()
+
+def chunk_splitter(chunk: Chunk, token_counter: Callable[[str], int], max_tokens_per_chunk: int) -> List[Chunk]:
+    """
+    Splits a chunk into sub-chunks.
+
+    Args:
+        chunk (Chunk): The chunk that needs to be split.
+        token_counter (Callable[[str], int]): A function that returns the number of tokens in a given string.
+        max_tokens_per_chunk (int): The maximum number of tokens allowed in each chunk.
+
+    Returns:
+        List[Chunk]: A list of chunks, each containing no more than the specified maximum number of tokens.
+    """
+    if chunk.is_markdown:
+        return markdown_splitter(chunk.url, chunk.content, token_counter, max_tokens_per_chunk)
+    else:
+        return text_splitter(chunk.url, chunk.content, token_counter, max_tokens_per_chunk)

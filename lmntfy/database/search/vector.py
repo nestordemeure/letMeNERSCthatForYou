@@ -1,17 +1,19 @@
 from pathlib import Path
 from typing import List
-from abc import ABC, abstractmethod
 from ..chunk import Chunk
+from . import SearchEngine
 
-class SearchEngine(ABC):
-    """In charge of the search logic."""
-    def __init__(self, name:str):
-        self.name = name
+class VectorSearch(SearchEngine):
+    """
+    Sentence-embedding based vector search.
+    Based on [faiss](https://faiss.ai/).
+    """
+    def __init__(self):
+        None
 
-    @abstractmethod
     def _add_chunk(self, chunk_id:int, chunk: Chunk):
         """
-        Abstract method, adds a chunk with the given id.
+        Adds a chunk with the given id.
         """
         pass
 
@@ -22,10 +24,9 @@ class SearchEngine(ABC):
         for (chunk_id, chunk) in chunks:
             self._add_chunk(chunk_id, chunk)
 
-    @abstractmethod
     def _remove_chunk(self, chunk_id:int):
         """
-        Abstract method, remove the chunk wih he given id.
+        Remove the chunk wih he given id.
         """
         pass
 
@@ -36,27 +37,20 @@ class SearchEngine(ABC):
         for chunk_id in chunk_indices:
             self._remove_chunk(chunk_id)
     
-    @abstractmethod
     def get_closest_chunks(self, input_text: str, k: int) -> List[(float,int)]:
         """
-        Abstract method, returns the (score,chunk_id) of the closest chunks, in order of decreasing scores.
+        Returns the (score,chunk_id) of the closest chunks, in order of decreasing scores.
         """
         pass
 
-    @abstractmethod
     def save(self, database_folder:Path):
         """
-        Abstract method, save the search engine on file.
+        Save the search engine on file.
         """
         pass
 
-    @abstractmethod
     def load(self, database_folder:Path):
         """
-        Abstract method, loads the search engine from file.
+        Loads the search engine from file.
         """
         pass
-
-# instances
-from .keywords import KeywordSearch
-from .vector import VectorSearch
