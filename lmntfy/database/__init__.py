@@ -24,17 +24,14 @@ class Database:
             update_database (bool, optional): Whether to update the database to the latest documentation. Default is True.
         """
         # parameters
-        if (max_tokens_per_chunk is None):
-            # adding 2 chunks to, roughly, fit system+question+answer
-            self.max_tokens_per_chunk = llm.context_size / (min_chunks_per_query + 2)
-        else:
-            self.max_tokens_per_chunk = max_tokens_per_chunk
+        self.max_tokens_per_chunk = max_tokens_per_chunk if (max_tokens_per_chunk is not None) else int(llm.context_size / (min_chunks_per_query + 2))
         # names and paths
-        self.name = f"{search_engine.name}_{llm.tokenizer.name}{self.max_tokens_per_chunk}"
+        self.name = f"{llm.tokenizer.name}{self.max_tokens_per_chunk}_{search_engine.name}"
         self.documentation_folder = documentation_folder.absolute().resolve()
         self.database_folder = database_folder.absolute().resolve() / self.name
         # components
         self.search_engine = search_engine
+        self.search_engine.initialize(self.database_folder)
         self.document_store = DocumentStore(self.database_folder, self.documentation_folder)
         # loads the database from file if possible
         if self.exists():
@@ -51,7 +48,7 @@ class Database:
         if len(self.document_store.chunks) <= k:
             return list(self.document_store.chunks.values())
         # queries the search engine
-        scored_chunk_id = self.search_engine.get_closest_chunks(input_text, k)
+        scored_chunk_id = self.search_engine.get_closest_chunks(input_text, self.document_store.chunks, k)
         # gets he chunks from the document store
         chunks = [self.document_store.get_chunk(id) for (score,id) in scored_chunk_id]
         # returns
@@ -70,10 +67,9 @@ class Database:
     def exists(self):
         """
         Returns True if the database already exists on disk.
-        NOTE: this is not an exhaustive check, parts of the search engine might be missing.
         """
         document_store_path = self.database_folder / 'document_store.json'
-        return self.database_folder.exists() and document_store_path.exists()
+        return self.database_folder.exists() and document_store_path.exists() and self.search_engine.exists(self.database_folder)
 
     def load(self):
         # load the document store

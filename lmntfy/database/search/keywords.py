@@ -1,4 +1,5 @@
 from pathlib import Path
+from tqdm import tqdm
 from typing import List, Dict, Tuple
 from ..chunk import Chunk
 from . import SearchEngine
@@ -44,25 +45,27 @@ class KeywordSearch(SearchEngine):
     """
     Classic keyword-based (BM25F) search.
     Based on [Whoosh](https://whoosh.readthedocs.io/en/latest/index.html).
-    WARNING: as the index update requires modifications on file, it cannot be updated from a compute node.
+
+    WARNING: as the index needs to be loaded from a file, one need to call the initialize method before any use.
     """
-    def __init__(self, scoring:WeightingModel=BM25F(B=0.0), name:str='keyword'):
+    def __init__(self, scoring:WeightingModel=BM25F(B=0.0)):
         """
         score (WeightingModel): function used to score hits, defaults to BM25F(B=0.0), B=0 means no penality to document length
         """
         # whoosh index
-        self.index: FileIndex = None # created on load
+        self.index: FileIndex = None # created on initialize
         # function used to score hits
         self.scoring: WeightingModel = scoring
         # init parent
-        super().__init__(name=name)
+        super().__init__(name='keyword')
 
-    def add_several_chunks(self, chunks: dict[int,Chunk]):
+    def add_several_chunks(self, chunks: Dict[int,Chunk], verbose=True):
         """
         Adds several chunks with the given indices.
         """
+        assert self.index is not None, "index is not initialized, call the `.initialize` method before using"
         writer = self.index.writer()
-        for (chunk_id, chunk) in chunks:
+        for (chunk_id, chunk) in tqdm(chunks.items(), disable=not verbose, desc="Keyword indexing chunks"):
             # gets the headlines from the file
             headlines = extract_headlines(chunk.content)
             # add chunk content to the index
@@ -73,6 +76,7 @@ class KeywordSearch(SearchEngine):
         """
         Removes several chunks from the search engine.
         """
+        assert self.index is not None, "index is not initialized, call the `.initialize` method before using"
         writer = self.index.writer()
         for chunk_id in chunk_indices:
             # remove chunk from the index
@@ -83,15 +87,35 @@ class KeywordSearch(SearchEngine):
         """
         Returns the (score,chunk_id) of the closest chunks, from best to worst
         """
+        assert self.index is not None, "index is not initialized, call the `.initialize` method before using"
         # does a search in the index
         result = []
         with self.index.searcher(weighting=self.scoring) as searcher:
             # match all documents that contains at least one of the terms
             query = MultifieldParser(['content','headlines'], schema=self.index.schema, group=OrGroup).parse(input_text)
             for hit in searcher.search(query, limit=k):
-                result.append((hit.score, hit['id']))
+                result.append((hit.score, int(hit['id'])))
         return result
     
+    def initialize(self, database_folder:Path):
+        """
+        Initialize the search engine if needed.
+        """
+        if self.exists(database_folder):
+            # the index already exists
+            self.load(database_folder)
+        else:
+            # insures that the saving folder exists
+            database_folder.mkdir(parents=True, exist_ok=True)
+            # creates a new index
+            self.index = create_in(database_folder, CHUNK_SCHEMA)
+
+    def exists(self, database_folder:Path) -> bool:
+        """
+        Returns True if an instance of the search engine is saved in the given folder.
+        """
+        return exists_in(database_folder)
+
     def save(self, database_folder:Path):
         """
         Save the search engine on file.
@@ -103,9 +127,4 @@ class KeywordSearch(SearchEngine):
         """
         Loads the search engine from file.
         """
-        if exists_in(database_folder):
-            # the index already exists
-            self.index = open_dir(self.database_folder)
-        else:
-            # creates a new index
-            self.index = create_in(database_folder, CHUNK_SCHEMA)
+        self.index = open_dir(database_folder)

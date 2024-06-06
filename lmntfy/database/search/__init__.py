@@ -4,38 +4,27 @@ from abc import ABC, abstractmethod
 from ..chunk import Chunk
 from ...models import embedding, reranker
 
+#----------------------------------------------------------------------------------------
+# ABSTRACT CLASS
+
 class SearchEngine(ABC):
     """In charge of the search logic."""
     def __init__(self, name:str):
         self.name = name
 
     @abstractmethod
-    def _add_chunk(self, chunk_id:int, chunk: Chunk):
-        """
-        Abstract method, adds a chunk with the given id.
-        """
-        pass
-
     def add_several_chunks(self, chunks: dict[int,Chunk]):
         """
         Adds several chunks with the given indices.
         """
-        for (chunk_id, chunk) in chunks:
-            self._add_chunk(chunk_id, chunk)
-
-    @abstractmethod
-    def _remove_chunk(self, chunk_id:int):
-        """
-        Abstract method, remove the chunk wih he given id.
-        """
         pass
 
+    @abstractmethod
     def remove_several_chunks(self, chunk_indices: List[int]):
         """
         Removes several chunks from the search engine.
         """
-        for chunk_id in chunk_indices:
-            self._remove_chunk(chunk_id)
+        pass
     
     @abstractmethod
     def get_closest_chunks(self, input_text: str, chunks:Dict[int,Chunk], k: int) -> List[Tuple[float,int]]:
@@ -53,32 +42,67 @@ class SearchEngine(ABC):
         pass
 
     @abstractmethod
+    def initialize(self, database_folder:Path):
+        """
+        Initialize the search engine if needed.
+        """
+        pass
+
+    @abstractmethod
+    def exists(self, database_folder:Path) -> bool:
+        """
+        Returns True if an instance of the search engine is saved in the given folder.
+        """
+        pass
+
+    @abstractmethod
     def save(self, database_folder:Path):
         """
-        Abstract method, save the search engine on file.
+        Save the search engine on file.
         """
         pass
 
     @abstractmethod
     def load(self, database_folder:Path):
         """
-        Abstract method, loads the search engine from file.
+        Loads the search engine from file. Does nothing if it does no exist.
         """
         pass
 
-# instances
+#----------------------------------------------------------------------------------------
+# INSTANCES
+
+# building blocks
 from .vector import VectorSearch
 from .keywords import KeywordSearch
 from .hybrid import HybridSearch, reciprocal_rank_scores, relative_scores, distribution_based_scores
 from .rerank import RerankSearch
 
-# a full fledged default
-def Default(models_folder:Path, device='cuda'):
+def Full_Hybrid(models_folder:Path, device='cuda'):
+    """
+    Classic Hybrid search: (Vector,Keyword) search combined with reciprocal_rank_scores
+    """
+    vector_search = VectorSearch(embedding.Default(models_folder, device='cuda'))
+    keyword_search = KeywordSearch()
+    return HybridSearch(vector_search, keyword_search, reciprocal_rank_scores)
+
+def Reranked_Hybrid(models_folder:Path, device='cuda'):
     """
     Classic Hybrid search:
         (Vector,Keyword) search combined with reciprocal_rank_scores
         with a reranker on top
     """
+    vector_search = VectorSearch(embedding.Default(models_folder, device='cuda'))
+    keyword_search = KeywordSearch()
+    hybrid_search = HybridSearch(vector_search, keyword_search, reciprocal_rank_scores)
+    return RerankSearch(reranker.Default(models_folder, device=device), hybrid_search)
+
+def Reranked_Vectors(models_folder:Path, device='cuda'):
+    """
+    tfidf on top of a vector search
+    """
     vector_search = VectorSearch(embedding.Default(models_folder, device=device))
-    hybrid_search = HybridSearch(vector_search, KeywordSearch)
-    return RerankSearch(reranker.Default(models_folder, device=device), hybrid_search, reciprocal_rank_scores)
+    return RerankSearch(reranker.TFIDFReranker(models_folder), vector_search)
+
+# our current default
+Default = Reranked_Vectors

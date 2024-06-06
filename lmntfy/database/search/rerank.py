@@ -1,4 +1,3 @@
-from functools import partial
 from pathlib import Path
 from typing import List, Tuple, Dict
 from ..chunk import Chunk
@@ -6,7 +5,7 @@ from . import SearchEngine
 from .hybrid import merge_and_sort_scores
 from ...models.reranker import Reranker
 
-class RerankSearch_raw(SearchEngine):
+class RerankSearch(SearchEngine):
     """
     Reranker search augmentation.
     This reorder search results according to a given reranker.
@@ -14,13 +13,13 @@ class RerankSearch_raw(SearchEngine):
     You can set k*=2 when using a good reranker.
     See: https://www.pinecone.io/learn/series/rag/rerankers/
     """
-    def __init__(self, reranker: Reranker, search_engine: SearchEngine, name:str='rescore'):
+    def __init__(self, reranker: Reranker, search_engine: SearchEngine):
         # reranker
         self.reranker: Reranker = reranker
         # search engine we are augmenting
         self.search_engine: SearchEngine = search_engine
         # init parent
-        super().__init__(name=search_engine.name + name + reranker.name)
+        super().__init__(name=f"reranker-{reranker.name}_{search_engine.name}")
 
     def add_several_chunks(self, chunks: dict[int,Chunk]):
         """
@@ -40,7 +39,7 @@ class RerankSearch_raw(SearchEngine):
         Returns the (score,chunk_id) of the closest chunks, from best to worst
         """
         # gets the original results
-        scored_chunk_ids = self.search_engine.get_closest_chunks(input_text, k)
+        scored_chunk_ids = self.search_engine.get_closest_chunks(input_text, chunks, k)
         # rerank them
         chunks = [chunks[chunk_id] for (score,chunk_id) in scored_chunk_ids]
         new_scores = self.reranker.similarities(input_text, chunks)
@@ -48,6 +47,18 @@ class RerankSearch_raw(SearchEngine):
         # sort the chunks according to the new score
         reranked_chunks = merge_and_sort_scores(reranked_chunks, merging_strategy=max)
         return reranked_chunks
+
+    def initialize(self, database_folder:Path):
+        """
+        Initialize the search engine if needed.
+        """
+        self.search_engine.initialize(database_folder)
+
+    def exists(self, database_folder:Path) -> bool:
+        """
+        Returns True if an instance of the search engine is saved in the given folder.
+        """
+        return self.search_engine.exists(database_folder)
 
     def save(self, database_folder:Path):
         """
@@ -60,6 +71,3 @@ class RerankSearch_raw(SearchEngine):
         Loads the search engine from file.
         """
         self.search_engine.load(database_folder)
-
-# instance that lets you define the reranker / base search engine
-RerankSearch = lambda reranker, search_engine: partial(RerankSearch_raw, reranker=reranker, search_engine=search_engine)

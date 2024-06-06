@@ -24,10 +24,9 @@ async def main():
     question = args.question
 
     # initializes models
+    search_engine = lmntfy.database.search.Default(models_folder, device='cuda')
     llm = lmntfy.models.llm.Default(models_folder, device='cuda')
-    embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
-    reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
-    database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=False)
+    database = lmntfy.database.Database(docs_folder, database_folder, search_engine, llm, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, database)
 
     # answers questions

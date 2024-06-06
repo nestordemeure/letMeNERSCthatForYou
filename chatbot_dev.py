@@ -26,10 +26,9 @@ async def main():
 
     # initializes models
     print("Loading the database and models...")
+    search_engine = lmntfy.database.search.Default(models_folder, device='cuda')
     llm = lmntfy.models.llm.Default(models_folder, device='cuda', engineType=VllmEngine)
-    embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
-    reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
-    database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=update_database)
+    database = lmntfy.database.Database(docs_folder, database_folder, search_engine, llm, update_database=update_database)
     question_answerer = lmntfy.QuestionAnswerer(llm, database)
 
     # answers questions

@@ -20,7 +20,7 @@ def text_splitter(url:str, text:str, token_counter:Callable[[str],int], max_toke
     """
     # shortcut if the text is short enough to be returned uncut
     if token_counter(text) < max_tokens:
-        return [text]
+        return [Chunk(url, text)]
     # process line by line
     chunks = []
     current_chunk = []

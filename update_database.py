@@ -24,9 +24,8 @@ def main():
     llm = lmntfy.models.llm.Default(models_folder,
                                     # keep the model on CPU as we will not need to draw upon it
                                     device='cpu', engineType=lmntfy.models.llm.engine.TransformerEngine)
-    embedder = lmntfy.models.embedding.Default(models_folder)
-    reranker = lmntfy.models.reranker.NoReranker(models_folder)
-    database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=True)
+    search_engine = lmntfy.database.search.Default(models_folder, device='cpu')
+    database = lmntfy.database.Database(docs_folder, database_folder, search_engine, llm, update_database=True)
     print("Done!")
 
 if __name__ == "__main__":

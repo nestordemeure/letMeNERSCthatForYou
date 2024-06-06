@@ -136,9 +136,8 @@ async def main():
     llm = lmntfy.models.llm.Default(args.models_folder, device='cuda',
                                     # TODO use the transformer engine while we are running on login nodes
                                     engineType=lmntfy.models.llm.engine.TransformerEngine)
-    embedder = lmntfy.models.embedding.Default(args.models_folder, device='cuda')
-    reranker = lmntfy.models.reranker.Default(args.models_folder, device='cuda')
-    database = lmntfy.database.Default(args.docs_folder, args.database_folder, llm, embedder, reranker, update_database=False)
+    search_engine = lmntfy.database.search.Default(args.models_folder, device='cuda')
+    database = lmntfy.database.Database(args.docs_folder, args.database_folder, search_engine, llm, update_database=False)
     question_answerer = lmntfy.QuestionAnswerer(llm, database)
 
     # API details

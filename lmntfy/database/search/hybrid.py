@@ -1,5 +1,4 @@
 import statistics
-from functools import partial
 from pathlib import Path
 from typing import List, Tuple, Callable, Dict
 from ..chunk import Chunk
@@ -118,26 +117,25 @@ def distribution_based_scores(scored_chunks: List[Tuple[float, int]]) -> List[Tu
 #----------------------------------------------------------------------------------------
 # SEARCH ENGINE
 
-class HybridSearch_raw(SearchEngine):
+class HybridSearch(SearchEngine):
     """
     Hybird search (also called Semantic search in traditional search engines).
     Combining the result of two (could be more) search engines, usualy vector search and keyword search.
     
     See:
-    * <https://www.assembled.com/blog/better-rag-results-with-reciprocal-rank-fusion-and-hybrid-search>
-    * <https://techcommunity.microsoft.com/t5/ai-azure-ai-services-blog/azure-ai-search-outperforming-vector-search-with-hybrid/ba-p/3929167>
-    * <https://weaviate.io/blog/hybrid-search-fusion-algorithms>
+    * https://www.assembled.com/blog/better-rag-results-with-reciprocal-rank-fusion-and-hybrid-search
+    * https://techcommunity.microsoft.com/t5/ai-azure-ai-services-blog/azure-ai-search-outperforming-vector-search-with-hybrid/ba-p/3929167
+    * https://weaviate.io/blog/hybrid-search-fusion-algorithms
     """
     def __init__(self, search_engine1: SearchEngine, search_engine2: SearchEngine, 
-                 scoring_function=reciprocal_rank_scores,
-                 name:str='hybrid'):
+                 scoring_function=reciprocal_rank_scores):
         # search engines we are augmenting
         self.search_engine1: SearchEngine = search_engine1
         self.search_engine2: SearchEngine = search_engine2
         # hybridization functions
         self.scoring_function = scoring_function
         # init parent
-        super().__init__(name=name + search_engine1.name + search_engine2.name)
+        super().__init__(name=f"hybrid_{search_engine1.name}_{search_engine2.name}")
 
     def add_several_chunks(self, chunks: dict[int,Chunk]):
         """
@@ -158,8 +156,8 @@ class HybridSearch_raw(SearchEngine):
         Returns the (score,chunk_id) of the closest chunks, from best to worst
         """
         # gets the original results
-        scored_chunks1 = self.search_engine1.get_closest_chunks(input_text, k)
-        scored_chunks2 = self.search_engine2.get_closest_chunks(input_text, k)
+        scored_chunks1 = self.search_engine1.get_closest_chunks(input_text, chunks, k)
+        scored_chunks2 = self.search_engine2.get_closest_chunks(input_text, chunks, k)
         # rescores them
         rescored_chunks1 = self.scoring_function(scored_chunks1)
         rescored_chunks2 = self.scoring_function(scored_chunks2)
@@ -168,6 +166,19 @@ class HybridSearch_raw(SearchEngine):
         # sort the chunks according to the new score
         rescored_chunks = merge_and_sort_scores(rescored_chunks, merging_strategy=addition)
         return rescored_chunks
+
+    def initialize(self, database_folder:Path):
+        """
+        Initialize the search engine if needed.
+        """
+        self.search_engine1.initialize(database_folder)
+        self.search_engine2.initialize(database_folder)
+
+    def exists(self, database_folder:Path) -> bool:
+        """
+        Returns True if an instance of the search engine is saved in the given folder.
+        """
+        return self.search_engine1.exists(database_folder) and self.search_engine2.exists(database_folder)
 
     def save(self, database_folder:Path):
         """
@@ -182,6 +193,3 @@ class HybridSearch_raw(SearchEngine):
         """
         self.search_engine1.load(database_folder)
         self.search_engine2.load(database_folder)
-
-# instance that lets you define the reranker / base search engine
-HybridSearch = lambda search_engine1, search_engine2, scoring_function: partial(HybridSearch_raw, search_engine1=search_engine1, search_engine2=search_engine2, scoring_function=scoring_function)

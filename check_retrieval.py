@@ -31,7 +31,7 @@ def main():
     database_folder = args.database_folder
     models_folder = args.models_folder
 
-    # load the database
+    # initializes models
     search_engine = lmntfy.database.search.Default(models_folder, device='cuda')
     llm = lmntfy.models.llm.Default(models_folder, device='cpu', engineType=TransformerEngine)
     database = lmntfy.database.Database(docs_folder, database_folder, 

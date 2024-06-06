@@ -1,19 +1,20 @@
 import faiss
 import numpy as np
-from functools import partial
+from tqdm import tqdm
 from pathlib import Path
 from typing import List, Tuple, Dict
 from ..chunk import Chunk
 from . import SearchEngine
 from ...models.embedding import Embedding
 from ..document_splitter import chunk_splitter
+from .hybrid import merge_and_sort_scores
 
-class VectorSearch_raw(SearchEngine):
+class VectorSearch(SearchEngine):
     """
     Sentence-embedding based vector search.
     Based on [faiss](https://faiss.ai/).
     """
-    def __init__(self, embedder: Embedding, name:str='vector'):
+    def __init__(self, embedder: Embedding):
         # embedder
         self.embedder: Embedding = embedder
         # vector database that will be used to store the vectors
@@ -21,7 +22,7 @@ class VectorSearch_raw(SearchEngine):
         # index on top of the database to support addition and deletion by id
         self.index = faiss.IndexIDMap(raw_index)
         # init parent
-        super().__init__(name=name + embedder.name)
+        super().__init__(name=f"vector-{embedder.name}")
 
     def _add_chunk(self, chunk_id:int, chunk: Chunk):
         """
@@ -36,12 +37,12 @@ class VectorSearch_raw(SearchEngine):
         # adds them to the vector database
         self.index.add_with_ids(embedding_batch, id_batch)
 
-    def add_several_chunks(self, chunks: dict[int,Chunk]):
+    def add_several_chunks(self, chunks: Dict[int,Chunk], verbose=True):
         """
         Adds several chunks with the given indices.
         NOTE: breaks chunk down into subchunks that fit our embedding model's context length
         """
-        for (chunk_id, chunk) in chunks:
+        for (chunk_id, chunk) in tqdm(chunks.items(), disable=not verbose, desc="Vector embedding chunks"):
             # breaks the chunk into subchunks small enough to fit the embedder's context size
             subchunks = chunk_splitter(chunk, self.embedder.count_tokens, self.embedder.context_size)
             # adds them one at a time, all pointing to the same chunk_id (parent document retrieval)
@@ -60,14 +61,36 @@ class VectorSearch_raw(SearchEngine):
         """
         # embedds the input
         input_embedding = self.embedder.embed(input_text, is_query=True)
-        # reshape it ino a batch of size one
+        # reshape it into a batch of size one
         input_embedding_batch = input_embedding.reshape((1,-1))
-        # does the search
-        distances, indices = self.index.search(input_embedding_batch, k=k)
-        # zip the results into a single list
-        distances = distances.flatten().tolist()
-        indices = indices.flatten().tolist()
-        return list(zip(distances, indices))
+        # loop until we get enough items
+        # NOTE: due to several ids pointing to the same chunk, we migh get duplicates
+        distances = list()
+        indices = list()
+        k_queried = k
+        while len(set(indices)) < k:
+            # does the search
+            distances, indices = self.index.search(input_embedding_batch, k=k_queried)
+            distances = distances.flatten().tolist()
+            indices = indices.flatten().tolist()
+            k_queried *= 2
+        # zip the results into a single list and remove duplicates
+        scored_chunkids = list(zip(distances, indices))
+        return merge_and_sort_scores(scored_chunkids, merging_strategy=max)
+
+    def initialize(self, database_folder:Path):
+        """
+        Initialize the search engine if needed.
+        """
+        # no initializaion needed
+        return
+
+    def exists(self, database_folder:Path) -> bool:
+        """
+        Returns True if an instance of the search engine is saved in the given folder.
+        """
+        index_path = database_folder / 'index.faiss'
+        return index_path.exists()
 
     def save(self, database_folder:Path):
         """
@@ -82,6 +105,3 @@ class VectorSearch_raw(SearchEngine):
         """
         index_path = database_folder / 'index.faiss'
         self.index = faiss.read_index(str(index_path))
-
-# instance that lets you define the embedder
-VectorSearch = lambda embedder: partial(VectorSearch_raw, embedder=embedder)

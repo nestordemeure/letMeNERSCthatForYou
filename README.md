@@ -47,6 +47,11 @@ In no particular order:
 * move this code to the NERSC github,
 * refresh prompt (moving chunk information within the prompt)
 
+* move away from Whoosh (keyword search) to remove he need for a `search.initialize` method
+
+* test removing from database with new refactor
+* find good default search settings
+
 ## Developers
 
 <table width="100%">

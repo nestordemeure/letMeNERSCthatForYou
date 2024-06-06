@@ -8,11 +8,12 @@ from .path_to_url import path2url, resolve_all_paths2urls
 from .text_splitter import text_splitter
 from .markdown_splitter import markdown_splitter
 
-def file_splitter(file_path: Path, token_counter: Callable[[str], int], max_tokens_per_chunk: int) -> List[Chunk]:
+def file_splitter(documentation_folder:Path, file_path: Path, token_counter: Callable[[str], int], max_tokens_per_chunk: int) -> List[Chunk]:
     """
     Splits a file into chunks based on a maximum token limit.
 
     Args:
+        documentation_folder (Path): The path to the folder that contains the documentation, used to build relative paths.
         file_path (Path): The path to the file that needs to be split.
         token_counter (Callable[[str], int]): A function that returns the number of tokens in a given string.
         max_tokens_per_chunk (int): The maximum number of tokens allowed in each chunk.
@@ -27,6 +28,8 @@ def file_splitter(file_path: Path, token_counter: Callable[[str], int], max_toke
     # try loading the file
     try:
         with open(file_path, 'r', encoding='utf8') as file:
+            # turns the path into a relative path
+            file_path = file_path.relative_to(documentation_folder)
             # reads the text ensuring that all paths are proper urls
             text = file.read()
             text = resolve_all_paths2urls(text, file_path)
