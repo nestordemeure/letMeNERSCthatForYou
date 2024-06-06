@@ -49,8 +49,6 @@ In no particular order:
 
 * move away from Whoosh (keyword search) to remove he need for a `search.initialize` method
 
-* test removing from database with new refactor
-
 ## Developers
 
 <table width="100%">

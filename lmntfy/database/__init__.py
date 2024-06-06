@@ -40,7 +40,7 @@ class Database:
         if update_database or not self.exists():
             self.update(llm.count_tokens, self.max_tokens_per_chunk, verbose=True)
     
-    def get_closest_chunks(self, input_text: str, k: int = 3, verbose=True) -> List[Chunk]:
+    def get_closest_chunks(self, input_text: str, k: int = 3, verbose=False) -> List[Chunk]:
         """
         Returns the (at least) k chunks that are relevant according to he search engine
         """

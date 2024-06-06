@@ -40,11 +40,10 @@ def main():
 
     # runs the retrieval and displays the urls
     for question in TEST_QUESTIONS:
-        #print(f"\nQ: {question}")
+        print(f"\nQ: {question}")
         chunks = database.get_closest_chunks(question, k=8)
-        # TODO debug
-        #for chunk in chunks:
-        #    print(f" * {chunk.url}")
+        for chunk in chunks:
+            print(f" * {chunk.url}")
 
 if __name__ == "__main__":
     main()
