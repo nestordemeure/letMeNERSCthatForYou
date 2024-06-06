@@ -19,7 +19,8 @@ class RerankSearch(SearchEngine):
         # search engine we are augmenting
         self.search_engine: SearchEngine = search_engine
         # init parent
-        super().__init__(name=f"reranker-{reranker.name}_{search_engine.name}")
+        # NOTE: we do not include the reranker in the name as it does not impact the database files
+        super().__init__(name=search_engine.name)
 
     def add_several_chunks(self, chunks: dict[int,Chunk]):
         """
