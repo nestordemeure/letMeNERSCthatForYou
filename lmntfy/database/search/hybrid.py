@@ -41,9 +41,9 @@ def assert_order(scored_chunks: List[Tuple[float, int]]):
     elif all(scored_chunks[i][0] >= scored_chunks[i + 1][0] for i in range(len(scored_chunks) - 1)):
         return # decreasing
     elif all(scored_chunks[i][0] <= scored_chunks[i + 1][0] for i in range(len(scored_chunks) - 1)):
-        return # increasing
+        raise RuntimeError("Scores are in INCREASING order.")
     else:
-        raise RuntimeError("Scores are not ordered either in increasing or decreasing order.")
+        raise RuntimeError("Scores are not ordered.")
 
 #----------------------------------------------------------------------------------------
 # SCORING
@@ -61,6 +61,7 @@ def reciprocal_rank_scores(scored_chunks: List[Tuple[float, int]], k:int, rankin
     * https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf
     """
     # asserts the ordering of the items
+    if len(scored_chunks) == 0: return scored_chunks
     assert_order(scored_chunks)
     # computes the rank based scores
     def reciprocal_rank(rank):
@@ -78,6 +79,7 @@ def relative_scores(scored_chunks: List[Tuple[float, int]], k:int) -> List[Tuple
     see: https://weaviate.io/blog/hybrid-search-fusion-algorithms#relativescorefusion
     """
     # asserts the ordering of the items
+    if len(scored_chunks) == 0: return scored_chunks
     assert_order(scored_chunks)
     # normalise the scores
     # NOTE: use only the best k items to avoid giving undue weight to a search engine returning more results
@@ -98,6 +100,7 @@ def distribution_based_scores(scored_chunks: List[Tuple[float, int]], k:int) -> 
     see: https://medium.com/plain-simple-software/distribution-based-score-fusion-dbsf-a-new-approach-to-vector-search-ranking-f87c37488b18
     """
     # asserts the ordering of the items
+    if len(scored_chunks) == 0: return scored_chunks
     assert_order(scored_chunks)   
     # Calculate mean and standard deviation
     # NOTE: use only the best k items to avoid giving undue weight to a search engine returning more results
@@ -108,11 +111,6 @@ def distribution_based_scores(scored_chunks: List[Tuple[float, int]], k:int) -> 
     # Calculate the lower and upper bounds for normalization
     upper_bound = mean_score + 3 * std_dev
     lower_bound = mean_score - 3 * std_dev
-    # flips bound when dealing with increasing scores
-    max_score = scored_chunks[0][0]
-    min_score = scored_chunks[-1][0]
-    if max_score < min_score:
-        lower_bound, upper_bound = upper_bound, lower_bound
     # Normalize the scores
     def normalize(score):
         return (score - lower_bound) / (upper_bound - lower_bound)

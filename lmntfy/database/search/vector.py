@@ -65,17 +65,17 @@ class VectorSearch(SearchEngine):
         input_embedding_batch = input_embedding.reshape((1,-1))
         # loop until we get enough items
         # NOTE: due to several ids pointing to the same chunk, we migh get duplicates
-        distances = list()
+        similarities = list()
         indices = list()
         k_queried = k
         while len(set(indices)) < k:
             # does the search
-            distances, indices = self.index.search(input_embedding_batch, k=k_queried)
-            distances = distances.flatten().tolist()
+            similarities, indices = self.index.search(input_embedding_batch, k=k_queried)
+            similarities = similarities.flatten().tolist()
             indices = indices.flatten().tolist()
             k_queried *= 2
         # zip the results into a single list and remove duplicates
-        scored_chunkids = list(zip(distances, indices))
+        scored_chunkids = list(zip(similarities, indices))
         return merge_and_sort_scores(scored_chunkids, merging_strategy=max)
 
     def initialize(self, database_folder:Path):

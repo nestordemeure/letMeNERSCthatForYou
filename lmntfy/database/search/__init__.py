@@ -78,13 +78,19 @@ from .keywords import KeywordSearch
 from .hybrid import HybridSearch, reciprocal_rank_scores, relative_scores, distribution_based_scores
 from .rerank import RerankSearch
 
+def Just_Keyword(models_folder:Path, device='cuda'):
+    return KeywordSearch()
+
+def Just_Vector(models_folder:Path, device='cuda'):
+    return VectorSearch(embedding.Default(models_folder, device='cuda'))
+
 def Full_Hybrid(models_folder:Path, device='cuda'):
     """
     Classic Hybrid search: (Vector,Keyword) search combined with reciprocal_rank_scores
     """
     vector_search = VectorSearch(embedding.Default(models_folder, device='cuda'))
     keyword_search = KeywordSearch()
-    return HybridSearch(vector_search, keyword_search, reciprocal_rank_scores)
+    return HybridSearch(vector_search, keyword_search, distribution_based_scores)
 
 def Reranked_Hybrid(models_folder:Path, device='cuda'):
     """
@@ -105,4 +111,4 @@ def Reranked_Vectors(models_folder:Path, device='cuda'):
     return RerankSearch(reranker.TFIDFReranker(models_folder), vector_search)
 
 # our current default
-Default = Reranked_Vectors
+Default = Full_Hybrid

@@ -40,7 +40,7 @@ class Database:
         if update_database or not self.exists():
             self.update(llm.count_tokens, self.max_tokens_per_chunk, verbose=True)
     
-    def get_closest_chunks(self, input_text: str, k: int = 3) -> List[Chunk]:
+    def get_closest_chunks(self, input_text: str, k: int = 3, verbose=True) -> List[Chunk]:
         """
         Returns the (at least) k chunks that are relevant according to he search engine
         """
@@ -51,6 +51,11 @@ class Database:
         scored_chunk_id = self.search_engine.get_closest_chunks(input_text, self.document_store.chunks, k)
         # gets he chunks from the document store
         chunks = [self.document_store.get_chunk(id) for (score,id) in scored_chunk_id]
+        # debug information
+        if verbose:
+            print(f"\nQ: {input_text}")
+            for i in range(len(chunks)):
+                print(f" * [{scored_chunk_id[i][0]:.2f}]: {chunks[i].url}")
         # returns
         return chunks
 

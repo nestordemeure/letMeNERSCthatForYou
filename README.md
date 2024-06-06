@@ -53,7 +53,6 @@ In no particular order:
 * find good default search settings
 
 * examine search ouput
-  are scores increasing or decreasing? -> how is i playing wih he max / merge operaions?
   when reranking, wha are he new scores?
   when hybriding, wha are he new scores?
 
