@@ -32,10 +32,11 @@ def main():
     models_folder = args.models_folder
 
     # load the database
+    search_engine = lmntfy.database.search.Default(models_folder, device='cuda')
     llm = lmntfy.models.llm.Default(models_folder, device='cpu', engineType=TransformerEngine)
-    embedder = lmntfy.models.embedding.Default(models_folder, device='cuda')
-    reranker = lmntfy.models.reranker.Default(models_folder, device='cuda')
-    database = lmntfy.database.Default(docs_folder, database_folder, llm, embedder, reranker, update_database=False)
+    database = lmntfy.database.Database(docs_folder, database_folder, 
+                                        search_engine, llm, 
+                                        update_database=False)
 
     # runs the retrieval and displays the urls
     for question in TEST_QUESTIONS:

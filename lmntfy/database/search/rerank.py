@@ -1,6 +1,6 @@
 from functools import partial
 from pathlib import Path
-from typing import List
+from typing import List, Tuple, Dict
 from ..chunk import Chunk
 from . import SearchEngine
 from .hybrid import merge_and_sort_scores
@@ -35,16 +35,16 @@ class RerankSearch_raw(SearchEngine):
         """
         self.search_engine.remove_several_chunks(chunk_indices)
     
-    def get_closest_chunks(self, input_text: str, k: int) -> List[(float,int)]:
+    def get_closest_chunks(self, input_text: str, chunks:Dict[int,Chunk], k: int) -> List[Tuple[float,int]]:
         """
         Returns the (score,chunk_id) of the closest chunks, from best to worst
         """
         # gets the original results
-        scored_chunks = self.search_engine.get_closest_chunks(input_text, k)
+        scored_chunk_ids = self.search_engine.get_closest_chunks(input_text, k)
         # rerank them
-        chunks = [chunk for (score,chunk) in scored_chunks]
+        chunks = [chunks[chunk_id] for (score,chunk_id) in scored_chunk_ids]
         new_scores = self.reranker.similarities(input_text, chunks)
-        reranked_chunks = list(zip(new_scores, chunks))
+        reranked_chunks = [ (new_score,chunk_id) for (new_score, (score,chunk_id)) in zip(new_scores, scored_chunk_ids)]
         # sort the chunks according to the new score
         reranked_chunks = merge_and_sort_scores(reranked_chunks, merging_strategy=max)
         return reranked_chunks

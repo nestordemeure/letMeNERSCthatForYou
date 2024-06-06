@@ -1,7 +1,7 @@
 import statistics
 from functools import partial
 from pathlib import Path
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Dict
 from ..chunk import Chunk
 from . import SearchEngine
 
@@ -153,7 +153,7 @@ class HybridSearch_raw(SearchEngine):
         self.search_engine1.remove_several_chunks(chunk_indices)
         self.search_engine2.remove_several_chunks(chunk_indices)
     
-    def get_closest_chunks(self, input_text: str, k: int) -> List[(float,int)]:
+    def get_closest_chunks(self, input_text: str, chunks:Dict[int,Chunk], k: int) -> List[Tuple[float,int]]:
         """
         Returns the (score,chunk_id) of the closest chunks, from best to worst
         """

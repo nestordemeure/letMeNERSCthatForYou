@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Dict, Tuple
 from ..chunk import Chunk
 from . import SearchEngine
 from whoosh.index import FileIndex, exists_in, create_in, open_dir
@@ -79,7 +79,7 @@ class KeywordSearch(SearchEngine):
             writer.delete_by_term(fieldname='id', text=str(chunk_id))
         writer.commit()
     
-    def get_closest_chunks(self, input_text: str, k: int) -> List[(float,int)]:
+    def get_closest_chunks(self, input_text: str, chunks:Dict[int,Chunk], k: int) -> List[Tuple[float,int]]:
         """
         Returns the (score,chunk_id) of the closest chunks, from best to worst
         """

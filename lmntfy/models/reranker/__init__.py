@@ -102,4 +102,4 @@ from .hfTransformer import MXbaiLargeReranker # a bit above BGE large?
 from .hfTransformer import PRMBReranker # very weak, best avoided
 from .hfTransformer import SimLMReranker # great on some and weak on others
 # default reranker
-Default = TFIDFReranker
+Default = BGELargeReranker

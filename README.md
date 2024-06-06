@@ -47,9 +47,6 @@ In no particular order:
 * move this code to the NERSC github,
 * refresh prompt (moving chunk information within the prompt)
 
-* refactor vector databse + search
-  * update the database with the new classes
-
 ## Developers
 
 <table width="100%">

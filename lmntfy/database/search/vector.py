@@ -2,7 +2,7 @@ import faiss
 import numpy as np
 from functools import partial
 from pathlib import Path
-from typing import List
+from typing import List, Tuple, Dict
 from ..chunk import Chunk
 from . import SearchEngine
 from ...models.embedding import Embedding
@@ -54,7 +54,7 @@ class VectorSearch_raw(SearchEngine):
         """
         self.index.remove_ids(np.array(chunk_indices, dtype=np.int64))
     
-    def get_closest_chunks(self, input_text: str, k: int) -> List[(float,int)]:
+    def get_closest_chunks(self, input_text: str, chunks:Dict[int,Chunk], k: int) -> List[Tuple[float,int]]:
         """
         Returns the (score,chunk_id) of the closest chunks, from best to worst
         """
