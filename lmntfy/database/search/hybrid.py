@@ -128,6 +128,8 @@ class HybridSearch(SearchEngine):
     * https://www.assembled.com/blog/better-rag-results-with-reciprocal-rank-fusion-and-hybrid-search
     * https://techcommunity.microsoft.com/t5/ai-azure-ai-services-blog/azure-ai-search-outperforming-vector-search-with-hybrid/ba-p/3929167
     * https://weaviate.io/blog/hybrid-search-fusion-algorithms
+
+    NOTE: we could add a weight to each search algorithm when merging.
     """
     def __init__(self, search_engine1: SearchEngine, search_engine2: SearchEngine, 
                  scoring_function=reciprocal_rank_scores):

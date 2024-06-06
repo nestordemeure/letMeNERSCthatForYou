@@ -50,11 +50,6 @@ In no particular order:
 * move away from Whoosh (keyword search) to remove he need for a `search.initialize` method
 
 * test removing from database with new refactor
-* find good default search settings
-
-* examine search ouput
-  when reranking, wha are he new scores?
-  when hybriding, wha are he new scores?
 
 ## Developers
 

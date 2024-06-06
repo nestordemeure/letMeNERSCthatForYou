@@ -4,23 +4,32 @@ from pathlib import Path
 from . import Reranker
 from ...database.document_splitter import Chunk
 from gensim.corpora import Dictionary
-from gensim.parsing.preprocessing import preprocess_string, strip_tags, strip_multiple_whitespaces, remove_stopwords
+from gensim.parsing.preprocessing import preprocess_string, strip_tags, strip_multiple_whitespaces, remove_stopwords, strip_punctuation, lower_to_unicode, stem_text
 from gensim.models import TfidfModel
 from gensim.similarities import MatrixSimilarity
 
-def keep_alphanumeric(text):
+# punctuation to be stripped
+stripped_punctuation = r"""!"#'()*,-./:;<>?[\]^_`{|}"""
+# compiled regexp
+RE_stripped_punctuation = re.compile(r'([%s])+' % re.escape(stripped_punctuation), re.UNICODE)
+# processing function
+def custom_strip_punctuation(s):
     """
-    Keep only alphanumeric characters in the text. Replace other characters with spaces.
-    Also turns the text to lowercase.
+    Duplicae of gensim's strip_punctuation function that keep more non-punctuation characters (such as @, $, or %)
+    This is useful to avoid breking down some shell output into names that might be things like compiler name.
+    See the output [here](https://gitlab.com/NERSC/nersc.gitlab.io/-/blob/main/docs/development/build-tools/spack.md?ref_type=heads&plain=1)
     """
-    return re.sub(r'[^a-zA-Z0-9]', ' ', text).lower()
+    return RE_stripped_punctuation.sub(" ", s)
 
 # Define a list of preprocessing functions to apply
 word_preprocesses = [
     strip_tags,  # remove HTML tags
-    keep_alphanumeric, # keep only alphanumeric characters
+    #strip_punctuation, # remove punctuation
+    custom_strip_punctuation, # remove *most* punctuation
+    lower_to_unicode, # set to lowercase
     strip_multiple_whitespaces,  # remove repeating whitespaces
     remove_stopwords,  # remove stopwords
+    #stem_text # stem words (NOTE: this seem to somewhat degrade search?)
 ]
 
 class TFIDFReranker(Reranker):

@@ -84,31 +84,20 @@ def Just_Keyword(models_folder:Path, device='cuda'):
 def Just_Vector(models_folder:Path, device='cuda'):
     return VectorSearch(embedding.Default(models_folder, device='cuda'))
 
-def Full_Hybrid(models_folder:Path, device='cuda'):
-    """
-    Classic Hybrid search: (Vector,Keyword) search combined with reciprocal_rank_scores
-    """
+def Reranked_Vectors(models_folder:Path, device='cuda'):
+    vector_search = VectorSearch(embedding.Default(models_folder, device=device))
+    return RerankSearch(reranker.TFIDFReranker(models_folder, device=device), vector_search)
+
+def Just_Hybrid(models_folder:Path, device='cuda'):
     vector_search = VectorSearch(embedding.Default(models_folder, device='cuda'))
     keyword_search = KeywordSearch()
     return HybridSearch(vector_search, keyword_search, distribution_based_scores)
 
 def Reranked_Hybrid(models_folder:Path, device='cuda'):
-    """
-    Classic Hybrid search:
-        (Vector,Keyword) search combined with reciprocal_rank_scores
-        with a reranker on top
-    """
     vector_search = VectorSearch(embedding.Default(models_folder, device='cuda'))
     keyword_search = KeywordSearch()
     hybrid_search = HybridSearch(vector_search, keyword_search, reciprocal_rank_scores)
-    return RerankSearch(reranker.Default(models_folder, device=device), hybrid_search)
-
-def Reranked_Vectors(models_folder:Path, device='cuda'):
-    """
-    tfidf on top of a vector search
-    """
-    vector_search = VectorSearch(embedding.Default(models_folder, device=device))
-    return RerankSearch(reranker.TFIDFReranker(models_folder), vector_search)
+    return RerankSearch(reranker.TFIDFReranker(models_folder, device=device), hybrid_search)
 
 # our current default
-Default = Full_Hybrid
+Default = Reranked_Hybrid
