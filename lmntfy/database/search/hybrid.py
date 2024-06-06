@@ -10,7 +10,7 @@ from . import SearchEngine
 # basic addition function
 addition = lambda x, y: x+y
 
-def merge_and_sort_scores(scored_chunks: List[Tuple[float, int]], merging_strategy: Callable[[float, float], float] = addition) -> List[Tuple[float, int]]:
+def merge_and_sort_scores(scored_chunk_ids: List[Tuple[float, int]], merging_strategy: Callable[[float, float], float] = addition) -> List[Tuple[float, int]]:
     """
     Takes a list of (score, chunk_id) and:
     * merges identical chunks using the given merging strategy (addition, max, etc)
@@ -18,14 +18,14 @@ def merge_and_sort_scores(scored_chunks: List[Tuple[float, int]], merging_strate
     """
     # Merge identical chunks using the given merging strategy
     chunk_dict = {}
-    for score, chunk in scored_chunks:
-        if chunk in chunk_dict:
-            chunk_dict[chunk] = merging_strategy(chunk_dict[chunk], score)
+    for score, chunk_id in scored_chunk_ids:
+        if chunk_id in chunk_dict:
+            chunk_dict[chunk_id] = merging_strategy(chunk_dict[chunk_id], score)
         else:
-            chunk_dict[chunk] = score
+            chunk_dict[chunk_id] = score
 
     # Convert the dictionary back to a list of tuples
-    merged_list = [(score, chunk) for chunk, score in chunk_dict.items()]
+    merged_list = [(score, chunk_id) for chunk_id, score in chunk_dict.items()]
 
     # Sort the merged list by scores in descending order
     sorted_list = sorted(merged_list, key=lambda x: x[0], reverse=True)
@@ -48,7 +48,7 @@ def assert_order(scored_chunks: List[Tuple[float, int]]):
 #----------------------------------------------------------------------------------------
 # SCORING
 
-def reciprocal_rank_scores(scored_chunks: List[Tuple[float, int]], ranking_constant:int=60) -> List[Tuple[float, int]]:
+def reciprocal_rank_scores(scored_chunks: List[Tuple[float, int]], k:int, ranking_constant:int=60) -> List[Tuple[float, int]]:
     """
     Takes a list of (score,chunk_id) in order.
     And replace their scores with reciprocal ranks: score = 1 / (ranking_constant + rank)
@@ -67,7 +67,7 @@ def reciprocal_rank_scores(scored_chunks: List[Tuple[float, int]], ranking_const
         return 1 / (ranking_constant + rank)
     return [(reciprocal_rank(rank),chunk_id) for (rank,(score,chunk_id)) in enumerate(scored_chunks, start=1)]
 
-def relative_scores(scored_chunks: List[Tuple[float, int]]) -> List[Tuple[float, int]]:
+def relative_scores(scored_chunks: List[Tuple[float, int]], k:int) -> List[Tuple[float, int]]:
     """
     Takes a list of (score,chunk_id) in order.
     And normalise them: score = (score - min(scores)) / (max(scores) - min(scores))
@@ -80,13 +80,15 @@ def relative_scores(scored_chunks: List[Tuple[float, int]]) -> List[Tuple[float,
     # asserts the ordering of the items
     assert_order(scored_chunks)
     # normalise the scores
+    # NOTE: use only the best k items to avoid giving undue weight to a search engine returning more results
+    k = min(k, len(scored_chunks))
     max_score = scored_chunks[0][0]
-    min_score = scored_chunks[-1][0]
+    min_score = scored_chunks[k-1][0]
     def normalize(score):
         return (score - min_score) / (max_score - min_score)
     return [(normalize(score),chunk_id) for (score,chunk_id) in scored_chunks]
 
-def distribution_based_scores(scored_chunks: List[Tuple[float, int]]) -> List[Tuple[float, int]]:
+def distribution_based_scores(scored_chunks: List[Tuple[float, int]], k:int) -> List[Tuple[float, int]]:
     """
     Takes a list of (score,chunk_id) in order.
     And normalize them: score = (score - (mean - 3std)) / ((mean + 3std) - (mean - 3std))
@@ -98,7 +100,9 @@ def distribution_based_scores(scored_chunks: List[Tuple[float, int]]) -> List[Tu
     # asserts the ordering of the items
     assert_order(scored_chunks)   
     # Calculate mean and standard deviation
-    scores = [score for (score, chunk_id) in scored_chunks]
+    # NOTE: use only the best k items to avoid giving undue weight to a search engine returning more results
+    k = min(k, len(scored_chunks))
+    scores = [score for (score, chunk_id) in scored_chunks[:k]]
     mean_score = statistics.mean(scores)
     std_dev = statistics.stdev(scores)
     # Calculate the lower and upper bounds for normalization
@@ -159,8 +163,8 @@ class HybridSearch(SearchEngine):
         scored_chunks1 = self.search_engine1.get_closest_chunks(input_text, chunks, k)
         scored_chunks2 = self.search_engine2.get_closest_chunks(input_text, chunks, k)
         # rescores them
-        rescored_chunks1 = self.scoring_function(scored_chunks1)
-        rescored_chunks2 = self.scoring_function(scored_chunks2)
+        rescored_chunks1 = self.scoring_function(scored_chunks1, k)
+        rescored_chunks2 = self.scoring_function(scored_chunks2, k)
         # merges both
         rescored_chunks = rescored_chunks1 + rescored_chunks2
         # sort the chunks according to the new score
