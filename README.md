@@ -48,11 +48,7 @@ In no particular order:
 * refresh prompt (moving chunk information within the prompt)
 
 * refactor vector databse + search
-  * write searcher class (rescore, hybrid) that compose (using partial functions)
-  * introduce hybrid search
   * update the database with the new classes
-
-* are scores ordered (one way or the other, doesn't matter)? add assert where it matters
 
 ## Developers
 

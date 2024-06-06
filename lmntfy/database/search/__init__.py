@@ -58,6 +58,7 @@ class SearchEngine(ABC):
         pass
 
 # instances
-from .keywords import KeywordSearch
 from .vector import VectorSearch
+from .keywords import KeywordSearch
+from .hybrid import HybridSearch
 from .rerank import RerankSearch
