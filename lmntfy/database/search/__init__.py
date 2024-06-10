@@ -74,12 +74,12 @@ class SearchEngine(ABC):
 
 # building blocks
 from .vector import VectorSearch
-from .keywords import KeywordSearch
+from .keywords import KeywordSearch, BM25F
 from .hybrid import HybridSearch, reciprocal_rank_scores, relative_scores, distribution_based_scores
 from .rerank import RerankSearch
 
 def Just_Keyword(models_folder:Path, device='cuda'):
-    return KeywordSearch()
+    return KeywordSearch(scoring=BM25F())
 
 def Just_Vector(models_folder:Path, device='cuda'):
     return VectorSearch(embedding.Default(models_folder, device='cuda'))

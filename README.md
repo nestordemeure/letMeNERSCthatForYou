@@ -47,6 +47,8 @@ In no particular order:
 * move this code to the NERSC github,
 * refresh prompt (moving chunk information within the prompt)
 
+* update whoosh to [whoosh reloaded](https://github.com/Sygil-Dev/whoosh-reloaded?tab=readme-ov-file)
+* use url as further keywords for keyword search (see [here](https://charlesreid1.com/wiki/Whoosh/Search#:~:text=writer%2C%20file_path%2C%20config)%3A-,file_name,-%3D%20file_path.replace(%22.%22%2C%20%22%20%22).replace))
 * move away from Whoosh (keyword search) to remove he need for a `search.initialize` method?
 
 ## Developers

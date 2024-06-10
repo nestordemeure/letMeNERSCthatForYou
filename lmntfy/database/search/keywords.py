@@ -48,9 +48,9 @@ class KeywordSearch(SearchEngine):
 
     WARNING: as the index needs to be loaded from a file, one need to call the initialize method before any use.
     """
-    def __init__(self, scoring:WeightingModel=BM25F(B=0.0)):
+    def __init__(self, scoring:WeightingModel=BM25F()):
         """
-        score (WeightingModel): function used to score hits, defaults to BM25F(B=0.0), B=0 means no penality to document length
+        score (WeightingModel): function used to score hits, defaults to BM25F
         """
         # whoosh index
         self.index: FileIndex = None # created on initialize
