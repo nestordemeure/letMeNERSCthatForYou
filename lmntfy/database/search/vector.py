@@ -14,15 +14,20 @@ class VectorSearch(SearchEngine):
     Sentence-embedding based vector search.
     Based on [faiss](https://faiss.ai/).
     """
-    def __init__(self, embedder: Embedding):
+    def __init__(self, embedder: Embedding, max_tokens_per_chunk:int=None):
+        """
+        embedder (Embedding): the model used to compute the embeddings
+        max_tokens_per_chunk (optional int): the maximum size for the chunks (default/capped to embedder.context_size)
+        """
         # embedder
         self.embedder: Embedding = embedder
+        self.max_tokens_per_chunk = self.embedder.context_size if (max_tokens_per_chunk is None) else min(max_tokens_per_chunk, self.embedder.context_size)
         # vector database that will be used to store the vectors
         raw_index = faiss.IndexFlatIP(embedder.embedding_length)
         # index on top of the database to support addition and deletion by id
         self.index = faiss.IndexIDMap(raw_index)
         # init parent
-        super().__init__(name=f"vector-{embedder.name}")
+        super().__init__(name=f"vector-{embedder.name}-{self.max_tokens_per_chunk}")
 
     def _add_chunk(self, chunk_id:int, chunk: Chunk):
         """
@@ -44,7 +49,7 @@ class VectorSearch(SearchEngine):
         """
         for (chunk_id, chunk) in tqdm(chunks.items(), disable=not verbose, desc="Vector embedding chunks"):
             # breaks the chunk into subchunks small enough to fit the embedder's context size
-            subchunks = chunk_splitter(chunk, self.embedder.count_tokens, self.embedder.context_size)
+            subchunks = chunk_splitter(chunk, self.embedder.count_tokens, self.max_tokens_per_chunk)
             # adds them one at a time, all pointing to the same chunk_id (parent document retrieval)
             for subchunk in subchunks:
                 self._add_chunk(chunk_id, subchunk)

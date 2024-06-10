@@ -38,12 +38,9 @@ def main():
                                         search_engine, llm, 
                                         update_database=False)
 
-    # runs the retrieval and displays the urls
+    # runs the retrieval with `verbose` on
     for question in TEST_QUESTIONS:
-        print(f"\nQ: {question}")
-        chunks = database.get_closest_chunks(question, k=8)
-        for chunk in chunks:
-            print(f" * {chunk.url}")
+        database.get_closest_chunks(question, k=8, verbose=True)
 
 if __name__ == "__main__":
     main()

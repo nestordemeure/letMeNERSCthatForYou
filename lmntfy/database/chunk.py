@@ -16,8 +16,20 @@ class Chunk:
 
     def to_markdown(self):
         """turns a chunk into a markdown representation suitable for usage in a prompt"""
-        markdown_content = "\n".join([f"> {line}" for line in self.content.split('\n')])
-        return f"Source URL: <{self.url}>\n\nExtract:\n{markdown_content}\n\n---\n"
+        return (f"Source URL: <{self.url}>\n"
+                "Extract:\n"
+                "````md\n"
+                f"{self.content}\n"
+                "````\n\n")
+
+    def to_xml(self):
+        """turns a chunk into an XML representation suitable for usage in a prompt"""
+        return ("<resource>\n"
+                f"<url>{self.url}</url>\n"
+                "<text>\n"
+                f"{self.content}\n"
+                "</text>\n"
+                "</resource>")
 
     def __eq__(self, other):
         if not isinstance(other, Chunk):

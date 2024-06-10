@@ -5,7 +5,8 @@ from ...database.document_splitter import Chunk
 
 class Reranker(ABC):
     """
-    used to compute similarity between a query and passages
+    Used to compute similarity between a query and passages
+    See this page for a comparison of various rerankers: https://huggingface.co/spaces/mteb/leaderboard
     """
     def __init__(self, models_folder:Path, name:str, device:str='cuda'):
         self.name = name
