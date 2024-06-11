@@ -14,8 +14,9 @@ def parse_args():
     return args
 
 def main():
+    print("Updating database...")
     # process command line arguments
-    args= parse_args()
+    args = parse_args()
     docs_folder = args.docs_folder
     database_folder = args.database_folder
     models_folder = args.models_folder

@@ -16,7 +16,7 @@ from whoosh.scoring import WeightingModel, BM25F
 # somewhat inspired by this: https://git.charlesreid1.com/charlesreid1/markdown-search
 # NOTE: an LLM keyword extraction system might be interesting to get a better index
 CHUNK_SCHEMA = Schema(
-    id=ID(stored=True, unique=True), # will be used to delete old chunks
+    id=ID(stored=True, unique=True), # used to id chunks
     headlines=KEYWORD(analyzer=StemmingAnalyzer(), field_boost=5.0), # markdown titles, more important
     content=TEXT(phrase=False, analyzer=StemmingAnalyzer(), field_boost=1.0) # actual text
 )
