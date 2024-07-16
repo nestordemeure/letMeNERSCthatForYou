@@ -1,4 +1,4 @@
-ARG VLLM_VERSION=v0.4.2
+ARG VLLM_VERSION=v0.5.2
 ARG BASE_IMAGE=vllm/vllm-openai:${VLLM_VERSION}
 FROM ${BASE_IMAGE}
 LABEL maintainer "Andrew Naylor <anaylor@lbl.gov>"
